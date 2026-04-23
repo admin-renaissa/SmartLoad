@@ -1,0 +1,516 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  SUPERVISOR
+  OPERATOR
+  ACCOUNTS
+  DRIVER
+}
+
+enum BarcodeFormat {
+  QR
+  CODE128
+  CODE39
+  DATAMATRIX
+  EAN13
+}
+
+enum POStatus {
+  DRAFT
+  CONFIRMED
+  LOADING
+  PARTIALLY_DISPATCHED
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+enum SessionStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum ScanResult {
+  SUCCESS
+  WRONG_PRODUCT
+  WRONG_COLOUR
+  EXCESS_QUANTITY
+  UNKNOWN_BARCODE
+}
+
+enum MovementType {
+  INWARD
+  OUTWARD
+  ADJUSTMENT
+  TRANSFER_IN
+  TRANSFER_OUT
+}
+
+enum VehicleType {
+  TRUCK
+  TEMPO
+  VAN
+  MINI_TRUCK
+  OTHER
+}
+
+enum PODStatus {
+  PENDING
+  LINK_SENT
+  OTP_VERIFIED
+  ACKNOWLEDGED
+  DISPUTED
+  EXPIRED
+}
+
+enum SyncDirection {
+  PULL
+  PUSH
+}
+
+enum SyncStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  PERMANENTLY_FAILED
+  RETRYING
+}
+
+// ─── Model 1: User ──────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         UserRole
+  phone        String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  createdOrders     PurchaseOrder[]    @relation("OrderCreatedBy")
+  updatedOrders     PurchaseOrder[]    @relation("OrderUpdatedBy")
+  supervisedSessions DispatchSession[] @relation("SessionSupervisor")
+  operatedSessions  DispatchSession[]  @relation("SessionOperator")
+  scanEvents        ScanEvent[]
+  inventoryLedgers  InventoryLedger[]
+  grnRecords        GoodsReceiptNote[]
+  auditLogs         AuditLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// ─── Model 2: ProductCategory ────────────────────────────────────────────────
+
+model ProductCategory {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products Product[]
+}
+
+// ─── Model 3: Product ────────────────────────────────────────────────────────
+
+model Product {
+  id              String          @id @default(cuid())
+  sku             String          @unique
+  name            String
+  categoryId      String
+  category        ProductCategory @relation(fields: [categoryId], references: [id])
+  hsnCode         String?
+  unitOfMeasure   String
+  piecesPerBox    Int
+  weightPerBoxKg  Float?
+  minStockAlert   Int             @default(0)
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  variants ProductVariant[]
+
+  @@index([sku])
+  @@index([categoryId])
+}
+
+// ─── Model 4: ProductVariant ─────────────────────────────────────────────────
+
+model ProductVariant {
+  id            String        @id @default(cuid())
+  productId     String
+  product       Product       @relation(fields: [productId], references: [id])
+  colourCode    String
+  colourName    String
+  length        Float?
+  width         Float?
+  thickness     Float?
+  barcodeValue  String        @unique
+  barcodeFormat BarcodeFormat @default(QR)
+  imageUrl      String?
+  mrp           Int?
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  poLineItems     POLineItem[]
+  scanEvents      ScanEvent[]
+  inventoryStock  InventoryStock?
+  inventoryLedger InventoryLedger[]
+  grnLineItems    GRNLineItem[]
+
+  @@unique([productId, colourCode, length, width, thickness])
+  @@index([barcodeValue])
+}
+
+// ─── Model 5: Client ─────────────────────────────────────────────────────────
+
+model Client {
+  id                String   @id @default(cuid())
+  clientCode        String   @unique
+  name              String
+  gstin             String?
+  phone             String
+  email             String?
+  billingAddress    Json
+  shippingAddress   Json
+  contactPersonName String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+
+  @@index([clientCode])
+  @@index([name])
+}
+
+// ─── Model 6: PurchaseOrder ──────────────────────────────────────────────────
+
+model PurchaseOrder {
+  id                   String    @id @default(cuid())
+  poNumber             String    @unique
+  clientId             String
+  client               Client    @relation(fields: [clientId], references: [id])
+  orderDate            DateTime
+  expectedDispatchDate DateTime?
+  status               POStatus  @default(DRAFT)
+  totalAmount          Int       @default(0)
+  notes                String?
+  createdById          String
+  createdBy            User      @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  updatedById          String?
+  updatedBy            User?     @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
+  tallyVoucherId       String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  lineItems        POLineItem[]
+  dispatchSessions DispatchSession[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([orderDate])
+}
+
+// ─── Model 7: POLineItem ─────────────────────────────────────────────────────
+
+model POLineItem {
+  id            String         @id @default(cuid())
+  poId          String
+  po            PurchaseOrder  @relation(fields: [poId], references: [id])
+  variantId     String
+  variant       ProductVariant @relation(fields: [variantId], references: [id])
+  orderedBoxes  Int
+  orderedPieces Int
+  ratePerBox    Int
+  gstPercent    Float          @default(18)
+  totalAmount   Int
+  loadedBoxes   Int            @default(0)
+  loadedPieces  Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  podLineItems PODLineItem[]
+
+  @@index([poId])
+}
+
+// ─── Model 8: Vehicle ────────────────────────────────────────────────────────
+
+model Vehicle {
+  id                 String      @id @default(cuid())
+  registrationNumber String      @unique
+  type               VehicleType
+  capacityKg         Float?
+  driverName         String
+  driverPhone        String
+  isActive           Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  dispatchSessions DispatchSession[]
+
+  @@index([registrationNumber])
+}
+
+// ─── Model 9: DispatchSession ────────────────────────────────────────────────
+
+model DispatchSession {
+  id                 String        @id @default(cuid())
+  sessionCode        String        @unique
+  poId               String
+  po                 PurchaseOrder @relation(fields: [poId], references: [id])
+  vehicleId          String
+  vehicle            Vehicle       @relation(fields: [vehicleId], references: [id])
+  supervisorId       String
+  supervisor         User          @relation("SessionSupervisor", fields: [supervisorId], references: [id])
+  operatorId         String?
+  operator           User?         @relation("SessionOperator", fields: [operatorId], references: [id])
+  status             SessionStatus @default(OPEN)
+  openedAt           DateTime      @default(now())
+  closedAt           DateTime?
+  totalBoxesExpected Int
+  totalBoxesScanned  Int           @default(0)
+  notes              String?
+  tallyVoucherId     String?
+  manifestUrl        String?
+  challanUrl         String?
+  isPartialDispatch  Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  scanEvents      ScanEvent[]
+  proofOfDelivery ProofOfDelivery?
+
+  @@index([poId])
+  @@index([vehicleId])
+  @@index([status])
+}
+
+// ─── Model 10: ScanEvent ─────────────────────────────────────────────────────
+
+model ScanEvent {
+  id                String         @id @default(cuid())
+  sessionId         String
+  session           DispatchSession @relation(fields: [sessionId], references: [id])
+  operatorId        String
+  operator          User           @relation(fields: [operatorId], references: [id])
+  scannedBarcode    String
+  resolvedVariantId String?
+  resolvedVariant   ProductVariant? @relation(fields: [resolvedVariantId], references: [id])
+  result            ScanResult
+  errorReason       String?
+  deviceId          String?
+  scannedAt         DateTime       @default(now())
+
+  @@index([sessionId])
+  @@index([result])
+  @@index([sessionId, scannedAt(sort: Desc)])
+}
+
+// ─── Model 11: InventoryLedger ───────────────────────────────────────────────
+
+model InventoryLedger {
+  id            String         @id @default(cuid())
+  variantId     String
+  variant       ProductVariant @relation(fields: [variantId], references: [id])
+  movementType  MovementType
+  boxes         Int
+  pieces        Int
+  referenceType String
+  referenceId   String
+  notes         String?
+  createdById   String
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  createdAt     DateTime       @default(now())
+
+  @@index([variantId])
+  @@index([movementType])
+  @@index([variantId, createdAt(sort: Desc)])
+}
+
+// ─── Model 12: InventoryStock ────────────────────────────────────────────────
+
+model InventoryStock {
+  id            String         @id @default(cuid())
+  variantId     String         @unique
+  variant       ProductVariant @relation(fields: [variantId], references: [id])
+  totalBoxes    Int            @default(0)
+  reservedBoxes Int            @default(0)
+  updatedAt     DateTime       @updatedAt
+}
+
+// ─── Model 13: GoodsReceiptNote ──────────────────────────────────────────────
+
+model GoodsReceiptNote {
+  id             String    @id @default(cuid())
+  grnNumber      String    @unique
+  receivedDate   DateTime
+  notes          String?
+  createdById    String
+  createdBy      User      @relation(fields: [createdById], references: [id])
+  tallyVoucherId String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  lineItems GRNLineItem[]
+
+  @@index([grnNumber])
+}
+
+// ─── Model 14: GRNLineItem ───────────────────────────────────────────────────
+
+model GRNLineItem {
+  id             String         @id @default(cuid())
+  grnId          String
+  grn            GoodsReceiptNote @relation(fields: [grnId], references: [id])
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id])
+  receivedBoxes  Int
+  receivedPieces Int
+  createdAt      DateTime       @default(now())
+
+  @@index([grnId])
+}
+
+// ─── Model 15: ProofOfDelivery ───────────────────────────────────────────────
+
+model ProofOfDelivery {
+  id                String          @id @default(cuid())
+  sessionId         String          @unique
+  session           DispatchSession @relation(fields: [sessionId], references: [id])
+  linkToken         String          @unique
+  linkExpiresAt     DateTime
+  otp               String?
+  otpExpiresAt      DateTime?
+  otpAttempts       Int             @default(0)
+  status            PODStatus       @default(PENDING)
+  receiverName      String?
+  receiverPhone     String?
+  signatureImageUrl String?
+  podPdfUrl         String?
+  acknowledgedAt    DateTime?
+  geoLat            Float?
+  geoLng            Float?
+  discrepancyNotes  String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  lineItems PODLineItem[]
+
+  @@index([linkToken])
+  @@index([status])
+}
+
+// ─── Model 16: PODLineItem ───────────────────────────────────────────────────
+
+model PODLineItem {
+  id                String          @id @default(cuid())
+  podId             String
+  pod               ProofOfDelivery @relation(fields: [podId], references: [id])
+  lineItemId        String
+  lineItem          POLineItem      @relation(fields: [lineItemId], references: [id])
+  deliveredBoxes    Int
+  acknowledgedBoxes Int             @default(0)
+  discrepancyBoxes  Int             @default(0)
+  discrepancyReason String?
+  createdAt         DateTime        @default(now())
+
+  @@index([podId])
+}
+
+// ─── Model 17: TallySyncJob ──────────────────────────────────────────────────
+
+model TallySyncJob {
+  id              String        @id @default(cuid())
+  direction       SyncDirection
+  dataType        String
+  status          SyncStatus    @default(PENDING)
+  referenceId     String?
+  tallyVoucherId  String?
+  requestPayload  Json?
+  responsePayload Json?
+  errorMessage    String?
+  attempts        Int           @default(0)
+  nextRetryAt     DateTime?
+  processedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([direction])
+  @@index([status, nextRetryAt])
+}
+
+// ─── Model 18: AuditLog (immutable) ─────────────────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  userEmail    String
+  userRole     String
+  action       String
+  resourceType String
+  resourceId   String?
+  oldValues    Json?
+  newValues    Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([resourceType])
+  @@index([createdAt])
+}
+
+// ─── Model 19: Notification ──────────────────────────────────────────────────
+
+model Notification {
+  id             String   @id @default(cuid())
+  recipientPhone String
+  recipientEmail String?
+  channel        String
+  type           String
+  status         String   @default("PENDING")
+  externalId     String?
+  payload        Json
+  sentAt         DateTime?
+  failedReason   String?
+  createdAt      DateTime @default(now())
+
+  @@index([recipientPhone])
+  @@index([status])
+  @@index([type])
+}
+
+// ─── Model 20: SystemConfig ──────────────────────────────────────────────────
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+}

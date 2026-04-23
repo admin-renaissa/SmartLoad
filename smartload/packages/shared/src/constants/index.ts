@@ -1,0 +1,45 @@
+export const SCAN_TIMEOUT_MS = 500;
+export const POD_LINK_EXPIRY_HOURS = 72;
+export const OTP_EXPIRY_MINUTES = 10;
+export const MAX_SCAN_RETRIES = 3;
+export const TALLY_SYNC_RETRY_ATTEMPTS = 3;
+export const ITEMS_PER_PAGE = 25;
+export const MAX_FAILED_OTP_ATTEMPTS = 5;
+export const ACCESS_TOKEN_EXPIRY = '15m';
+export const REFRESH_TOKEN_EXPIRY = '7d';
+export const POD_TOKEN_EXPIRY = '2h';
+export const BARCODE_CACHE_TTL_SECONDS = 3600;
+export const SESSION_CONTEXT_CACHE_TTL_SECONDS = 3600;
+export const DASHBOARD_CACHE_TTL_SECONDS = 60;
+export const INVENTORY_CACHE_TTL_SECONDS = 30;
+export const TALLY_PULL_INTERVAL_MINUTES = 15;
+
+export const QUEUES = {
+  INVENTORY_DEDUCTION: 'inventory-deduction',
+  TALLY_SYNC: 'tally-sync',
+  POD_CREATION: 'pod-creation',
+  NOTIFICATIONS: 'notifications',
+} as const;
+
+export const TALLY_DATA_TYPES = {
+  DISPATCH_OUTWARD: 'DISPATCH_OUTWARD',
+  GRN_INWARD: 'GRN_INWARD',
+  PULL_STOCK: 'PULL_STOCK',
+  PULL_PARTIES: 'PULL_PARTIES',
+  PULL_ORDERS: 'PULL_ORDERS',
+} as const;
+
+export const NOTIFICATION_TYPES = {
+  POD_DISPATCH: 'POD_DISPATCH',
+  LOW_STOCK: 'LOW_STOCK',
+  SCAN_ERROR: 'SCAN_ERROR',
+  TALLY_FAILED: 'TALLY_FAILED',
+  POD_DISPUTED: 'POD_DISPUTED',
+  WELCOME: 'WELCOME',
+} as const;
+
+export const NOTIFICATION_CHANNELS = {
+  SMS: 'SMS',
+  WHATSAPP: 'WHATSAPP',
+  EMAIL: 'EMAIL',
+} as const;

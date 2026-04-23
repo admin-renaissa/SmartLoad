@@ -1,0 +1,35 @@
+{
+  "name": "smartload",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SmartLoad — Barcode Verification & Dispatch Management System",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "setup": "node run-smartload.mjs setup",
+    "start": "node run-smartload.mjs start",
+    "stop": "node run-smartload.mjs stop",
+    "restart": "node run-smartload.mjs restart",
+    "clean": "node run-smartload.mjs clean",
+    "status": "node run-smartload.mjs status",
+    "logs": "node run-smartload.mjs logs --follow",
+    "doctor": "node run-smartload.mjs doctor",
+    "dev": "pnpm --parallel -r run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "db:generate": "pnpm --filter @smartload/db run generate",
+    "db:migrate": "pnpm --filter @smartload/db run migrate",
+    "db:seed": "pnpm --filter @smartload/db run seed",
+    "db:studio": "pnpm --filter @smartload/db run studio",
+    "docker:dev": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
