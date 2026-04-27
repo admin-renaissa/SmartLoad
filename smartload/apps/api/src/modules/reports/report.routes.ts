@@ -9,7 +9,7 @@ export const reportRoutes: FastifyPluginAsync = async (fastify) => {
     const query = request.query as { dateFrom?: string; dateTo?: string; clientId?: string; status?: string };
     const where: Record<string, unknown> = {};
     if (query.status) where.status = query.status;
-    if (query.clientId) where.po = { clientId: query.clientId };
+    if (query.clientId) where.purchaseOrder = { clientId: query.clientId };
     if (query.dateFrom || query.dateTo) {
       where.openedAt = {
         ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
@@ -21,7 +21,7 @@ export const reportRoutes: FastifyPluginAsync = async (fastify) => {
       where,
       orderBy: { openedAt: 'desc' },
       include: {
-        po: { include: { client: true } },
+        purchaseOrder: { include: { client: true } },
         vehicle: true,
         supervisor: { select: { name: true } },
       },
@@ -35,12 +35,18 @@ export const reportRoutes: FastifyPluginAsync = async (fastify) => {
     const query = request.query as { vehicleId?: string; dateFrom?: string; dateTo?: string };
     const where: Record<string, unknown> = { status: 'CLOSED' };
     if (query.vehicleId) where.vehicleId = query.vehicleId;
+    if (query.dateFrom || query.dateTo) {
+      where.closedAt = {
+        ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
+        ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
+      };
+    }
 
     const sessions = await fastify.prisma.dispatchSession.findMany({
       where,
       orderBy: { closedAt: 'desc' },
       include: {
-        po: { include: { client: true } },
+        purchaseOrder: { include: { client: true } },
         vehicle: true,
       },
     });
@@ -98,6 +104,12 @@ export const reportRoutes: FastifyPluginAsync = async (fastify) => {
     const query = request.query as { status?: string; dateFrom?: string; dateTo?: string };
     const where: Record<string, unknown> = {};
     if (query.status) where.status = query.status;
+    if (query.dateFrom || query.dateTo) {
+      where.createdAt = {
+        ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
+        ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
+      };
+    }
 
     const pods = await fastify.prisma.proofOfDelivery.findMany({
       where,
@@ -105,7 +117,7 @@ export const reportRoutes: FastifyPluginAsync = async (fastify) => {
       include: {
         session: {
           include: {
-            po: { include: { client: true } },
+            purchaseOrder: { include: { client: true } },
             vehicle: true,
           },
         },
@@ -128,7 +140,7 @@ export const reportRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/reports/outstanding-pos
   fastify.get('/outstanding-pos', { preHandler: requireReports }, async (_request, reply) => {
     const orders = await fastify.prisma.purchaseOrder.findMany({
-      where: { status: { in: ['CONFIRMED', 'LOADING', 'PARTIALLY_DISPATCHED'] } },
+      where: { status: { in: ['CONFIRMED', 'PARTIALLY_LOADED', 'FULLY_LOADED'] } },
       orderBy: { expectedDispatchDate: 'asc' },
       include: {
         client: true,
@@ -149,9 +161,9 @@ export const reportRoutes: FastifyPluginAsync = async (fastify) => {
       orderBy: { orderDate: 'desc' },
       include: {
         client: true,
-        dispatchSessions: {
+        sessions: {
           include: {
-            proofOfDelivery: { select: { status: true, acknowledgedAt: true } },
+            pod: { select: { status: true, acknowledgedAt: true } },
           },
         },
       },

@@ -6,13 +6,13 @@ import { generateBarcodeValue } from '@smartload/shared';
 const variantSchema = z.object({
   colourCode: z.string().min(2).toUpperCase(),
   colourName: z.string().min(2),
-  length: z.number().positive().optional(),
-  width: z.number().positive().optional(),
-  thickness: z.number().positive().optional(),
+  lengthMm: z.number().positive().optional(),
+  widthMm: z.number().positive().optional(),
+  thicknessMm: z.number().positive().optional(),
   barcodeValue: z.string().min(4),
   barcodeFormat: z.nativeEnum(BarcodeFormat).default(BarcodeFormat.QR),
   imageUrl: z.string().url().optional(),
-  mrp: z.number().int().positive().optional(),
+  mrpPaise: z.number().int().positive().optional(),
 });
 
 export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
@@ -35,20 +35,31 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
     const product = await fastify.prisma.product.findUnique({ where: { id: productId } });
     if (!product) return reply.code(404).send(errorResponse('Product not found'));
 
-    // Auto-generate barcodeValue if not provided or use provided
-    const barcodeValue = dto.barcodeValue || generateBarcodeValue(
-      product.sku,
-      dto.colourCode,
-      dto.length,
-      dto.width,
-      dto.thickness,
-    );
+    const barcodeValue =
+      dto.barcodeValue ||
+      generateBarcodeValue(
+        product.sku,
+        dto.colourCode,
+        dto.lengthMm,
+        dto.widthMm,
+        dto.thicknessMm
+      );
 
     const variant = await fastify.prisma.$transaction(async (tx) => {
       const v = await tx.productVariant.create({
-        data: { ...dto, productId, barcodeValue },
+        data: {
+          productId,
+          colourCode: dto.colourCode,
+          colourName: dto.colourName,
+          lengthMm: dto.lengthMm,
+          widthMm: dto.widthMm,
+          thicknessMm: dto.thicknessMm,
+          barcodeValue,
+          barcodeFormat: dto.barcodeFormat,
+          imageUrl: dto.imageUrl,
+          mrpPaise: dto.mrpPaise,
+        },
       });
-      // Initialize inventory stock
       await tx.inventoryStock.create({
         data: { variantId: v.id, totalBoxes: 0, reservedBoxes: 0 },
       });
@@ -62,8 +73,10 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.patch('/products/:productId/variants/:variantId', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
     const { variantId } = request.params as { productId: string; variantId: string };
     const dto = variantSchema.partial().parse(request.body);
-    const variant = await fastify.prisma.productVariant.update({ where: { id: variantId }, data: dto });
-    // Invalidate barcode cache
+    const variant = await fastify.prisma.productVariant.update({
+      where: { id: variantId },
+      data: dto,
+    });
     await fastify.redis.del(`variant:barcode:${variant.barcodeValue}`);
     return reply.send(successResponse(variant));
   });
@@ -80,7 +93,6 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
     const { barcode } = request.query as { barcode?: string };
     if (!barcode) return reply.code(400).send(errorResponse('barcode query param required'));
 
-    // Check Redis cache first
     const cacheKey = `variant:barcode:${barcode}`;
     const cached = await fastify.redis.get(cacheKey);
     if (cached) {
@@ -97,7 +109,6 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (!variant) return reply.code(404).send(errorResponse('Barcode not found in product master'));
 
-    // Cache for 1 hour
     await fastify.redis.setex(cacheKey, 3600, JSON.stringify(variant));
 
     return reply.send(successResponse(variant));
@@ -121,7 +132,6 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // A4 page, 4 labels per page (2x2 grid)
     const LABELS_PER_ROW = 2;
     const LABELS_PER_COL = 2;
     const LABELS_PER_PAGE = LABELS_PER_ROW * LABELS_PER_COL;
@@ -149,11 +159,12 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
 
       const qrPayload = JSON.stringify({
         sku: v.product.sku,
+        variantId: v.id,
         colourCode: v.colourCode,
         colourName: v.colourName,
-        length: v.length,
-        width: v.width,
-        thickness: v.thickness,
+        lengthMm: v.lengthMm,
+        widthMm: v.widthMm,
+        thicknessMm: v.thicknessMm,
         piecesPerBox: v.product.piecesPerBox,
       });
 
@@ -166,8 +177,8 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
       page.drawText(v.product.sku, { x, y: y + 45, size: 10, font: boldFont, color: rgb(0, 0, 0) });
       page.drawText(`${v.colourName} (${v.colourCode})`, { x, y: y + 30, size: 9, font, color: rgb(0.2, 0.2, 0.2) });
 
-      const dims = [v.length, v.width, v.thickness].filter(Boolean).join(' × ');
-      if (dims) page.drawText(dims + ' mm', { x, y: y + 15, size: 8, font, color: rgb(0.4, 0.4, 0.4) });
+      const dims = [v.lengthMm, v.widthMm, v.thicknessMm].filter(Boolean).join(' × ');
+      if (dims) page.drawText(`${dims} mm`, { x, y: y + 15, size: 8, font, color: rgb(0.4, 0.4, 0.4) });
       page.drawText(`${v.product.piecesPerBox} pcs/box`, { x, y, size: 8, font, color: rgb(0.4, 0.4, 0.4) });
     }
 

@@ -49,6 +49,10 @@
     "@types/node": "^20.14.1",
     "@types/nodemailer": "^6.4.15",
     "@types/qrcode": "^1.5.5",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
     "tsx": "^4.15.1",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"

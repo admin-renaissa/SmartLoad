@@ -4,7 +4,7 @@ import { Plus, Search, Building2, Phone, Mail, MapPin, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.tsx';
+import { Card } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';

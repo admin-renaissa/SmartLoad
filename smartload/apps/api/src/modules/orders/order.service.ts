@@ -9,7 +9,8 @@ export interface CreatePODto {
   lineItems: Array<{
     variantId: string;
     orderedBoxes: number;
-    ratePerBox: number;
+    /** Unit price in paise */
+    ratePerBoxPaise: number;
     gstPercent?: number;
   }>;
 }
@@ -44,11 +45,13 @@ export class OrderService {
       const variant = variants.find((v) => v.id === li.variantId)!;
       const gstPercent = li.gstPercent ?? 18;
       const orderedPieces = li.orderedBoxes * variant.product.piecesPerBox;
-      const totalAmount = Math.round(li.ratePerBox * li.orderedBoxes * (1 + gstPercent / 100));
-      return { ...li, orderedPieces, gstPercent, totalAmount };
+      const totalAmountPaise = Math.round(
+        li.ratePerBoxPaise * li.orderedBoxes * (1 + gstPercent / 100)
+      );
+      return { ...li, orderedPieces, gstPercent, totalAmountPaise };
     });
 
-    const totalAmount = lineItemsData.reduce((sum, li) => sum + li.totalAmount, 0);
+    const totalAmountPaise = lineItemsData.reduce((sum, li) => sum + li.totalAmountPaise, 0);
 
     const po = await this.prisma.$transaction(async (tx) => {
       const order = await tx.purchaseOrder.create({
@@ -58,7 +61,7 @@ export class OrderService {
           orderDate: new Date(dto.orderDate),
           expectedDispatchDate: dto.expectedDispatchDate ? new Date(dto.expectedDispatchDate) : null,
           notes: dto.notes,
-          totalAmount,
+          totalAmountPaise,
           status: POStatus.CONFIRMED,
           createdById,
           lineItems: {
@@ -66,9 +69,9 @@ export class OrderService {
               variantId: li.variantId,
               orderedBoxes: li.orderedBoxes,
               orderedPieces: li.orderedPieces,
-              ratePerBox: li.ratePerBox,
+              ratePerBoxPaise: li.ratePerBoxPaise,
               gstPercent: li.gstPercent,
-              totalAmount: li.totalAmount,
+              totalAmountPaise: li.totalAmountPaise,
             })),
           },
         },
@@ -120,7 +123,7 @@ export class OrderService {
           },
           orderBy: { createdAt: 'asc' },
         },
-        dispatchSessions: {
+        sessions: {
           orderBy: { openedAt: 'desc' },
           include: {
             vehicle: true,

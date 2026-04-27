@@ -25,6 +25,8 @@ const TallySyncPage = lazy(() => import('./pages/tally/TallySyncPage.tsx'));
 const ReportsPage = lazy(() => import('./pages/reports/ReportsPage.tsx'));
 const AuditLogPage = lazy(() => import('./pages/audit/AuditLogPage.tsx'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage.tsx'));
+const UserListPage = lazy(() => import('./pages/users/UserListPage.tsx'));
+const UserDetailPage = lazy(() => import('./pages/users/UserDetailPage.tsx'));
 
 // Scan pages (full-screen, no layout)
 const ScanSessionSelectPage = lazy(() => import('./pages/scan/ScanSessionSelectPage.tsx'));
@@ -39,7 +41,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  if (isAuthenticated) return <Navigate to="/app" replace />;
+  if (isAuthenticated) return <Navigate to="/app/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -81,11 +83,13 @@ export default function App() {
             <Route path="reports" element={<ReportsPage />} />
             <Route path="audit" element={<AuditLogPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="users" element={<UserListPage />} />
+            <Route path="users/:id" element={<UserDetailPage />} />
           </Route>
 
           {/* Fallback */}
-          <Route path="/" element={<Navigate to="/app" replace />} />
-          <Route path="*" element={<Navigate to="/app" replace />} />
+          <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

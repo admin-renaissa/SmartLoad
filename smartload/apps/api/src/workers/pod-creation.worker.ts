@@ -27,7 +27,7 @@ export function startPodWorker() {
       const session = await prisma.dispatchSession.findUnique({
         where: { id: sessionId },
         include: {
-          po: {
+          purchaseOrder: {
             include: {
               client: true,
               lineItems: true,
@@ -50,7 +50,7 @@ export function startPodWorker() {
           linkExpiresAt,
           status: 'PENDING',
           lineItems: {
-            create: session.po.lineItems.map((li) => ({
+            create: session.purchaseOrder.lineItems.map((li) => ({
               lineItemId: li.id,
               deliveredBoxes: li.loadedBoxes,
             })),
@@ -61,10 +61,10 @@ export function startPodWorker() {
       // Send notification to client
       await notifQueue.add('send', {
         channel: 'SMS',
-        recipientPhone: session.po.client.phone,
+        recipientPhone: session.purchaseOrder.client.phone,
         type: 'POD_DISPATCH',
         variables: {
-          poNumber: session.po.poNumber,
+          poNumber: session.purchaseOrder.poNumber,
           podUrl,
           vehicleReg: session.vehicle.registrationNumber,
           driverName: session.vehicle.driverName,

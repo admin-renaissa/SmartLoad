@@ -1,4 +1,4 @@
-import { sendXML } from '../tally-client.js';
+import { sendXML, parseTallyXml } from '../tally-client.js';
 
 export interface StockJournalItem {
   itemName: string;
@@ -16,19 +16,31 @@ export interface PushStockJournalDto {
   godownName?: string;
 }
 
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export async function pushStockJournal(dto: PushStockJournalDto): Promise<{ voucherId?: string }> {
   const godown = dto.godownName || process.env.TALLY_GODOWN || 'Main Warehouse';
   const dateFormatted = new Date(dto.date).toISOString().slice(0, 10).replace(/-/g, '');
 
-  const itemsXML = dto.items.map((item) => `
+  const itemsXML = dto.items
+    .map(
+      (item) => `
     <ALLINVENTORYENTRIES.LIST>
-      <STOCKITEMNAME>${item.itemName}</STOCKITEMNAME>
+      <STOCKITEMNAME>${escapeXml(item.itemName)}</STOCKITEMNAME>
       <ISDELIVERED>No</ISDELIVERED>
       <ISDESTINATIONGODOWN>No</ISDESTINATIONGODOWN>
-      <ACTUALQTY>${item.quantity} ${item.unit}</ACTUALQTY>
-      <BILLEDQTY>${item.quantity} ${item.unit}</BILLEDQTY>
-      <GODOWNNAME>${item.godownName || godown}</GODOWNNAME>
-    </ALLINVENTORYENTRIES.LIST>`).join('\n');
+      <ACTUALQTY>${item.quantity} ${escapeXml(item.unit)}</ACTUALQTY>
+      <BILLEDQTY>${item.quantity} ${escapeXml(item.unit)}</BILLEDQTY>
+      <GODOWNNAME>${escapeXml(item.godownName || godown)}</GODOWNNAME>
+    </ALLINVENTORYENTRIES.LIST>`,
+    )
+    .join('\n');
 
   const xml = `<TALLYMESSAGE>
     <VOUCHER VCHTYPE="Stock Journal" ACTION="Create" OBJVIEW="Journal Voucher View">
@@ -36,14 +48,18 @@ export async function pushStockJournal(dto: PushStockJournalDto): Promise<{ vouc
       <VOUCHERTYPENAME>Stock Journal</VOUCHERTYPENAME>
       <ISINVOICE>No</ISINVOICE>
       <PERSISTEDVIEW>Journal Voucher View</PERSISTEDVIEW>
-      <NARRATION>SmartLoad Dispatch: ${dto.sessionCode} | PO: ${dto.poNumber} | Client: ${dto.clientName}</NARRATION>
+      <NARRATION>SmartLoad Dispatch: ${escapeXml(dto.sessionCode)} | PO: ${escapeXml(dto.poNumber)} | Client: ${escapeXml(dto.clientName)}</NARRATION>
       ${itemsXML}
     </VOUCHER>
   </TALLYMESSAGE>`;
 
-  const response = await sendXML(xml);
-  const voucherId = (response as { ENVELOPE?: { BODY?: { IMPORTDATA?: { IMPORTRESULT?: { LASTID?: string } } } } })
-    ?.ENVELOPE?.BODY?.IMPORTDATA?.IMPORTRESULT?.LASTID;
-
+  const responseStr = await sendXML(xml, 'Import');
+  const response = parseTallyXml(responseStr) as Record<string, unknown>;
+  const env = response.ENVELOPE as Record<string, unknown> | undefined;
+  const body = (env?.BODY as Record<string, unknown> | undefined)?.IMPORTDATA as
+    | Record<string, unknown>
+    | undefined;
+  const importResult = (body?.IMPORTRESULT as { LASTID?: string } | undefined) ?? undefined;
+  const voucherId = importResult?.LASTID;
   return { voucherId: voucherId as string | undefined };
 }

@@ -24,7 +24,7 @@ export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
         take: limit,
         orderBy: { openedAt: 'desc' },
         include: {
-          po: { include: { client: { select: { id: true, name: true } } } },
+          purchaseOrder: { include: { client: { select: { id: true, name: true } } } },
           vehicle: true,
           supervisor: { select: { id: true, name: true } },
         },

@@ -1,4 +1,4 @@
-import { sendXML } from '../tally-client.js';
+import { sendXML, parseTallyXml } from '../tally-client.js';
 
 export interface TallyStockItem {
   tallyName: string;
@@ -17,15 +17,16 @@ export async function pullStockItems(): Promise<TallyStockItem[]> {
     </REQUESTDESC>
   </EXPORTDATA>`;
 
-  const response = await sendXML(xml);
-
-  const envelope = response as {
+  const responseStr = await sendXML(xml);
+  const response = parseTallyXml(responseStr) as {
     ENVELOPE?: {
       BODY?: {
         EXPORTDATA?: {
           REQUESTDATA?: {
             TALLYMESSAGE?: {
-              STOCKITEM?: Array<{ NAME: string; ALIAS?: string; OPENINGBALANCE?: string; BASEUNITS?: string }> | { NAME: string; ALIAS?: string; OPENINGBALANCE?: string; BASEUNITS?: string };
+              STOCKITEM?:
+                | Array<{ NAME: string; ALIAS?: string; OPENINGBALANCE?: string; BASEUNITS?: string }>
+                | { NAME: string; ALIAS?: string; OPENINGBALANCE?: string; BASEUNITS?: string };
             };
           };
         };
@@ -33,13 +34,13 @@ export async function pullStockItems(): Promise<TallyStockItem[]> {
     };
   };
 
-  const rawItems = envelope?.ENVELOPE?.BODY?.EXPORTDATA?.REQUESTDATA?.TALLYMESSAGE?.STOCKITEM;
+  const rawItems = response?.ENVELOPE?.BODY?.EXPORTDATA?.REQUESTDATA?.TALLYMESSAGE?.STOCKITEM;
   const itemsArray = rawItems ? (Array.isArray(rawItems) ? rawItems : [rawItems]) : [];
 
   return itemsArray.map((item) => ({
     tallyName: item.NAME as string,
     tallyAlias: item.ALIAS as string | undefined,
-    openingQty: item.OPENINGBALANCE ? parseFloat(item.OPENINGBALANCE as string) : undefined,
+    openingQty: item.OPENINGBALANCE ? parseFloat(String(item.OPENINGBALANCE)) : undefined,
     unit: item.BASEUNITS as string | undefined,
   }));
 }

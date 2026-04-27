@@ -4,12 +4,7 @@ import type { Prisma } from '@prisma/client';
 
 const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-const SKIP_PATHS = new Set([
-  '/health',
-  '/api/v1/auth/login',
-  '/api/v1/auth/refresh',
-  '/api/v1/sessions/:id/scan',
-]);
+const SKIP_PATHS = new Set<string>(['/health', '/api/v1/auth/login', '/api/v1/auth/refresh']);
 
 const auditPluginImpl: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('onResponse', async (request, reply) => {
@@ -18,8 +13,10 @@ const auditPluginImpl: FastifyPluginAsync = async (fastify) => {
       if (!request.user) return;
       if (reply.statusCode >= 400) return;
 
-      // Skip high-frequency scan endpoint from audit to avoid log spam
-      if (request.url.includes('/scan') && request.method === 'POST') return;
+      const pathOnly = request.url.split('?')[0] ?? request.url;
+      if (SKIP_PATHS.has(pathOnly)) return;
+      // High-frequency scan — avoid audit log spam
+      if (request.method === 'POST' && /\/api\/v1\/sessions\/[^/]+\/scan$/.test(pathOnly)) return;
 
       const parts = request.url.split('/').filter(Boolean);
       const resourceType = parts[2] || 'unknown'; // e.g. /api/v1/products → 'products'

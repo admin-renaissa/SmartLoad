@@ -1,26 +1,14 @@
-export enum VehicleType {
-  TRUCK = 'TRUCK',
-  TEMPO = 'TEMPO',
-  VAN = 'VAN',
-  MINI_TRUCK = 'MINI_TRUCK',
-  OTHER = 'OTHER',
-}
+import type { VehicleType } from './enums.js'
 
 export interface Vehicle {
-  id: string;
-  registrationNumber: string;
-  type: VehicleType;
-  capacityKg?: number | null;
-  driverName: string;
-  driverPhone: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Trip {
-  vehicleId: string;
-  sessionId: string;
-  startedAt: string;
-  completedAt?: string | null;
+  id: string
+  registrationNumber: string
+  type: VehicleType
+  capacityKg: number | null
+  driverName: string
+  driverPhone: string
+  isActive: boolean
+  currentSession?: import('./dispatch.js').DispatchSession | null
+  createdAt: string
+  updatedAt: string
 }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Truck, CheckCircle } from 'lucide-react';
+import { Truck } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore.ts';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { ProgressBar } from '../../components/ui/ProgressBar.tsx';
@@ -24,8 +24,6 @@ export default function ScanSessionSelectPage() {
     s.operatorId === user?.id || s.supervisorId === user?.id,
   );
 
-  const allSessions = sessions || [];
-
   return (
     <div className="min-h-screen bg-primary flex flex-col">
       <div className="px-6 py-6 border-b border-white/10">
@@ -41,7 +39,7 @@ export default function ScanSessionSelectPage() {
       <div className="flex-1 px-6 py-6">
         {isLoading ? (
           <div className="flex justify-center py-20"><LoadingSpinner /></div>
-        ) : allSessions.length === 0 ? (
+        ) : mySessions.length === 0 ? (
           <div className="text-center py-20">
             <Truck className="h-16 w-16 text-white/20 mx-auto mb-4" />
             <p className="text-white/60 text-lg">No active sessions</p>
@@ -49,7 +47,7 @@ export default function ScanSessionSelectPage() {
           </div>
         ) : (
           <div className="grid gap-4 max-w-2xl mx-auto">
-            {allSessions.map((session: Record<string, unknown>) => {
+            {mySessions.map((session: Record<string, unknown>) => {
               const po = session.po as Record<string, unknown>;
               const vehicle = session.vehicle as Record<string, unknown>;
               const client = po?.client as Record<string, unknown>;

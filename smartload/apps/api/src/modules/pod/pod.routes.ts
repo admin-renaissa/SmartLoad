@@ -18,7 +18,7 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
       include: {
         session: {
           include: {
-            po: {
+            purchaseOrder: {
               include: {
                 client: true,
                 lineItems: {
@@ -64,7 +64,7 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
 
     await fastify.prisma.proofOfDelivery.update({
       where: { id },
-      data: { otp: hashedOtp, otpExpiresAt, receiverPhone, status: PODStatus.LINK_SENT, otpAttempts: 0 },
+      data: { otpHash: hashedOtp, otpExpiresAt, receiverPhone, status: PODStatus.LINK_SENT, otpAttempts: 0 },
     });
 
     // Queue SMS notification
@@ -95,11 +95,11 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
 
     const pod = await fastify.prisma.proofOfDelivery.findUnique({ where: { id } });
     if (!pod) return reply.code(404).send(errorResponse('POD not found'));
-    if (!pod.otp || !pod.otpExpiresAt) return reply.code(400).send(errorResponse('OTP not requested'));
+    if (!pod.otpHash || !pod.otpExpiresAt) return reply.code(400).send(errorResponse('OTP not requested'));
     if (new Date() > pod.otpExpiresAt) return reply.code(400).send(errorResponse('OTP expired. Request a new one.'));
     if (pod.otpAttempts >= 5) return reply.code(429).send(errorResponse('Too many failed attempts. Request a new OTP.'));
 
-    const valid = await bcrypt.compare(otp, pod.otp);
+    const valid = await bcrypt.compare(otp, pod.otpHash);
     if (!valid) {
       await fastify.prisma.proofOfDelivery.update({
         where: { id },
@@ -230,7 +230,7 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
         include: {
           session: {
             include: {
-              po: { include: { client: { select: { id: true, name: true } } } },
+              purchaseOrder: { include: { client: { select: { id: true, name: true } } } },
               vehicle: { select: { registrationNumber: true } },
             },
           },
@@ -250,7 +250,7 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
       include: {
         session: {
           include: {
-            po: { include: { client: true } },
+            purchaseOrder: { include: { client: true } },
             vehicle: { select: { registrationNumber: true } },
           },
         },
@@ -260,8 +260,8 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
     if (!pod) return reply.code(404).send(errorResponse('POD not found'));
 
     const podUrl = `${process.env.APP_BASE_URL}/pod/${pod.linkToken}`;
-    const phone = pod.receiverPhone || pod.session.po.client.phone;
-    const poNumber = pod.session.po.poNumber;
+    const phone = pod.receiverPhone || pod.session.purchaseOrder.client.phone;
+    const poNumber = pod.session.purchaseOrder.poNumber;
 
     const { Queue } = await import('bullmq');
     const notifQueue = new Queue('notifications', {

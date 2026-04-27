@@ -53,9 +53,9 @@ const PKG_MANAGER = 'pnpm';
 
 const DEFAULT_PORTS = {
   frontend: 3000,       // vite.config.ts server.port
-  backend: 4001,        // .env PORT
+  backend: 4000,        // .env PORT (Phase 0 / .env.example)
   tallyBridge: 7474,    // tally-bridge/src/index.ts BRIDGE_PORT fallback
-  postgres: 5433,       // docker-compose host port (5433:5432)
+  postgres: 5433,       // docker-compose host port (5433:5432; avoids local PG on 5432)
   redis: 6379,          // docker-compose host port
   minio: 9000,          // docker-compose host port
   minioConsole: 9001,   // docker-compose console port
@@ -636,16 +636,18 @@ async function cmdSetup() {
     } else {
       log.warn('.env not found and no .env.example available. Creating minimal placeholder…');
       if (!FLAGS.dryRun) writeFileSync(ENV_FILE, [
-        'DATABASE_URL="postgresql://smartload:smartload@localhost:5433/smartload"',
+        'DATABASE_URL="postgresql://smartload:smartload123@localhost:5433/smartload_db"',
+        'DIRECT_DATABASE_URL="postgresql://smartload:smartload123@localhost:5433/smartload_db"',
         'REDIS_URL="redis://localhost:6379"',
         'JWT_SECRET="change-me-min-32-chars-aaaaaaaaaaaa"',
         'JWT_REFRESH_SECRET="change-me-different-min-32-chars-bb"',
-        'PORT=4001',
+        'PORT=4000',
         'NODE_ENV=development',
         'APP_BASE_URL="http://localhost:3000"',
-        'VITE_API_URL="http://localhost:4001"',
+        'CORS_ORIGINS="http://localhost:3000"',
+        'VITE_API_URL="http://localhost:4000"',
         'VITE_APP_NAME="SmartLoad"',
-        'VITE_SOCKET_URL="http://localhost:4001"',
+        'VITE_SOCKET_URL="http://localhost:4000"',
       ].join('\n'));
       log.warn('Fill in JWT_SECRET, SMTP, AWS, MSG91, WATI values in .env before use.');
     }

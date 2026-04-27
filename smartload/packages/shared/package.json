@@ -7,7 +7,9 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "echo \"skip\"",
+    "test": "echo \"skip\""
   },
   "devDependencies": {
     "typescript": "^5.4.5"

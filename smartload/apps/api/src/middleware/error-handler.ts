@@ -1,6 +1,6 @@
 import type { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 export function errorHandler(error: FastifyError | Error, request: FastifyRequest, reply: FastifyReply) {
   request.log.error({ err: error }, 'Request error');
@@ -16,9 +16,9 @@ export function errorHandler(error: FastifyError | Error, request: FastifyReques
   }
 
   // Prisma unique constraint violation
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  if (error instanceof PrismaClientKnownRequestError) {
     if (error.code === 'P2002') {
-      const target = (error.meta?.target as string[])?.join(', ') || 'field';
+      const target = (error.meta?.target as string[] | undefined)?.join(', ') || 'field';
       return reply.code(409).send({
         success: false,
         data: null,

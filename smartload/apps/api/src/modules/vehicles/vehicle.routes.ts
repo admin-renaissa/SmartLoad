@@ -87,7 +87,7 @@ export const vehicleRoutes: FastifyPluginAsync = async (fastify) => {
         skip, take: limit,
         orderBy: { closedAt: 'desc' },
         include: {
-          po: { include: { client: { select: { id: true, name: true } } } },
+          purchaseOrder: { include: { client: { select: { id: true, name: true } } } },
           supervisor: { select: { id: true, name: true } },
         },
       }),
@@ -103,7 +103,7 @@ export const vehicleRoutes: FastifyPluginAsync = async (fastify) => {
     const session = await fastify.prisma.dispatchSession.findFirst({
       where: { vehicleId: id, status: 'OPEN' },
       include: {
-        po: {
+        purchaseOrder: {
           include: {
             client: true,
             lineItems: { include: { variant: { include: { product: true } } } },

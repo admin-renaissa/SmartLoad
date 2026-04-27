@@ -1,19 +1,17 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
-  LayoutDashboard, ShoppingCart, Package, Users, Warehouse,
+  LayoutDashboard, ShoppingCart, Package, Users, UserCog, Warehouse,
   Truck, Activity, BarChart3, Settings, RefreshCw, ClipboardList,
   LogOut, ChevronLeft, ChevronRight, Menu, X, Scan, User,
-  FileText
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore.ts';
 import { cn } from '../utils/cn.ts';
-import { UserRole } from '@smartload/shared';
 import api from '../lib/axios.ts';
 import { usePermission } from '../hooks/usePermission.ts';
 
 const navItems = [
-  { href: '/app', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+  { href: '/app/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { href: '/app/dispatch', icon: Activity, label: 'Dispatch', permission: 'dashboard:supervisor' as const },
   { href: '/scan', icon: Scan, label: 'Scan App', permission: 'scan:operate' as const },
   { href: '/app/orders', icon: ShoppingCart, label: 'Orders', permission: 'orders:view' as const },
@@ -24,7 +22,8 @@ const navItems = [
   { href: '/app/tally', icon: RefreshCw, label: 'Tally Sync', permission: 'tally:view' as const },
   { href: '/app/reports', icon: BarChart3, label: 'Reports', permission: 'reports:view' as const },
   { href: '/app/audit', icon: ClipboardList, label: 'Audit Log', permission: 'audit:view' as const },
-  { href: '/app/settings', icon: Settings, label: 'Settings', permission: 'settings:manage' as const },
+  { href: '/app/settings', icon: Settings, label: 'Account' },
+  { href: '/app/users', icon: UserCog, label: 'Users', permission: 'users:manage' as const },
 ];
 
 function NavItem({ href, icon: Icon, label, exact, collapsed }: {
@@ -67,7 +66,7 @@ export function AppLayout() {
   const canViewTally = usePermission('tally:view');
   const canViewReports = usePermission('reports:view');
   const canViewAudit = usePermission('audit:view');
-  const canManageSettings = usePermission('settings:manage');
+  const canManageUsers = usePermission('users:manage');
   const canViewSuperDash = usePermission('dashboard:supervisor');
 
   const permissionMap: Record<string, boolean> = {
@@ -81,12 +80,13 @@ export function AppLayout() {
     'tally:view': canViewTally,
     'reports:view': canViewReports,
     'audit:view': canViewAudit,
-    'settings:manage': canManageSettings,
+    'users:manage': canManageUsers,
   };
 
   const handleLogout = async () => {
+    const { refreshToken } = useAuthStore.getState();
     try {
-      await api.post('/api/v1/auth/logout');
+      await api.post('/api/v1/auth/logout', refreshToken ? { refreshToken } : {});
     } catch {
       // ignore
     }

@@ -5,7 +5,6 @@ import { CheckCircle, Package, Truck, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '../../components/ui/Button.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
-import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';
 
 type Step = 'loading' | 'overview' | 'otp' | 'items' | 'signature' | 'done' | 'expired';

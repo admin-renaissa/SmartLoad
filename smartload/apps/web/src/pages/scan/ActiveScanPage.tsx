@@ -81,7 +81,7 @@ const initialState: State = {
 export default function ActiveScanPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const { accessToken, user } = useAuthStore();
+  const { accessToken } = useAuthStore();
   const [state, dispatch] = useReducer(reducer, initialState);
   const socketRef = useRef<Socket | null>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -98,7 +98,7 @@ export default function ActiveScanPage() {
 
   // Initialize WebSocket
   useEffect(() => {
-    const socket = io(`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:4001'}/scan`, {
+    const socket = io(`${import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000'}/scan`, {
       auth: { token: accessToken },
       transports: ['websocket'],
     });
@@ -176,9 +176,15 @@ export default function ActiveScanPage() {
   }, []);
 
   const scanState = state.scanState;
-  const progress = state.lastResult?.sessionProgress || sessionData
-    ? { scanned: sessionData?.totalBoxesScanned || 0, expected: sessionData?.totalBoxesExpected || 0 }
-    : { scanned: 0, expected: 0 };
+  const progress = state.lastResult?.sessionProgress
+    ? {
+        scanned: state.lastResult.sessionProgress.scanned,
+        expected: state.lastResult.sessionProgress.expected,
+      }
+    : {
+        scanned: sessionData?.totalBoxesScanned || 0,
+        expected: sessionData?.totalBoxesExpected || 0,
+      };
 
   const screenConfig = {
     IDLE: {
@@ -262,7 +268,7 @@ export default function ActiveScanPage() {
             {sessionData?.vehicle?.registrationNumber || '—'}
           </span>
           <span className="text-white/60 text-sm hidden sm:block">
-            PO: {sessionData?.po?.poNumber || '—'}
+            PO: {sessionData?.purchaseOrder?.poNumber || '—'}
           </span>
         </div>
         <button

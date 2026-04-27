@@ -1,8 +1,16 @@
 import { Worker, type Job } from 'bullmq';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, NotificationChannel, NotificationStatus } from '@prisma/client';
 import { QUEUES } from '@smartload/shared';
 import nodemailer from 'nodemailer';
 import axios from 'axios';
+import {
+  getNotificationIntegrationStatus,
+  getSmsChannel,
+  getWhatsAppChannel,
+  isEmailMockSend,
+  isSmsMockSend,
+  isWhatsAppMockSend,
+} from '../lib/notification-env.js';
 
 const prisma = new PrismaClient();
 const connection = {
@@ -23,6 +31,7 @@ function buildMessage(type: string, variables: Record<string, string>): string {
     POD_DISPATCH: `Your order {poNumber} has been dispatched. Vehicle: {vehicleReg}. Acknowledge delivery: {podUrl} (valid 72hrs)`,
     POD_OTP: `Your SmartLoad delivery OTP is {otp}. Valid for {expiryMinutes} minutes. Do not share.`,
     LOW_STOCK: `⚠ Low stock alert: {productName} {colourName} — {availableBoxes} boxes remaining.`,
+    WELCOME: `Hi {name}, your SmartLoad account is ready. Sign in at {appUrl}{loginPath} using the password your admin set. You can change it after login.`,
   };
 
   let message = templates[type] || type;
@@ -33,9 +42,12 @@ function buildMessage(type: string, variables: Record<string, string>): string {
 }
 
 async function sendSMS(phone: string, message: string) {
-  if (!process.env.MSG91_API_KEY) {
+  if (isSmsMockSend()) {
     console.log(`[SMS MOCK] To: ${phone} | ${message}`);
     return { messageId: `mock-${Date.now()}` };
+  }
+  if (getSmsChannel() === 'misconfigured') {
+    throw new Error('MSG91 misconfiguration: set MSG91_TEMPLATE_ID_POD and MSG91_SENDER_ID');
   }
 
   const response = await axios.post(
@@ -54,9 +66,12 @@ async function sendSMS(phone: string, message: string) {
 }
 
 async function sendWhatsApp(phone: string, templateName: string, variables: Record<string, string>) {
-  if (!process.env.WATI_API_TOKEN) {
+  if (isWhatsAppMockSend()) {
     console.log(`[WhatsApp MOCK] To: ${phone} | Template: ${templateName}`);
     return { id: `mock-${Date.now()}` };
+  }
+  if (getWhatsAppChannel() === 'misconfigured') {
+    throw new Error('WATI misconfiguration: set WATI_API_ENDPOINT');
   }
 
   const response = await axios.post(
@@ -75,6 +90,10 @@ async function sendWhatsApp(phone: string, templateName: string, variables: Reco
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
+  if (isEmailMockSend()) {
+    console.log(`[EMAIL MOCK] To: ${to} | ${subject}`);
+    return { messageId: `mock-${Date.now()}` };
+  }
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT) || 587,
@@ -90,6 +109,11 @@ async function sendEmail(to: string, subject: string, html: string) {
 }
 
 export function startNotificationWorker() {
+  try {
+    console.log('[NotificationWorker] channels:', JSON.stringify(getNotificationIntegrationStatus()));
+  } catch {
+    // ignore
+  }
   const worker = new Worker(
     QUEUES.NOTIFICATIONS,
     async (job: Job<NotificationJob>) => {
@@ -98,12 +122,12 @@ export function startNotificationWorker() {
 
       const notification = await prisma.notification.create({
         data: {
-          recipientPhone: recipientPhone || '',
-          recipientEmail,
-          channel,
+          recipientPhone: recipientPhone ?? null,
+          recipientEmail: recipientEmail ?? null,
+          channel: channel as NotificationChannel,
           type,
-          status: 'PROCESSING',
-          payload: variables as Record<string, string>,
+          status: NotificationStatus.PENDING,
+          payload: variables,
         },
       });
 
@@ -122,12 +146,12 @@ export function startNotificationWorker() {
 
         await prisma.notification.update({
           where: { id: notification.id },
-          data: { status: 'SENT', sentAt: new Date(), externalId },
+          data: { status: NotificationStatus.SENT, sentAt: new Date(), externalId },
         });
       } catch (err) {
         await prisma.notification.update({
           where: { id: notification.id },
-          data: { status: 'FAILED', failedReason: err instanceof Error ? err.message : 'Unknown error' },
+          data: { status: NotificationStatus.FAILED, failedReason: err instanceof Error ? err.message : 'Unknown error' },
         });
         throw err;
       }

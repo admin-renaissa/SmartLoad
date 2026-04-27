@@ -1,33 +1,33 @@
 export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data: T | null;
-  error: string | null;
-  meta?: PaginationMeta;
+  success: boolean
+  data: T | null
+  error: string | null
+  meta?: PaginationMeta
 }
 
 export interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  meta: PaginationMeta;
-}
-
-export interface ApiError {
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
+  page: number
+  limit: number
+  total: number
+  totalPages: number
+  hasNext: boolean
+  hasPrev: boolean
 }
 
 export interface PaginationQuery {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
+}
+
+export class AppError extends Error {
+  constructor(
+    public message: string,
+    public statusCode: number = 500,
+    public code?: string
+  ) {
+    super(message)
+    this.name = 'AppError'
+  }
 }

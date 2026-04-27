@@ -1,39 +1,48 @@
-import type { ProductQRPayload } from '../types/product.js';
-import { BarcodeFormat } from '../types/product.js';
+import { BarcodeFormat } from '../types/enums.js'
+import type { ProductQRPayload } from '../types/product.js'
 
+/**
+ * Attempts to parse a raw scanned string as a SmartLoad QR payload JSON.
+ */
 export function parseQRPayload(raw: string): ProductQRPayload | null {
   try {
-    const trimmed = raw.trim();
-    if (trimmed.startsWith('{')) {
-      const parsed = JSON.parse(trimmed) as ProductQRPayload;
-      if (parsed.sku) {
-        return parsed;
-      }
-    }
-    return null;
+    const cleaned = raw.trim().replace(/\r?\n/g, '')
+    const parsed = JSON.parse(cleaned) as Partial<ProductQRPayload>
+    if (!parsed.sku || !parsed.variantId || !parsed.colourCode) return null
+    return parsed as ProductQRPayload
   } catch {
-    return null;
+    return null
   }
 }
 
-export function validateBarcodeFormat(code: string): BarcodeFormat {
-  const trimmed = code.trim();
-  if (trimmed.startsWith('{') || trimmed.length > 30) {
-    return BarcodeFormat.QR;
-  }
-  if (/^[0-9]{13}$/.test(trimmed)) {
-    return BarcodeFormat.EAN13;
-  }
-  if (/^[A-Z0-9\-\.\ \$\/\+\%]{1,48}$/i.test(trimmed)) {
-    return BarcodeFormat.CODE39;
-  }
-  return BarcodeFormat.CODE128;
+/**
+ * Heuristically detect barcode format from a raw scan string.
+ */
+export function detectBarcodeFormat(raw: string): BarcodeFormat {
+  const s = raw.trim()
+  if (s.startsWith('{') && s.endsWith('}')) return BarcodeFormat.QR
+  if (/^\d{13}$/.test(s)) return BarcodeFormat.EAN13
+  if (/^[A-Z0-9\-. $/+%]+$/.test(s) && s.length <= 43) return BarcodeFormat.CODE39
+  if (s.length <= 20 && /[a-z]/.test(s)) return BarcodeFormat.DATAMATRIX
+  return BarcodeFormat.CODE128
 }
 
-export function generateBarcodeValue(sku: string, colourCode: string, length?: number, width?: number, thickness?: number): string {
-  const parts = [sku, colourCode];
-  if (length) parts.push(`L${length}`);
-  if (width) parts.push(`W${width}`);
-  if (thickness) parts.push(`T${thickness}`);
-  return parts.join('-').toUpperCase().replace(/\s+/g, '-');
+/** @deprecated use detectBarcodeFormat */
+export const validateBarcodeFormat = detectBarcodeFormat
+
+/**
+ * Build a simple CODE128-style key from product dimensions (dev / fallback).
+ */
+export function generateBarcodeValue(
+  sku: string,
+  colourCode: string,
+  lengthMm?: number,
+  widthMm?: number,
+  thicknessMm?: number
+): string {
+  const parts = [sku, colourCode]
+  if (lengthMm) parts.push(`L${lengthMm}`)
+  if (widthMm) parts.push(`W${widthMm}`)
+  if (thicknessMm) parts.push(`T${thicknessMm}`)
+  return parts.join('-').toUpperCase().replace(/\s+/g, '-')
 }

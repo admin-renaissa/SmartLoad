@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { loginSchema, refreshSchema, changePasswordSchema } from './auth.schema.js';
+import { loginSchema, refreshSchema, changePasswordSchema, logoutSchema } from './auth.schema.js';
 import { AuthService } from './auth.service.js';
 import { successResponse } from '@smartload/shared';
 
@@ -28,7 +28,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/logout', {
     preHandler: fastify.requireAuth,
   }, async (request, reply) => {
-    const { refreshToken } = (request.body || {}) as { refreshToken?: string };
+    const { refreshToken } = logoutSchema.parse(request.body ?? {});
     const service = getService();
     await service.logout(request.user.userId, refreshToken);
     return reply.send(successResponse({ message: 'Logged out successfully' }));

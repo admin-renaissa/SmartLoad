@@ -34,7 +34,7 @@ export default function LoginPage() {
     onSuccess: (data) => {
       login(data.user, data.accessToken, data.refreshToken);
       toast.success(`Welcome back, ${data.user.name}!`);
-      navigate('/app');
+      navigate('/app/dashboard');
     },
     onError: (error) => {
       const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Login failed';

@@ -14,9 +14,9 @@ interface Variant {
   colourCode: string;
   colourName: string;
   barcodeValue: string;
-  length: number | null;
-  width: number | null;
-  thickness: number | null;
+  lengthMm: number | null;
+  widthMm: number | null;
+  thicknessMm: number | null;
   product: { id: string; sku: string; name: string; piecesPerBox: number };
   inventoryStock: { totalBoxes: number; reservedBoxes: number } | null;
 }
@@ -112,7 +112,7 @@ export default function CreateOrderPage() {
         lineItems: lineItems.map((li) => ({
           variantId: li.variant.id,
           orderedBoxes: li.orderedBoxes,
-          ratePerBox: Math.round(li.ratePerBox * 100),
+          ratePerBoxPaise: Math.round(li.ratePerBox * 100),
           gstPercent: li.gstPercent,
         })),
         confirmImmediately: confirm,
@@ -263,7 +263,7 @@ export default function CreateOrderPage() {
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {variantResults.map((v) => {
                       const avail = (v.inventoryStock?.totalBoxes ?? 0) - (v.inventoryStock?.reservedBoxes ?? 0);
-                      const dims = [v.length, v.width, v.thickness].filter(Boolean).join('×');
+                      const dims = [v.lengthMm, v.widthMm, v.thicknessMm].filter(Boolean).join('×');
                       const alreadyAdded = lineItems.some((li) => li.variant.id === v.id);
                       return (
                         <button
@@ -299,7 +299,7 @@ export default function CreateOrderPage() {
                 <div className="text-center py-12">
                   <ShoppingCart className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500 font-medium">No line items yet</p>
-                  <p className="text-gray-400 text-xs mt-1">Click "Add Product" to start building the order</p>
+                  <p className="text-gray-400 text-xs mt-1">Click &ldquo;Add Product&rdquo; to start building the order</p>
                 </div>
               </CardContent>
             </Card>
@@ -308,7 +308,7 @@ export default function CreateOrderPage() {
               {lineItems.map((li, idx) => {
                 const lineTotal = li.orderedBoxes * li.ratePerBox * (1 + li.gstPercent / 100);
                 const avail = (li.variant.inventoryStock?.totalBoxes ?? 0) - (li.variant.inventoryStock?.reservedBoxes ?? 0);
-                const dims = [li.variant.length, li.variant.width, li.variant.thickness].filter(Boolean).join('×');
+                const dims = [li.variant.lengthMm, li.variant.widthMm, li.variant.thicknessMm].filter(Boolean).join('×');
                 return (
                   <Card key={li.variant.id}>
                     <CardContent className="pt-4">

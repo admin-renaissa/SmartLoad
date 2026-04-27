@@ -15,6 +15,7 @@ import { prismaPlugin } from './plugins/prisma.js';
 import { redisPlugin } from './plugins/redis.js';
 import { authPlugin } from './plugins/auth.js';
 import { auditPlugin } from './plugins/audit.js';
+import { bullmqPlugin } from './plugins/bullmq.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { socketPlugin } from './plugins/socket.js';
 
@@ -30,6 +31,7 @@ import { grnRoutes } from './modules/inventory/grn.routes.js';
 import { vehicleRoutes } from './modules/vehicles/vehicle.routes.js';
 import { podRoutes } from './modules/pod/pod.routes.js';
 import { tallyRoutes } from './modules/tally/tally.routes.js';
+import { integrationsRoutes } from './modules/integrations/integrations.routes.js';
 import { reportRoutes } from './modules/reports/report.routes.js';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js';
 import { settingsRoutes } from './modules/settings/settings.routes.js';
@@ -78,18 +80,32 @@ export async function buildServer() {
   await app.register(redisPlugin);
   await app.register(authPlugin);
   await app.register(auditPlugin);
+  await app.register(bullmqPlugin);
   await app.register(socketPlugin);
 
   // Error handler
   app.setErrorHandler(errorHandler);
 
-  // Health check
-  app.get('/health', async () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-  }));
+  app.get('/health', async () => {
+    let database: 'ok' | 'error' = 'ok';
+    let redisStatus: 'ok' | 'error' = 'ok';
+    try {
+      await app.prisma.$queryRaw`SELECT 1`;
+    } catch {
+      database = 'error';
+    }
+    try {
+      await app.redis.ping();
+    } catch {
+      redisStatus = 'error';
+    }
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || '1.0.0',
+      services: { database, redis: redisStatus },
+    };
+  });
 
   // API routes under /api/v1
   const apiPrefix = '/api/v1';
@@ -105,6 +121,7 @@ export async function buildServer() {
   await app.register(vehicleRoutes, { prefix: `${apiPrefix}/vehicles` });
   await app.register(podRoutes, { prefix: `${apiPrefix}/pod` });
   await app.register(tallyRoutes, { prefix: `${apiPrefix}/tally` });
+  await app.register(integrationsRoutes, { prefix: `${apiPrefix}/integrations` });
   await app.register(reportRoutes, { prefix: `${apiPrefix}/reports` });
   await app.register(dashboardRoutes, { prefix: `${apiPrefix}/dashboard` });
   await app.register(settingsRoutes, { prefix: `${apiPrefix}/settings` });

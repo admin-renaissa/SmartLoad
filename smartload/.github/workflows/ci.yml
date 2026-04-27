@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint all packages
+        run: pnpm lint
+
       - name: Typecheck all packages
         run: pnpm typecheck
 
@@ -66,6 +69,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://smartload:smartload@localhost:5432/smartload_test
+      DIRECT_DATABASE_URL: postgresql://smartload:smartload@localhost:5432/smartload_test
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: test-jwt-secret-min-32-chars-here
       JWT_REFRESH_SECRET: test-refresh-secret-min-32-chars
@@ -93,6 +97,9 @@ jobs:
 
       - name: Run migrations
         run: pnpm --filter @smartload/db run migrate:deploy
+
+      - name: Seed database
+        run: pnpm db:seed
 
       - name: Run unit tests
         run: pnpm test

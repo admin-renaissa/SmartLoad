@@ -8,7 +8,7 @@ import { OrderService } from './order.service.js';
 const lineItemSchema = z.object({
   variantId: z.string().cuid(),
   orderedBoxes: z.number().int().positive(),
-  ratePerBox: z.number().int().positive(),
+  ratePerBoxPaise: z.number().int().positive(),
   gstPercent: z.number().min(0).max(28).optional(),
 });
 

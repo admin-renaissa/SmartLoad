@@ -16,17 +16,17 @@ interface LineItem {
   orderedBoxes: number;
   loadedBoxes: number;
   orderedPieces: number;
-  ratePerBox: number;
+  ratePerBoxPaise: number;
   gstPercent: number;
-  totalAmount: number;
+  totalAmountPaise: number;
   variant: {
     id: string;
     colourCode: string;
     colourName: string;
     barcodeValue: string;
-    length: number | null;
-    width: number | null;
-    thickness: number | null;
+    lengthMm: number | null;
+    widthMm: number | null;
+    thicknessMm: number | null;
     product: { sku: string; name: string; piecesPerBox: number };
   };
 }
@@ -37,12 +37,12 @@ interface PurchaseOrder {
   status: string;
   orderDate: string;
   expectedDispatchDate: string | null;
-  totalAmount: number;
+  totalAmountPaise: number;
   notes: string | null;
   createdAt: string;
   client: { id: string; name: string; phone: string; clientCode: string };
   lineItems: LineItem[];
-  dispatchSessions: Array<{
+  sessions: Array<{
     id: string;
     sessionCode: string;
     status: string;
@@ -125,7 +125,7 @@ export default function OrderDetailPage() {
                 </Button>
               </>
             )}
-            {canManage && po.status === 'CONFIRMED' && (
+            {canManage && (po.status === 'CONFIRMED' || po.status === 'PARTIALLY_LOADED') && (
               <Button size="sm" icon={<Truck className="h-4 w-4" />} onClick={() => navigate('/app/dispatch/new?poId=' + po.id)}>
                 Start Loading
               </Button>
@@ -146,7 +146,7 @@ export default function OrderDetailPage() {
                   { label: 'Client', value: po.client.name },
                   { label: 'Order Date', value: new Date(po.orderDate).toLocaleDateString('en-IN') },
                   { label: 'Expected Dispatch', value: po.expectedDispatchDate ? new Date(po.expectedDispatchDate).toLocaleDateString('en-IN') : '—' },
-                  { label: 'Total Amount', value: <span className="font-bold text-accent">₹{(po.totalAmount / 100).toFixed(2)}</span> },
+                  { label: 'Total Amount', value: <span className="font-bold text-accent">₹{(po.totalAmountPaise / 100).toFixed(2)}</span> },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex items-start justify-between gap-4">
                     <dt className="text-gray-500 flex-shrink-0">{label}</dt>
@@ -174,11 +174,11 @@ export default function OrderDetailPage() {
             </CardContent>
           </Card>
 
-          {po.dispatchSessions.length > 0 && (
+          {po.sessions.length > 0 && (
             <Card>
               <CardHeader><CardTitle>Dispatch Sessions</CardTitle></CardHeader>
               <CardContent className="space-y-2">
-                {po.dispatchSessions.map((s) => (
+                {po.sessions.map((s) => (
                   <div
                     key={s.id}
                     className="flex items-center justify-between p-2 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
@@ -218,7 +218,7 @@ export default function OrderDetailPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {po.lineItems.map((li) => {
-                    const dims = [li.variant.length, li.variant.width, li.variant.thickness].filter(Boolean).join('×');
+                    const dims = [li.variant.lengthMm, li.variant.widthMm, li.variant.thicknessMm].filter(Boolean).join('×');
                     return (
                       <tr key={li.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">
@@ -238,10 +238,10 @@ export default function OrderDetailPage() {
                           <ProgressBar value={li.loadedBoxes} max={li.orderedBoxes} size="sm" />
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums text-gray-500">
-                          ₹{(li.ratePerBox / 100).toFixed(2)}
+                          ₹{(li.ratePerBoxPaise / 100).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums font-medium">
-                          ₹{(li.totalAmount / 100).toFixed(2)}
+                          ₹{(li.totalAmountPaise / 100).toFixed(2)}
                         </td>
                       </tr>
                     );
@@ -250,7 +250,7 @@ export default function OrderDetailPage() {
                 <tfoot className="border-t-2 border-gray-200">
                   <tr>
                     <td colSpan={5} className="px-4 py-3 text-right font-semibold text-gray-700">Total</td>
-                    <td className="px-4 py-3 text-right font-bold text-accent">₹{(po.totalAmount / 100).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-bold text-accent">₹{(po.totalAmountPaise / 100).toFixed(2)}</td>
                   </tr>
                 </tfoot>
               </table>

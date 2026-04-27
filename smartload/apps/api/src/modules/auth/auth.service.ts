@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import type { PrismaClient } from '@prisma/client';
 import type { Redis } from 'ioredis';
@@ -9,6 +10,10 @@ const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
 
 function getRefreshSecret(): string {
   return process.env.JWT_REFRESH_SECRET || 'change-me-refresh-secret-min-32-chars';
+}
+
+function hashRefreshToken(refreshToken: string): string {
+  return crypto.createHash('sha256').update(refreshToken).digest('hex');
 }
 
 export class AuthService {
@@ -45,7 +50,7 @@ export class AuthService {
     const accessToken = this.fastify.jwt.sign(payload, { expiresIn: '15m' });
     const refreshToken = jwt.sign(payload as object, getRefreshSecret(), { expiresIn: '7d' });
 
-    const tokenHash = Buffer.from(refreshToken).toString('base64').slice(0, 64);
+    const tokenHash = hashRefreshToken(refreshToken);
     await this.redis.setex(`refresh:${user.id}:${tokenHash}`, REFRESH_TOKEN_TTL, '1');
 
     return {
@@ -70,7 +75,7 @@ export class AuthService {
         name: string;
       };
 
-      const tokenHash = Buffer.from(refreshToken).toString('base64').slice(0, 64);
+      const tokenHash = hashRefreshToken(refreshToken);
       const exists = await this.redis.get(`refresh:${payload.userId}:${tokenHash}`);
 
       if (!exists) {
@@ -92,7 +97,7 @@ export class AuthService {
       const newRefreshToken = jwt.sign(newPayload as object, getRefreshSecret(), { expiresIn: '7d' });
 
       await this.redis.del(`refresh:${payload.userId}:${tokenHash}`);
-      const newTokenHash = Buffer.from(newRefreshToken).toString('base64').slice(0, 64);
+      const newTokenHash = hashRefreshToken(newRefreshToken);
       await this.redis.setex(`refresh:${payload.userId}:${newTokenHash}`, REFRESH_TOKEN_TTL, '1');
 
       return { accessToken, refreshToken: newRefreshToken };
@@ -104,7 +109,7 @@ export class AuthService {
 
   async logout(userId: string, refreshToken?: string) {
     if (refreshToken) {
-      const tokenHash = Buffer.from(refreshToken).toString('base64').slice(0, 64);
+      const tokenHash = hashRefreshToken(refreshToken);
       await this.redis.del(`refresh:${userId}:${tokenHash}`);
     } else {
       const keys = await this.redis.keys(`refresh:${userId}:*`);

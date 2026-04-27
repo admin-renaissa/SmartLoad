@@ -1,64 +1,73 @@
-import type { ProductVariant } from './product.js';
-import type { POLineItem } from './order.js';
-
-export enum SessionStatus {
-  OPEN = 'OPEN',
-  CLOSED = 'CLOSED',
-  CANCELLED = 'CANCELLED',
-}
-
-export enum ScanResult {
-  SUCCESS = 'SUCCESS',
-  WRONG_PRODUCT = 'WRONG_PRODUCT',
-  WRONG_COLOUR = 'WRONG_COLOUR',
-  EXCESS_QUANTITY = 'EXCESS_QUANTITY',
-  UNKNOWN_BARCODE = 'UNKNOWN_BARCODE',
-}
+import type { SessionStatus, ScanResult } from './enums.js'
 
 export interface DispatchSession {
-  id: string;
-  sessionCode: string;
-  poId: string;
-  vehicleId: string;
-  supervisorId: string;
-  operatorId?: string | null;
-  status: SessionStatus;
-  openedAt: string;
-  closedAt?: string | null;
-  totalBoxesExpected: number;
-  totalBoxesScanned: number;
-  notes?: string | null;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  sessionCode: string
+  poId: string
+  purchaseOrder?: import('./order.js').PurchaseOrder
+  vehicleId: string
+  vehicle?: import('./vehicle.js').Vehicle
+  supervisorId: string
+  supervisor?: import('./user.js').User
+  operatorId: string | null
+  operator?: import('./user.js').User | null
+  status: SessionStatus
+  openedAt: string
+  closedAt: string | null
+  totalBoxesExpected: number
+  totalBoxesScanned: number
+  notes: string | null
+  isPartialDispatch: boolean
+  partialReason: string | null
+  inventoryDeducted: boolean
+  tallySynced: boolean
+  podCreated: boolean
+  scanEvents?: ScanEvent[]
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ScanEvent {
-  id: string;
-  sessionId: string;
-  operatorId: string;
-  scannedBarcode: string;
-  resolvedVariantId?: string | null;
-  result: ScanResult;
-  errorReason?: string | null;
-  deviceId?: string | null;
-  scannedAt: string;
+  id: string
+  sessionId: string
+  operatorId: string
+  operator?: import('./user.js').User
+  scannedBarcode: string
+  resolvedVariantId: string | null
+  resolvedVariant?: import('./product.js').ProductVariant | null
+  result: ScanResult
+  errorReason: string | null
+  deviceId: string | null
+  scannedAt: string
+}
+
+export interface LineItemProgress {
+  lineItemId: string
+  variantId: string
+  productName: string
+  colourName: string
+  orderedBoxes: number
+  loadedBoxes: number
+  isComplete: boolean
 }
 
 export interface ScanProcessResult {
-  result: ScanResult;
-  variant?: ProductVariant;
-  lineItem?: POLineItem;
+  result: ScanResult
+  alertLevel: 'success' | 'warning' | 'error' | 'info'
+  alertMessage: string
+  variant: import('./product.js').ProductVariant | null
+  lineItem: import('./order.js').POLineItem | null
   sessionProgress: {
-    scanned: number;
-    expected: number;
-    percent: number;
-  };
-  alertLevel: 'success' | 'warning' | 'error';
-  alertMessage: string;
+    scanned: number
+    expected: number
+    percentComplete: number
+    lineItems: LineItemProgress[]
+  }
+  scanEvent: { id: string; scannedAt: string }
 }
 
 export interface ScannerInput {
-  rawValue: string;
-  format: string;
-  deviceId?: string;
+  rawValue: string
+  format: import('./enums.js').BarcodeFormat
+  deviceId?: string
 }

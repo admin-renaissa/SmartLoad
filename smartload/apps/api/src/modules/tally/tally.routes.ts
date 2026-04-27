@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { successResponse, errorResponse, UserRole } from '@smartload/shared';
+import { successResponse, errorResponse, UserRole, TALLY_DATA_TYPES, QUEUES } from '@smartload/shared';
 import { parsePagination, buildPaginationMeta } from '@smartload/shared';
 
 export const tallyRoutes: FastifyPluginAsync = async (fastify) => {
@@ -34,17 +34,35 @@ export const tallyRoutes: FastifyPluginAsync = async (fastify) => {
     }));
   });
 
-  // POST /api/v1/tally/sync/pull-stock
-  fastify.post('/sync/pull-stock', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (_request, reply) => {
+  const getTallyQueue = async () => {
     const { Queue } = await import('bullmq');
-    const queue = new Queue('tally-sync', {
+    return new Queue(QUEUES.TALLY_SYNC, {
       connection: {
         host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
         port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
       },
     });
-    await queue.add('pull', { type: 'PULL_STOCK' });
+  };
+
+  // POST /api/v1/tally/sync/pull-stock
+  fastify.post('/sync/pull-stock', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (_request, reply) => {
+    const queue = await getTallyQueue();
+    await queue.add('pull', { type: TALLY_DATA_TYPES.PULL_STOCK_ITEMS });
     return reply.send(successResponse({ message: 'Stock pull job queued' }));
+  });
+
+  // POST /api/v1/tally/sync/pull-parties
+  fastify.post('/sync/pull-parties', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (_request, reply) => {
+    const queue = await getTallyQueue();
+    await queue.add('pull', { type: 'PULL_PARTIES' });
+    return reply.send(successResponse({ message: 'Parties pull job queued' }));
+  });
+
+  // POST /api/v1/tally/sync/pull-orders
+  fastify.post('/sync/pull-orders', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (_request, reply) => {
+    const queue = await getTallyQueue();
+    await queue.add('pull', { type: 'PULL_ORDERS' });
+    return reply.send(successResponse({ message: 'Purchase orders pull job queued' }));
   });
 
   // POST /api/v1/tally/sync/push/:sessionId
@@ -53,13 +71,7 @@ export const tallyRoutes: FastifyPluginAsync = async (fastify) => {
     const session = await fastify.prisma.dispatchSession.findUnique({ where: { id: sessionId } });
     if (!session) return reply.code(404).send(errorResponse('Session not found'));
 
-    const { Queue } = await import('bullmq');
-    const queue = new Queue('tally-sync', {
-      connection: {
-        host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-        port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
-      },
-    });
+    const queue = await getTallyQueue();
     await queue.add('push', { sessionId, type: 'DISPATCH_OUTWARD' });
     return reply.send(successResponse({ message: 'Tally push job queued' }));
   });

@@ -32,8 +32,8 @@ export class SessionService {
     });
 
     if (!po) throw Object.assign(new Error('Purchase order not found'), { statusCode: 404 });
-    if (!([POStatus.CONFIRMED, POStatus.PARTIALLY_DISPATCHED] as POStatus[]).includes(po.status)) {
-      throw Object.assign(new Error('PO must be CONFIRMED or PARTIALLY_DISPATCHED to start loading'), { statusCode: 400 });
+    if (!([POStatus.CONFIRMED, POStatus.PARTIALLY_LOADED] as POStatus[]).includes(po.status)) {
+      throw Object.assign(new Error('PO must be CONFIRMED or PARTIALLY_LOADED to start a dispatch session'), { statusCode: 400 });
     }
 
     // Check vehicle not already in an open session
@@ -65,7 +65,7 @@ export class SessionService {
           status: SessionStatus.OPEN,
         },
         include: {
-          po: {
+          purchaseOrder: {
             include: {
               client: true,
               lineItems: { include: { variant: { include: { product: true } } } },
@@ -79,7 +79,7 @@ export class SessionService {
 
       await tx.purchaseOrder.update({
         where: { id: dto.poId },
-        data: { status: POStatus.LOADING },
+        data: { status: POStatus.PARTIALLY_LOADED },
       });
 
       return s;
@@ -205,6 +205,17 @@ export class SessionService {
     // Step 6: Build result
     const scanned = sessionContext.totalBoxesScanned + (result === ScanResult.SUCCESS ? 1 : 0);
     const expected = sessionContext.totalBoxesExpected;
+    const lineItems: import('@smartload/shared').LineItemProgress[] = sessionContext.lineItems.map(
+      (li: { id: string; variantId: string; orderedBoxes: number; loadedBoxes: number }) => ({
+        lineItemId: li.id,
+        variantId: li.variantId,
+        productName: '',
+        colourName: '',
+        orderedBoxes: li.orderedBoxes,
+        loadedBoxes: li.loadedBoxes + (result === ScanResult.SUCCESS && matchedLineItem?.id === li.id ? 1 : 0),
+        isComplete: li.loadedBoxes + (result === ScanResult.SUCCESS && matchedLineItem?.id === li.id ? 1 : 0) >= li.orderedBoxes,
+      })
+    );
 
     return {
       result: result as unknown as import('@smartload/shared').ScanResult,
@@ -213,9 +224,16 @@ export class SessionService {
       sessionProgress: {
         scanned,
         expected,
-        percent: expected > 0 ? Math.round((scanned / expected) * 100) : 0,
+        percentComplete: expected > 0 ? Math.round((scanned / expected) * 100) : 0,
+        lineItems,
       },
-      alertLevel: result === ScanResult.SUCCESS ? 'success' : result === ScanResult.EXCESS_QUANTITY ? 'warning' : 'error',
+      scanEvent: { id: 'pending', scannedAt: new Date().toISOString() },
+      alertLevel:
+        result === ScanResult.SUCCESS
+          ? 'success'
+          : result === ScanResult.EXCESS_QUANTITY
+            ? 'warning'
+            : 'error',
       alertMessage: this.getAlertMessage(result, variant, matchedLineItem),
     };
   }
@@ -248,7 +266,7 @@ export class SessionService {
     const session = await this.prisma.dispatchSession.findUnique({
       where: { id: sessionId },
       include: {
-        po: { include: { lineItems: true } },
+        purchaseOrder: { include: { lineItems: true } },
       },
     });
 
@@ -257,7 +275,7 @@ export class SessionService {
       throw Object.assign(new Error('Session is already closed'), { statusCode: 400 });
     }
 
-    const underLoadedItems = session.po.lineItems.filter(
+    const underLoadedItems = session.purchaseOrder.lineItems.filter(
       (li) => li.loadedBoxes < li.orderedBoxes,
     );
 
@@ -285,7 +303,7 @@ export class SessionService {
           notes,
           isPartialDispatch: isPartial,
         },
-        include: { po: { include: { lineItems: true } }, vehicle: true },
+        include: { purchaseOrder: { include: { lineItems: true } }, vehicle: true },
       });
 
       // Update PO status
@@ -293,11 +311,10 @@ export class SessionService {
         where: { poId: session.poId, status: SessionStatus.OPEN },
       });
 
-      const newPoStatus = isPartial ? POStatus.PARTIALLY_DISPATCHED : POStatus.DISPATCHED;
       if (allSessionsClosed === 0 || !isPartial) {
         await tx.purchaseOrder.update({
           where: { id: session.poId },
-          data: { status: newPoStatus },
+          data: { status: POStatus.DISPATCHED },
         });
       }
 
@@ -319,7 +336,7 @@ export class SessionService {
     return this.prisma.dispatchSession.findUnique({
       where: { id: sessionId },
       include: {
-        po: {
+        purchaseOrder: {
           include: {
             client: true,
             lineItems: { include: { variant: { include: { product: true } } } },
@@ -344,7 +361,7 @@ export class SessionService {
     return this.prisma.dispatchSession.findMany({
       where: { status: SessionStatus.OPEN },
       include: {
-        po: { include: { client: { select: { id: true, name: true } } } },
+        purchaseOrder: { include: { client: { select: { id: true, name: true } } } },
         vehicle: true,
         supervisor: { select: { id: true, name: true } },
         operator: { select: { id: true, name: true } },
@@ -365,7 +382,7 @@ export class SessionService {
     const session = await this.prisma.dispatchSession.findUnique({
       where: { id: sessionId },
       include: {
-        po: {
+        purchaseOrder: {
           include: {
             lineItems: true,
           },
@@ -381,7 +398,7 @@ export class SessionService {
       status: session.status,
       totalBoxesExpected: session.totalBoxesExpected,
       totalBoxesScanned: session.totalBoxesScanned,
-      lineItems: session.po.lineItems.map((li) => ({
+      lineItems: session.purchaseOrder.lineItems.map((li) => ({
         id: li.id,
         variantId: li.variantId,
         orderedBoxes: li.orderedBoxes,
@@ -398,6 +415,3 @@ export class SessionService {
     return this.getSessionContextFromDB(sessionId);
   }
 }
-
-// Type helper (not used at runtime)
-function successResult(_variant: unknown, _lineItem: unknown) { return null; }

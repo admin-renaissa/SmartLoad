@@ -17,10 +17,10 @@ interface Variant {
   colourName: string;
   barcodeValue: string;
   barcodeFormat: string;
-  length: number | null;
-  width: number | null;
-  thickness: number | null;
-  mrp: number | null;
+  lengthMm: number | null;
+  widthMm: number | null;
+  thicknessMm: number | null;
+  mrpPaise: number | null;
   isActive: boolean;
   inventoryStock: { totalBoxes: number; reservedBoxes: number } | null;
 }
@@ -41,12 +41,12 @@ interface Product {
 
 function AddVariantModal({ productId, onClose }: { productId: string; onClose: () => void }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({
+    const [form, setForm] = useState({
     colourCode: '',
     colourName: '',
-    length: '',
-    width: '',
-    thickness: '',
+    lengthMm: '',
+    widthMm: '',
+    thicknessMm: '',
     barcodeValue: '',
     mrp: '',
   });
@@ -56,11 +56,11 @@ function AddVariantModal({ productId, onClose }: { productId: string; onClose: (
       await api.post(`/api/v1/products/${productId}/variants`, {
         colourCode: form.colourCode.toUpperCase(),
         colourName: form.colourName,
-        length: form.length ? Number(form.length) : undefined,
-        width: form.width ? Number(form.width) : undefined,
-        thickness: form.thickness ? Number(form.thickness) : undefined,
+        lengthMm: form.lengthMm ? Number(form.lengthMm) : undefined,
+        widthMm: form.widthMm ? Number(form.widthMm) : undefined,
+        thicknessMm: form.thicknessMm ? Number(form.thicknessMm) : undefined,
         barcodeValue: form.barcodeValue,
-        mrp: form.mrp ? Math.round(Number(form.mrp) * 100) : undefined,
+        mrpPaise: form.mrp ? Math.round(Number(form.mrp) * 100) : undefined,
         barcodeFormat: 'QR',
       });
     },
@@ -92,9 +92,9 @@ function AddVariantModal({ productId, onClose }: { productId: string; onClose: (
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            {(['length', 'width', 'thickness'] as const).map((dim) => (
+            {(['lengthMm', 'widthMm', 'thicknessMm'] as const).map((dim) => (
               <div key={dim}>
-                <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">{dim} (mm)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">{dim.replace('Mm', '')} (mm)</label>
                 <input type="number" value={form[dim]} onChange={(e) => setForm({ ...form, [dim]: e.target.value })}
                   placeholder="0" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30" />
               </div>
@@ -225,7 +225,7 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-1 gap-3">
               {product.variants.map((v) => {
                 const available = (v.inventoryStock?.totalBoxes ?? 0) - (v.inventoryStock?.reservedBoxes ?? 0);
-                const dims = [v.length, v.width, v.thickness].filter(Boolean).join(' × ');
+                const dims = [v.lengthMm, v.widthMm, v.thicknessMm].filter(Boolean).join(' × ');
                 return (
                   <Card key={v.id} className={!v.isActive ? 'opacity-60' : ''}>
                     <CardContent className="pt-4">
@@ -239,7 +239,7 @@ export default function ProductDetailPage() {
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                             {dims && <span>{dims} mm</span>}
                             <span className="font-mono">{v.barcodeValue}</span>
-                            {v.mrp && <span>MRP ₹{(v.mrp / 100).toFixed(2)}</span>}
+                            {v.mrpPaise && <span>MRP ₹{(v.mrpPaise / 100).toFixed(2)}</span>}
                           </div>
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">

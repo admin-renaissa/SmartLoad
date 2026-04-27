@@ -1,4 +1,4 @@
-import { UserRole } from '../types/user.js';
+import { UserRole } from '../types/enums.js'
 
 export const PERMISSIONS = {
   'orders:create': [UserRole.ADMIN, UserRole.SUPERVISOR],
@@ -27,6 +27,6 @@ export const PERMISSIONS = {
   'settings:manage': [UserRole.ADMIN],
   'clients:manage': [UserRole.ADMIN, UserRole.SUPERVISOR],
   'clients:view': [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS],
-} as const;
+} as const
 
-export type Permission = keyof typeof PERMISSIONS;
+export type Permission = keyof typeof PERMISSIONS

@@ -18,6 +18,7 @@ interface AuthState {
   login: (user: AuthUser, accessToken: string, refreshToken: string) => void;
   logout: () => void;
   setTokens: (accessToken: string, refreshToken: string) => void;
+  setUser: (user: AuthUser) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -36,6 +37,8 @@ export const useAuthStore = create<AuthState>()(
 
       setTokens: (accessToken, refreshToken) =>
         set({ accessToken, refreshToken }),
+
+      setUser: (user) => set({ user }),
     }),
     {
       name: 'smartload-auth',

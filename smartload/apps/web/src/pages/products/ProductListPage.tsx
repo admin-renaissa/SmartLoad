@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Download, Upload, Package } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
-import { Card, CardContent } from '../../components/ui/Card.tsx';
+import { Card } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';
