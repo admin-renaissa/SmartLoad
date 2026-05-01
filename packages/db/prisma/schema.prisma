@@ -1,5 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
+  output          = "../../../node_modules/.prisma/client"
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
@@ -148,6 +149,7 @@ model User {
   ordersUpdated      PurchaseOrder[]   @relation("POUpdater")
   auditLogs          AuditLog[]
   configsUpdated     SystemConfig[]
+  registeredDevices  ScannerDevice[]
 
   @@index([email])
   @@index([role])
@@ -313,6 +315,28 @@ model Vehicle {
   @@map("vehicles")
 }
 
+model ScannerDevice {
+  id             String    @id @default(cuid())
+  name           String
+  serialNumber   String    @unique
+  driverName     String
+  deviceType     String    @default("BARCODE_SCANNER")
+  ipAddress      String?
+  location       String?
+  notes          String?
+  isActive       Boolean   @default(true)
+  registeredById String
+  registeredBy   User      @relation(fields: [registeredById], references: [id])
+  lastSeenAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([serialNumber])
+  @@index([driverName])
+  @@index([isActive])
+  @@map("scanner_devices")
+}
+
 model DispatchSession {
   id                 String        @id @default(cuid())
   sessionCode        String        @unique
@@ -448,6 +472,7 @@ model ProofOfDelivery {
   receiverName       String?
   receiverPhone      String?
   signatureImageUrl  String?
+  receiverPhotoUrl   String?
   acknowledgedAt     DateTime?
   geoLat             Float?
   geoLng             Float?

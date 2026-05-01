@@ -8,6 +8,9 @@ import { Button } from '../../components/ui/Button.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import api from '../../lib/axios.ts';
 import { getUiLang, POD_UIcopy, setUiLang, type UiLang } from '../../i18n/messages.ts';
+import i18n from '../../i18n/i18n.ts';
+
+/** FR-07.2 delivery photo: `CameraModal` is a QR/barcode scanner driver — not used here. File input + `capture` + canvas JPEG meets the same UX goal on mobile/desktop. */
 
 type Step = 'loading' | 'overview' | 'otp' | 'items' | 'signature' | 'done' | 'expired' | 'invalid';
 
@@ -25,6 +28,7 @@ export default function PODPage() {
   const [uiLang, setUiLangLocal] = useState<UiLang>(() => getUiLang());
   const t = uiLang === 'hi' ? POD_UIcopy.hi : POD_UIcopy.en;
   const pickLang = (lang: UiLang) => {
+    void i18n.changeLanguage(lang);
     setUiLang(lang);
     setUiLangLocal(lang);
   };
@@ -37,6 +41,8 @@ export default function PODPage() {
   const [itemAcks, setItemAcks] = useState<Record<string, number>>({});
   const [discReasons, setDiscReasons] = useState<Record<string, string>>({});
   const sigRef = useRef<SignatureCanvas>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [deliveryPhotoDataUrl, setDeliveryPhotoDataUrl] = useState<string | null>(null);
 
   const { data: pod, isLoading, isSuccess, isError, error: podError } = useQuery<Record<string, unknown>>({
     queryKey: ['pod', token],
@@ -123,6 +129,7 @@ export default function PODPage() {
           geoLat: geoPos?.coords.latitude,
           geoLng: geoPos?.coords.longitude,
           signatureDataUrl,
+          deliveryPhotoDataUrl: deliveryPhotoDataUrl ?? undefined,
         },
         { headers: { Authorization: `Bearer ${podToken}` } },
       );
@@ -133,6 +140,19 @@ export default function PODPage() {
     },
     onError: () => toast.error(t.toastSubmitErr),
   });
+
+  async function onDeliveryPhotoFile(file: File) {
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file);
+      if (dataUrl.length > 6_500_000) {
+        toast.error(t.photoTooLarge);
+        return;
+      }
+      setDeliveryPhotoDataUrl(dataUrl);
+    } catch {
+      toast.error(t.toastSubmitErr);
+    }
+  }
 
   if (isLoading || step === 'loading') {
     return (
@@ -376,6 +396,32 @@ export default function PODPage() {
               <Button type="button" variant="outline" className="w-full" onClick={clearSig}>
                 {t.clearSig}
               </Button>
+              <p className="text-sm text-gray-600 pt-2">{t.deliveryPhotoHint}</p>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void onDeliveryPhotoFile(f);
+                  e.target.value = '';
+                }}
+              />
+              {deliveryPhotoDataUrl ? (
+                <img src={deliveryPhotoDataUrl} alt="" className="w-full max-h-40 object-contain rounded-lg border border-gray-200" />
+              ) : null}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => photoInputRef.current?.click()}>
+                  {t.addDeliveryPhoto}
+                </Button>
+                {deliveryPhotoDataUrl ? (
+                  <Button type="button" variant="outline" className="flex-1" onClick={() => setDeliveryPhotoDataUrl(null)}>
+                    {t.clearDeliveryPhoto}
+                  </Button>
+                ) : null}
+              </div>
               <Button
                 className="w-full"
                 onClick={() => acknowledgeMutation.mutate()}
@@ -390,6 +436,41 @@ export default function PODPage() {
       </div>
     </div>
   );
+}
+
+function fileToCompressedDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxW = 1280;
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          reject(new Error('no canvas'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        reject(e);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('image load failed'));
+    };
+    img.src = url;
+  });
 }
 
 function LangToggle({

@@ -144,6 +144,7 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.code(401).send(errorResponse('Invalid or expired POD token'));
     }
 
+    const MAX_DATA_URL_CHARS = 6_500_000;
     const dto = z.object({
       receiverName: z.string().min(1),
       acknowledgedItems: z.array(z.object({
@@ -154,7 +155,8 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
       discrepancyNotes: z.string().optional(),
       geoLat: z.number().optional(),
       geoLng: z.number().optional(),
-      signatureDataUrl: z.string().optional(),
+      signatureDataUrl: z.string().max(MAX_DATA_URL_CHARS).optional(),
+      deliveryPhotoDataUrl: z.string().max(MAX_DATA_URL_CHARS).optional(),
     }).parse(request.body);
 
     const pod = await fastify.prisma.proofOfDelivery.findUnique({
@@ -215,25 +217,59 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
     if (dto.signatureDataUrl) {
       const parsed = dataUrlToBuffer(dto.signatureDataUrl);
       if (parsed) {
-        try {
-          signatureImageUrl = await uploadObject(
-            `pod/${id}/signature-${Date.now()}.png`,
-            parsed.buffer,
-            parsed.contentType || 'image/png',
-          );
-          await fastify.prisma.proofOfDelivery.update({
-            where: { id },
-            data: { signatureImageUrl },
-          });
-        } catch (err) {
-          fastify.log.warn({ err }, 'POD signature upload failed (check S3 / MinIO env)');
+        if (parsed.buffer.length > 4 * 1024 * 1024) {
+          fastify.log.warn('POD signature image exceeds 4MB; skipped');
+        } else {
+          try {
+            signatureImageUrl = await uploadObject(
+              `pod/${id}/signature-${Date.now()}.png`,
+              parsed.buffer,
+              parsed.contentType || 'image/png',
+            );
+            await fastify.prisma.proofOfDelivery.update({
+              where: { id },
+              data: { signatureImageUrl },
+            });
+          } catch (err) {
+            fastify.log.warn({ err }, 'POD signature upload failed (check S3 / MinIO env)');
+          }
+        }
+      }
+    }
+
+    let receiverPhotoUrl: string | null = null;
+    if (dto.deliveryPhotoDataUrl) {
+      const parsed = dataUrlToBuffer(dto.deliveryPhotoDataUrl);
+      if (parsed) {
+        if (parsed.buffer.length > 4 * 1024 * 1024) {
+          fastify.log.warn('POD delivery photo exceeds 4MB; skipped');
+        } else {
+          const ext = (parsed.contentType || '').includes('png') ? 'png' : 'jpg';
+          try {
+            receiverPhotoUrl = await uploadObject(
+              `pod/${id}/delivery-photo-${Date.now()}.${ext}`,
+              parsed.buffer,
+              parsed.contentType || 'image/jpeg',
+            );
+            await fastify.prisma.proofOfDelivery.update({
+              where: { id },
+              data: { receiverPhotoUrl },
+            });
+          } catch (err) {
+            fastify.log.warn({ err }, 'POD delivery photo upload failed (check S3 / MinIO env)');
+          }
         }
       }
     }
 
     let podPdfUrl: string | null = null;
     try {
-      const pdfBuf = await generatePodPdfBuffer(fastify.prisma, id, dto.signatureDataUrl ?? null);
+      const pdfBuf = await generatePodPdfBuffer(
+        fastify.prisma,
+        id,
+        dto.signatureDataUrl ?? null,
+        dto.deliveryPhotoDataUrl ?? null,
+      );
       podPdfUrl = await uploadObject(`pod/${id}/pod-${Date.now()}.pdf`, pdfBuf, 'application/pdf');
       await fastify.prisma.proofOfDelivery.update({
         where: { id },

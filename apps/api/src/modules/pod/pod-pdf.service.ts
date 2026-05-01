@@ -29,7 +29,7 @@ export async function loadPodForPdf(prisma: PrismaClient, podId: string) {
 
 export function buildPodPdfHtml(
   pod: Awaited<ReturnType<typeof loadPodForPdf>>,
-  opts?: { embeddedSignatureDataUrl?: string | null },
+  opts?: { embeddedSignatureDataUrl?: string | null; embeddedDeliveryPhotoDataUrl?: string | null },
 ): string {
   const po = pod.session.purchaseOrder;
   const client = po.client;
@@ -57,6 +57,13 @@ export function buildPodPdfHtml(
       ? `<p style="font-size:11px;color:#666">Signature on file (URL)</p>`
       : '';
 
+  const photo =
+    opts?.embeddedDeliveryPhotoDataUrl != null && opts.embeddedDeliveryPhotoDataUrl.length > 0
+      ? `<div style="margin-top:16px"><p style="font-size:11px;color:#666">Receiver / delivery photo</p><img src="${opts.embeddedDeliveryPhotoDataUrl}" alt="" style="max-height:160px;border:1px solid #e5e7eb" /></div>`
+      : pod.receiverPhotoUrl
+        ? `<p style="font-size:11px;color:#666">Delivery photo on file (URL)</p>`
+        : '';
+
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><style>
     body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 24px; }
     h1 { color: #0F2044; font-size: 18px; margin: 0 0 8px; }
@@ -77,6 +84,7 @@ export function buildPodPdfHtml(
       <tbody>${rows}</tbody>
     </table>
     ${pod.discrepancyNotes ? `<p style="margin-top:12px;font-size:11px"><strong>Notes:</strong> ${esc(pod.discrepancyNotes)}</p>` : ''}
+    ${photo}
     ${sig}
   </body></html>`;
 }
@@ -101,8 +109,9 @@ export async function generatePodPdfBuffer(
   prisma: PrismaClient,
   podId: string,
   embeddedSignatureDataUrl?: string | null,
+  embeddedDeliveryPhotoDataUrl?: string | null,
 ): Promise<Buffer> {
   const pod = await loadPodForPdf(prisma, podId);
-  const html = buildPodPdfHtml(pod, { embeddedSignatureDataUrl });
+  const html = buildPodPdfHtml(pod, { embeddedSignatureDataUrl, embeddedDeliveryPhotoDataUrl });
   return renderHtmlToPdfBuffer(html);
 }

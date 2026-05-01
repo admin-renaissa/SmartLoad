@@ -1,5 +1,10 @@
 import type { PrismaClient } from '@prisma/client';
-import { POStatus } from '@prisma/client';
+import { POStatus, PODStatus } from '@prisma/client';
+
+/**
+ * inventoryValuePaise: proxy only — current on-hand boxes × latest PO line rate per variant (max createdAt).
+ * Excludes variants with no PO lines; not a substitute for multi-warehouse valuation (FR-05 deferred).
+ */
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -52,6 +57,10 @@ export type ExecutiveDashboardPayload = {
     lastSyncAt: string | null;
     failedJobsCount: number;
   };
+  /** Daily counts for last 30 days: acknowledged vs disputed POD (acknowledgedAt day bucket, server TZ). */
+  podDisputeTrend: { date: string; label: string; acknowledged: number; disputed: number }[];
+  /** Stock valuation proxy in paise (see module comment). */
+  inventoryValuePaise: number;
 };
 
 
@@ -78,6 +87,8 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     stockRows,
     lastTallySync,
     failedTallyJobs,
+    podTrendRows,
+    inventoryValueRow,
   ] = await Promise.all([
     prisma.dispatchSession.count({ where: { status: 'CLOSED', closedAt: { gte: today } } }),
     prisma.dispatchSession.count({
@@ -126,6 +137,24 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     prisma.tallySyncJob.count({
       where: { status: { in: ['FAILED', 'PERMANENTLY_FAILED'] } } },
     ),
+    prisma.proofOfDelivery.findMany({
+      where: {
+        status: { in: [PODStatus.ACKNOWLEDGED, PODStatus.DISPUTED] },
+        acknowledgedAt: { gte: thirtyAgo },
+      },
+      select: { acknowledgedAt: true, status: true },
+    }),
+    prisma.$queryRaw<{ valuePaise: bigint }[]>`
+      SELECT COALESCE(SUM(inv."totalBoxes" * COALESCE(sub."ratePerBoxPaise", 0)), 0)::bigint AS "valuePaise"
+      FROM "inventory_stock" inv
+      LEFT JOIN LATERAL (
+        SELECT li."ratePerBoxPaise"
+        FROM "po_line_items" li
+        WHERE li."variantId" = inv."variantId"
+        ORDER BY li."createdAt" DESC
+        LIMIT 1
+      ) sub ON true
+    `,
   ]);
 
   const boxesThisWeek = sessionsWeek.reduce((s, x) => s + x.totalBoxesScanned, 0);
@@ -214,6 +243,34 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     vehicleReg: s.vehicle.registrationNumber,
   }));
 
+  const podByDay = new Map<string, { acknowledged: number; disputed: number }>();
+  for (let i = 29; i >= 0; i--) {
+    const d = addDays(today, -i);
+    podByDay.set(toYmd(d), { acknowledged: 0, disputed: 0 });
+  }
+  for (const row of podTrendRows) {
+    if (!row.acknowledgedAt) continue;
+    const key = toYmd(row.acknowledgedAt);
+    const bucket = podByDay.get(key);
+    if (!bucket) continue;
+    if (row.status === PODStatus.DISPUTED) bucket.disputed += 1;
+    else if (row.status === PODStatus.ACKNOWLEDGED) bucket.acknowledged += 1;
+  }
+  const podDisputeTrend: ExecutiveDashboardPayload['podDisputeTrend'] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = addDays(today, -i);
+    const key = toYmd(d);
+    const b = podByDay.get(key)!;
+    podDisputeTrend.push({
+      date: key,
+      label: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`,
+      acknowledged: b.acknowledged,
+      disputed: b.disputed,
+    });
+  }
+
+  const inventoryValuePaise = Number(inventoryValueRow[0]?.valuePaise ?? 0n);
+
   const lowStockAlerts = stockRows
     .filter((s) => s.totalBoxes <= s.variant.product.minStockAlert)
     .map((s) => {
@@ -251,5 +308,7 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
       lastSyncAt: lastTallySync?.processedAt?.toISOString() ?? null,
       failedJobsCount: failedTallyJobs,
     },
+    podDisputeTrend,
+    inventoryValuePaise,
   };
 }

@@ -2,6 +2,8 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { successResponse, UserRole } from '@smartload/shared';
 
+/** Compliance backlog (PRD §13): encryption keys, device trust, and similar belong in platform/KMS/MDM — not toggled via generic config rows without a security review. */
+
 export const settingsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/settings
   fastify.get('/', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (_request, reply) => {

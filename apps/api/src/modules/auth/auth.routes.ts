@@ -3,6 +3,12 @@ import { loginSchema, refreshSchema, changePasswordSchema, logoutSchema, twoFact
 import { AuthService } from './auth.service.js';
 import { successResponse } from '@smartload/shared';
 
+/**
+ * Compliance backlog (PRD §13): application-level field encryption (e.g. AES-256 for PII at rest)
+ * and device binding / posture for mobile clients are intentionally out of scope here — use KMS,
+ * database/platform encryption, MDM, and attestation policies. Track as infra/security work.
+ */
+
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
   const getService = () => new AuthService(fastify.prisma, fastify.redis, fastify);
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Truck, Package, RefreshCw } from 'lucide-react';
+import { Truck, Package, RefreshCw, ChevronLeft } from 'lucide-react';
 import api from '../../lib/axios.ts';
 
 export default function ScanSessionSelectPage() {
@@ -19,14 +19,30 @@ export default function ScanSessionSelectPage() {
 
   return (
     <div className="min-h-screen bg-[#0F2044] text-white flex flex-col">
-      <div className="px-6 pt-8 pb-4 flex items-center justify-between">
+      <div className="px-6 pt-8 pb-4 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => navigate('/app/dashboard')}
+            className="flex shrink-0 items-center gap-0.5 rounded-lg py-2 pl-2 pr-3 text-sm text-white/70 hover:bg-white/10 hover:text-white"
+            aria-label="Back to dashboard"
+          >
+            <ChevronLeft className="h-6 w-6" />
+            <span className="font-medium">Dashboard</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="shrink-0 text-white/50 hover:text-white p-2 rounded-lg hover:bg-white/10"
+            aria-label="Refresh sessions"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
+        </div>
         <div>
           <h1 className="text-2xl font-bold">SmartLoad</h1>
           <p className="text-white/50 text-sm mt-1">Select a dispatch session to begin scanning</p>
         </div>
-        <button type="button" onClick={() => refetch()} className="text-white/50 hover:text-white">
-          <RefreshCw className="w-5 h-5" />
-        </button>
       </div>
 
       <div className="flex-1 px-4 pb-6 space-y-3">

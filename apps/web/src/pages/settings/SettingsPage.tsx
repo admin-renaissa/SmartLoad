@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { UserCog, Eye, EyeOff } from 'lucide-react';
+import { UserCog, Eye, EyeOff, ScanLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { UserRole } from '@smartload/shared';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
@@ -233,6 +233,21 @@ export default function SettingsPage() {
           <div>
             <p className="font-medium text-gray-900">User management</p>
             <p className="text-sm text-gray-500">Create users, assign roles, and deactivate accounts</p>
+          </div>
+        </Link>
+      )}
+
+      {isAdmin && (
+        <Link
+          to="/app/devices"
+          className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-accent/40 hover:bg-accent/5 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+            <ScanLine className="h-5 w-5 text-accent" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">Scanner devices</p>
+            <p className="text-sm text-gray-500">Register and manage barcode scanning hardware</p>
           </div>
         </Link>
       )}

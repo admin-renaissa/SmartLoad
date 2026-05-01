@@ -49,6 +49,10 @@ export const POD_UIcopy = {
     toastOtpInvalid: 'Invalid OTP. Please try again.',
     toastSubmitted: 'Acknowledgement submitted',
     toastSubmitErr: 'Could not submit. Try again.',
+    deliveryPhotoHint: 'Optional: add a photo of received goods or the unloading point.',
+    addDeliveryPhoto: 'Add delivery photo',
+    clearDeliveryPhoto: 'Remove photo',
+    photoTooLarge: 'Photo too large after compression. Try a smaller image.',
   },
   hi: {
     langEn: 'English',
@@ -87,6 +91,10 @@ export const POD_UIcopy = {
     toastOtpInvalid: 'अमान्य ओटीपी। पुनः प्रयास करें।',
     toastSubmitted: 'पुष्टिकरण जमा हो गया',
     toastSubmitErr: 'जमा नहीं हो सका। पुनः प्रयास करें।',
+    deliveryPhotoHint: 'वैकल्पिक: प्राप्त सामान या उतारने का फोटो जोड़ें।',
+    addDeliveryPhoto: 'डिलीवरी फोटो जोड़ें',
+    clearDeliveryPhoto: 'फोटो हटाएँ',
+    photoTooLarge: 'संपीड़न के बाद भी फोटा बड़ा है। छोटी छवि आज़माएँ।',
   },
 } as const;
 

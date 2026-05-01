@@ -57,6 +57,21 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.code(201).send(successResponse(product));
   });
 
+  fastify.post('/labels/pdf', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
+    const dto = z.object({ variantIds: z.array(z.string().cuid()).min(1).max(500) }).parse(request.body);
+    const { generateVariantLabelsPdfBuffer } = await import('./label-pdf.service.js');
+    try {
+      const buf = await generateVariantLabelsPdfBuffer(fastify.prisma, dto.variantIds);
+      reply.header('Content-Type', 'application/pdf');
+      reply.header('Content-Disposition', 'attachment; filename="variant-labels.pdf"');
+      return reply.send(buf);
+    } catch (err) {
+      const e = err as { statusCode?: number; message?: string };
+      const code = e.statusCode === 400 ? 400 : 500;
+      return reply.code(code).send(errorResponse(e.message || 'Failed to generate label PDF'));
+    }
+  });
+
   // GET /api/v1/products/:id
   fastify.get('/:id', { preHandler: fastify.requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };

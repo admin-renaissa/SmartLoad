@@ -27,6 +27,25 @@ const variantLookupInclude = {
 
 type VariantLookupRow = Prisma.ProductVariantGetPayload<{ include: typeof variantLookupInclude }>;
 
+/** `closedAt` range for list filters; `YYYY-MM-DD` → start/end of that local calendar day. */
+function closedAtFilterFromDates(dateFrom?: string, dateTo?: string): Prisma.DateTimeNullableFilter | null {
+  if (!dateFrom && !dateTo) return null;
+  const filter: Prisma.DateTimeNullableFilter = {};
+  if (dateFrom) {
+    const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateFrom.trim());
+    filter.gte = ymd
+      ? new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]), 0, 0, 0, 0)
+      : new Date(dateFrom);
+  }
+  if (dateTo) {
+    const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateTo.trim());
+    filter.lte = ymd
+      ? new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]), 23, 59, 59, 999)
+      : new Date(dateTo);
+  }
+  return filter;
+}
+
 interface CachedLineItem {
   lineItemId: string;
   variantId: string;
@@ -676,7 +695,16 @@ export class SessionService {
     if (query.podStatus) {
       where.pod = { status: query.podStatus as PODStatus };
     }
-    if (query.dateFrom || query.dateTo) {
+    if (query.completedToday && query.status === SessionStatus.CLOSED) {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      where.closedAt = { gte: start, lt: end };
+    } else if (query.status === SessionStatus.CLOSED && (query.dateFrom || query.dateTo)) {
+      const cf = closedAtFilterFromDates(query.dateFrom, query.dateTo);
+      if (cf) where.closedAt = cf;
+    } else if (query.dateFrom || query.dateTo) {
       where.openedAt = {
         ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
         ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),

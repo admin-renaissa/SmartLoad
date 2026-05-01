@@ -6,6 +6,7 @@
     "types": ["vite/client"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "preserveSymlinks": false,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
@@ -20,7 +21,8 @@
     "paths": {
       "@/*": ["src/*"],
       "@shared/*": ["../../packages/shared/src/*"],
-      "@ui/*": ["../../packages/ui/src/*"]
+      "@ui/*": ["../../packages/ui/src/*"],
+      "@prisma/client": ["../../node_modules/.prisma/client"]
     }
   },
   "include": ["src"],

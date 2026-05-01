@@ -30,6 +30,8 @@ export const PERMISSIONS = {
   'settings:manage': [UserRole.ADMIN],
   'clients:manage': [UserRole.ADMIN, UserRole.SUPERVISOR],
   'clients:view': [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS, UserRole.CLIENT],
+  'devices:manage': [UserRole.ADMIN],
+  'devices:view': [UserRole.ADMIN, UserRole.SUPERVISOR],
 } as const
 
 export type Permission = keyof typeof PERMISSIONS

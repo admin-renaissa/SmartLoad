@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { CheckCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../lib/axios.ts';
@@ -56,8 +56,20 @@ export default function SessionCompletePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F2044] flex flex-col items-center justify-center px-6 text-white">
+    <div className="min-h-screen bg-[#0F2044] flex flex-col text-white">
+      <div className="shrink-0 px-4 pt-4 pb-2">
+        <button
+          type="button"
+          onClick={() => navigate('/app/dashboard')}
+          className="inline-flex items-center gap-0.5 rounded-lg py-2 pl-2 pr-3 text-sm text-white/70 hover:bg-white/10 hover:text-white"
+          aria-label="Back to dashboard"
+        >
+          <ChevronLeft className="h-6 w-6" />
+          <span className="font-medium">Dashboard</span>
+        </button>
+      </div>
 
+      <div className="flex flex-1 flex-col items-center justify-center px-6 pb-12">
       {incompleteItems.length === 0 ? (
         <>
           <CheckCircle className="w-24 h-24 text-green-400 mb-6" />
@@ -160,6 +172,7 @@ export default function SessionCompletePage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -30,6 +30,8 @@ const AuditLogPage = lazy(() => import('./pages/audit/AuditLogPage.tsx'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage.tsx'));
 const UserListPage = lazy(() => import('./pages/users/UserListPage.tsx'));
 const UserDetailPage = lazy(() => import('./pages/users/UserDetailPage.tsx'));
+const ScannerDevicesPage = lazy(() => import('./pages/devices/ScannerDevicesPage.tsx'));
+const DeviceDetailPage = lazy(() => import('./pages/devices/DeviceDetailPage.tsx'));
 
 // Scan pages (full-screen, no layout)
 const ScanSessionSelectPage = lazy(() => import('./pages/scan/ScanSessionSelectPage.tsx'));
@@ -92,6 +94,8 @@ export default function App() {
             <Route path="settings" element={<SettingsPage />} />
             <Route path="users" element={<UserListPage />} />
             <Route path="users/:id" element={<UserDetailPage />} />
+            <Route path="devices" element={<ScannerDevicesPage />} />
+            <Route path="devices/:id" element={<DeviceDetailPage />} />
           </Route>
 
           {/* Fallback */}

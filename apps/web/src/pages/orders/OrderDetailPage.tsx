@@ -49,6 +49,12 @@ interface PurchaseOrder {
     openedAt: string;
     totalBoxesScanned: number;
     totalBoxesExpected: number;
+    pod?: {
+      id: string;
+      status: string;
+      acknowledgedAt: string | null;
+      linkExpiresAt: string;
+    } | null;
   }>;
 }
 
@@ -182,15 +188,20 @@ export default function OrderDetailPage() {
                   <div
                     key={s.id}
                     className="flex items-center justify-between p-2 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/app/dispatch/${s.id}`)}
+                    onClick={() => navigate(`/app/sessions/${s.id}`)}
                   >
                     <div>
                       <p className="text-sm font-medium font-mono text-gray-900">{s.sessionCode}</p>
                       <p className="text-xs text-gray-500">{new Date(s.openedAt).toLocaleDateString('en-IN')}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end gap-1">
                       <StatusBadge status={s.status} />
-                      <p className="text-xs text-gray-500 mt-1">{s.totalBoxesScanned}/{s.totalBoxesExpected} boxes</p>
+                      {s.pod ? (
+                        <StatusBadge status={s.pod.status} />
+                      ) : (
+                        <span className="text-[10px] text-gray-400 uppercase">No POD</span>
+                      )}
+                      <p className="text-xs text-gray-500 mt-0.5">{s.totalBoxesScanned}/{s.totalBoxesExpected} boxes</p>
                     </div>
                   </div>
                 ))}

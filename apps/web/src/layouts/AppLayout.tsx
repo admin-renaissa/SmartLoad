@@ -1,29 +1,56 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, UserCog, Warehouse,
   Truck, Activity, BarChart3, Settings, RefreshCw, ClipboardList,
-  LogOut, ChevronLeft, ChevronRight, Menu, X, Scan, User,
+  LogOut, ChevronLeft, ChevronRight, Menu, X, Scan, User, MonitorSmartphone,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore.ts';
 import { cn } from '../utils/cn.ts';
 import api from '../lib/axios.ts';
 import { usePermission } from '../hooks/usePermission.ts';
 
-const navItems = [
-  { href: '/app/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-  { href: '/app/dispatch', icon: Activity, label: 'Dispatch', permission: 'dashboard:supervisor' as const },
-  { href: '/scan', icon: Scan, label: 'Scan App', permission: 'scan:operate' as const },
-  { href: '/app/orders', icon: ShoppingCart, label: 'Orders', permission: 'orders:view' as const },
-  { href: '/app/products', icon: Package, label: 'Products', permission: 'products:view' as const },
-  { href: '/app/clients', icon: Users, label: 'Clients', permission: 'clients:view' as const },
-  { href: '/app/inventory', icon: Warehouse, label: 'Inventory', permission: 'inventory:view' as const },
-  { href: '/app/vehicles', icon: Truck, label: 'Vehicles', permission: 'vehicles:view' as const },
-  { href: '/app/tally', icon: RefreshCw, label: 'Tally Sync', permission: 'tally:view' as const },
-  { href: '/app/reports', icon: BarChart3, label: 'Reports', permission: 'reports:view' as const },
-  { href: '/app/audit', icon: ClipboardList, label: 'Audit Log', permission: 'audit:view' as const },
-  { href: '/app/settings', icon: Settings, label: 'Account' },
-  { href: '/app/users', icon: UserCog, label: 'Users', permission: 'users:manage' as const },
+const navPermissionKeys = [
+  'dashboard:supervisor',
+  'scan:operate',
+  'orders:view',
+  'products:view',
+  'clients:view',
+  'inventory:view',
+  'vehicles:view',
+  'tally:view',
+  'reports:view',
+  'audit:view',
+  'users:manage',
+  'devices:view',
+] as const;
+
+type NavPermission = (typeof navPermissionKeys)[number];
+
+type NavItemDef = {
+  href: string;
+  icon: typeof LayoutDashboard;
+  labelKey: string;
+  exact?: boolean;
+  permission?: NavPermission;
+};
+
+const navItems: NavItemDef[] = [
+  { href: '/app/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard', exact: true },
+  { href: '/app/dispatch', icon: Activity, labelKey: 'nav.dispatch', permission: 'dashboard:supervisor' },
+  { href: '/scan', icon: Scan, labelKey: 'nav.scanApp', permission: 'scan:operate' },
+  { href: '/app/orders', icon: ShoppingCart, labelKey: 'nav.orders', permission: 'orders:view' },
+  { href: '/app/products', icon: Package, labelKey: 'nav.products', permission: 'products:view' },
+  { href: '/app/clients', icon: Users, labelKey: 'nav.clients', permission: 'clients:view' },
+  { href: '/app/inventory', icon: Warehouse, labelKey: 'nav.inventory', permission: 'inventory:view' },
+  { href: '/app/vehicles', icon: Truck, labelKey: 'nav.vehicles', permission: 'vehicles:view' },
+  { href: '/app/tally', icon: RefreshCw, labelKey: 'nav.tallySync', permission: 'tally:view' },
+  { href: '/app/reports', icon: BarChart3, labelKey: 'nav.reports', permission: 'reports:view' },
+  { href: '/app/audit', icon: ClipboardList, labelKey: 'nav.auditLog', permission: 'audit:view' },
+  { href: '/app/devices', icon: MonitorSmartphone, labelKey: 'nav.devices', permission: 'devices:view' },
+  { href: '/app/settings', icon: Settings, labelKey: 'nav.account' },
+  { href: '/app/users', icon: UserCog, labelKey: 'nav.users', permission: 'users:manage' },
 ];
 
 function NavItem({ href, icon: Icon, label, exact, collapsed }: {
@@ -52,6 +79,7 @@ function NavItem({ href, icon: Icon, label, exact, collapsed }: {
 }
 
 export function AppLayout() {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuthStore();
@@ -68,6 +96,7 @@ export function AppLayout() {
   const canViewAudit = usePermission('audit:view');
   const canManageUsers = usePermission('users:manage');
   const canViewSuperDash = usePermission('dashboard:supervisor');
+  const canViewDevices = usePermission('devices:view');
 
   const permissionMap: Record<string, boolean> = {
     'dashboard:supervisor': canViewSuperDash,
@@ -81,6 +110,7 @@ export function AppLayout() {
     'reports:view': canViewReports,
     'audit:view': canViewAudit,
     'users:manage': canManageUsers,
+    'devices:view': canViewDevices,
   };
 
   const handleLogout = async () => {
@@ -94,9 +124,9 @@ export function AppLayout() {
     navigate('/login');
   };
 
-  const filteredNavItems = navItems.filter((item) =>
-    !item.permission || permissionMap[item.permission],
-  );
+  const filteredNavItems = navItems
+    .filter((item) => !item.permission || permissionMap[item.permission])
+    .map((item) => ({ ...item, label: t(item.labelKey) }));
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -108,14 +138,14 @@ export function AppLayout() {
         {!collapsed && (
           <div>
             <span className="font-bold text-white text-lg">SmartLoad</span>
-            <p className="text-white/50 text-xs">Dispatch System</p>
+            <p className="text-white/50 text-xs">{t('nav.smartloadSubtitle')}</p>
           </div>
         )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-        {filteredNavItems.map((item) => (
+        {filteredNavItems.map(({ labelKey: _lk, permission: _perm, ...item }) => (
           <NavItem key={item.href} {...item} collapsed={collapsed} />
         ))}
       </nav>

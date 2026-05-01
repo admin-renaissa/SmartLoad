@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, XCircle, AlertTriangle, Scan } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Scan, LayoutDashboard } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useScanSession } from '../../hooks/useScanSession.ts';
 import { useBarcodeCapture } from '../../hooks/useBarcodeCapture.ts';
@@ -269,6 +269,15 @@ export default function ActiveScanPage() {
 
       <div className="flex items-center justify-between px-4 bg-[#0F2044] border-b border-white/10 h-14 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate('/app/dashboard')}
+            className="shrink-0 text-white/50 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors -ml-1"
+            aria-label="Back to dashboard"
+            title="Dashboard"
+          >
+            <LayoutDashboard className="w-5 h-5" />
+          </button>
           <span className="text-white/50 text-xs uppercase tracking-widest shrink-0">Session</span>
           <span className="text-white font-mono font-bold text-sm truncate">
             {(sessionMeta?.sessionCode as string) ?? '—'}
