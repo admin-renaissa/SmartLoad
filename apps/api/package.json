@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:integration": "RUN_WORKER_INTEGRATION_TESTS=true vitest run --config vitest.integration.config.ts",
+    "load-test:scan": "node scripts/load-scan-concurrent.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

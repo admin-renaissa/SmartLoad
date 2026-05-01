@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
+import type { Html5QrcodeResult } from 'html5-qrcode';
 import { Html5Qrcode } from 'html5-qrcode';
+import { encodeCameraScanPayload } from '../../utils/cameraScanPayload.ts';
 
 interface CameraModalProps {
-  onScan: (value: string) => void;
+  /** Raw barcode string for API (JSON when camera driver expects structured payload). */
+  onScan: (payloadForApi: string) => void;
   onClose: () => void;
 }
 
@@ -17,19 +20,17 @@ export function CameraModal({ onScan, onClose }: CameraModalProps) {
     const scanner = new Html5Qrcode('camera-reader');
     scannerRef.current = scanner;
 
+    const onDecoded = (decodedText: string, result: Html5QrcodeResult) => {
+      if (!mountedRef.current) return;
+      const payload = encodeCameraScanPayload(decodedText, result);
+      void scanner
+        .stop()
+        .then(() => onScanRef.current(payload))
+        .catch(() => onScanRef.current(payload));
+    };
+
     scanner
-      .start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          if (!mountedRef.current) return;
-          void scanner
-            .stop()
-            .then(() => onScanRef.current(decodedText))
-            .catch(() => onScanRef.current(decodedText));
-        },
-        () => {},
-      )
+      .start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 250 } }, onDecoded, () => {})
       .catch((err) => {
         console.error('Camera start failed:', err);
       });

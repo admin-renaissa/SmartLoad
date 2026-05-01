@@ -13,6 +13,11 @@ const HTML5QR_FORMAT_MAP: Record<string, BarcodeFormat> = {
   EAN_13: BarcodeFormat.EAN13,
 };
 
+function normalizeHtml5FormatLabel(fmt?: string): string | undefined {
+  if (!fmt?.trim()) return undefined;
+  return fmt.trim().toUpperCase().replace(/-/g, '_');
+}
+
 interface CameraPayload {
   value: string;
   format?: string;
@@ -33,8 +38,9 @@ export class CameraDriver implements IScannerDriver {
       }
 
       const cleaned = payload.value.trim();
-      const format = payload.format
-        ? (HTML5QR_FORMAT_MAP[payload.format] ?? BarcodeFormat.UNKNOWN)
+      const fmtKey = normalizeHtml5FormatLabel(payload.format);
+      const format = fmtKey
+        ? (HTML5QR_FORMAT_MAP[fmtKey] ?? BarcodeFormat.UNKNOWN)
         : BarcodeFormat.QR;
 
       return {

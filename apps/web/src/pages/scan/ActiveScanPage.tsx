@@ -384,8 +384,8 @@ export default function ActiveScanPage() {
 
       {showCamera && (
         <CameraModal
-          onScan={(value) => {
-            handleSubmitScan(JSON.stringify({ value, format: 'QR_CODE' }), 'camera');
+          onScan={(payload) => {
+            handleSubmitScan(payload, 'camera');
             setShowCamera(false);
           }}
           onClose={() => setShowCamera(false)}

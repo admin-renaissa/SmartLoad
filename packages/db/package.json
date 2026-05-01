@@ -6,12 +6,12 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "migrate": "prisma migrate dev",
-    "migrate:deploy": "prisma migrate deploy",
+    "migrate": "dotenv -e ../../.env -- prisma migrate dev",
+    "migrate:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
     "generate": "prisma generate",
-    "studio": "prisma studio",
-    "seed": "tsx prisma/seed.ts",
-    "typecheck": "prisma validate",
+    "studio": "dotenv -e ../../.env -- prisma studio",
+    "seed": "dotenv -e ../../.env -- tsx prisma/seed.ts",
+    "typecheck": "dotenv -e ../../.env -- prisma validate",
     "lint": "echo \"skip\"",
     "build": "prisma generate",
     "test": "echo \"skip\""
@@ -22,12 +22,13 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "dotenv-cli": "^11.0.0",
     "prisma": "^5.14.0",
     "ts-node": "^10.9.0",
     "tsx": "^4.15.1",
     "typescript": "^5.4.0"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "dotenv -e ../../.env -- tsx prisma/seed.ts"
   }
 }

@@ -19,6 +19,7 @@ import type {
 } from './session.schema.js';
 import type { ScannerInput } from '../../hal/hal.interface.js';
 import { ZebraDataWedgeDriver } from '../../hal/drivers/zebra-datawedge.driver.js';
+import { CameraDriver } from '../../hal/drivers/camera.driver.js';
 
 const variantLookupInclude = {
   product: { include: { category: true } },
@@ -204,8 +205,27 @@ export class SessionService {
   }
 
   async processScan(input: ProcessScanInput, operatorId: string): Promise<ScanProcessResult> {
-    const scannerInput = this.app.hal.processRawScan(input.rawBarcode, input.deviceId);
+    const scannerInput = this.parseScannerInput(input.rawBarcode, input.deviceId);
     return this.processNormalizedScan(input.sessionId, scannerInput, operatorId, input.deviceId);
+  }
+
+  /** Camera scans use {@link CameraDriver}; keyboard wedge uses configured HAL driver. */
+  private parseScannerInput(raw: string, deviceId?: string): ScannerInput {
+    const trimmed = raw.trim();
+    if (deviceId === 'camera') {
+      return new CameraDriver().parseRawInput(raw, deviceId);
+    }
+    try {
+      if (trimmed.startsWith('{')) {
+        const parsed = JSON.parse(trimmed) as { value?: unknown };
+        if (typeof parsed?.value === 'string') {
+          return new CameraDriver().parseRawInput(trimmed, deviceId);
+        }
+      }
+    } catch {
+      /* use HAL */
+    }
+    return this.app.hal.processRawScan(raw, deviceId);
   }
 
   async processDataWedgeScan(sessionId: string, body: unknown, operatorId: string): Promise<ScanProcessResult> {

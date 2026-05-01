@@ -7,6 +7,7 @@ import { SessionService } from '../session.service.js';
 import { HIDKeyboardDriver } from '../../../hal/drivers/hid-keyboard.driver.js';
 import { SerialDriver } from '../../../hal/drivers/serial.driver.js';
 import { ZebraDataWedgeDriver } from '../../../hal/drivers/zebra-datawedge.driver.js';
+import { CameraDriver } from '../../../hal/drivers/camera.driver.js';
 import { HalService } from '../../../hal/hal.service.js';
 
 function flushImmediate(): Promise<void> {
@@ -667,6 +668,13 @@ describe('HalService & drivers', () => {
     expect(out.cleaned).toBe('QR-VALUE');
     expect(out.format).toBe(BarcodeFormat.QR);
     expect(out.deviceId).toBe('SN12345');
+  });
+
+  it('CameraDriver maps dashed format labels to shared barcode enums', () => {
+    const d = new CameraDriver();
+    const out = d.parseRawInput(JSON.stringify({ value: 'ABC-123', format: 'CODE-128' }));
+    expect(out.format).toBe(BarcodeFormat.CODE128);
+    expect(out.cleaned).toBe('ABC-123');
   });
 
   it('HalService.setDriver throws for unknown driver', async () => {
