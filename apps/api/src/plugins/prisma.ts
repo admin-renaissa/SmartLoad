@@ -1,6 +1,8 @@
 import fp from 'fastify-plugin';
-import { PrismaClient } from '@prisma/client';
 import type { FastifyPluginAsync } from 'fastify';
+// Use workspace path so typings always come from `prisma generate` output (incl. `scannerDevice`).
+// The `@prisma/client` package symlink alone can diverge from that output in some installs.
+import { PrismaClient } from '@smartload/prisma-client';
 
 declare module 'fastify' {
   interface FastifyInstance {

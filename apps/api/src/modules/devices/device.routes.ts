@@ -1,7 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { successResponse, UserRole } from '@smartload/shared';
-import { parsePagination, buildPaginationMeta } from '@smartload/shared';
+import { buildPaginationMeta, parsePagination, successResponse, UserRole } from '@smartload/shared';
 
 const VALID_DRIVERS = ['hid-keyboard', 'serial', 'zebra-datawedge', 'camera'] as const;
 
