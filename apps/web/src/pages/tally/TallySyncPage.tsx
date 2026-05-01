@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 import { cn } from '../../utils/cn.ts';
@@ -108,6 +109,27 @@ export default function TallySyncPage() {
     }
   };
 
+  const rowJobs = syncLog?.items ?? [];
+
+  const jobStatusSlices = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const j of rowJobs) {
+      const st = String(j.status ?? 'UNKNOWN');
+      counts.set(st, (counts.get(st) || 0) + 1);
+    }
+
+    const palette: Record<string, string> = {
+      COMPLETED: '#16A34A',
+      FAILED: '#DC2626',
+      PERMANENTLY_FAILED: '#B91C1C',
+      RETRYING: '#F59E0B',
+    };
+
+    return [...counts.entries()]
+      .map(([label, value]) => ({ label, value, color: palette[label] }))
+      .sort((a, b) => b.value - a.value);
+  }, [rowJobs]);
+
   if (!canView) {
     return (
       <div>
@@ -116,8 +138,6 @@ export default function TallySyncPage() {
       </div>
     );
   }
-
-  const rowJobs = syncLog?.items ?? [];
 
   return (
     <div className="space-y-6">
@@ -149,6 +169,16 @@ export default function TallySyncPage() {
           {message.text}
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tally job status</CardTitle>
+          <p className="text-sm text-gray-500 font-normal">Distribution from the latest sync log</p>
+        </CardHeader>
+        <CardContent>
+          <DonutChart data={jobStatusSlices} height={230} showLegend />
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

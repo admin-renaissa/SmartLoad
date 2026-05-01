@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { CheckCircle, Package, Truck, AlertCircle } from 'lucide-react';
@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import SignatureCanvas from 'react-signature-canvas';
 import { Button } from '../../components/ui/Button.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
+import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
 import api from '../../lib/axios.ts';
 import { getUiLang, POD_UIcopy, setUiLang, type UiLang } from '../../i18n/messages.ts';
 import i18n from '../../i18n/i18n.ts';
@@ -207,6 +208,24 @@ export default function PODPage() {
   const vehicle = session?.vehicle as Record<string, unknown>;
   const lineRows = ((pod as Record<string, unknown>)?.lineItems || []) as PodLine[];
 
+  const discrepancySlices = useMemo<DonutSlice[]>(() => {
+    if (!lineRows.length) return [];
+
+    let withReason = 0;
+    for (const row of lineRows) {
+      const reason = String(discReasons[row.lineItemId] ?? '').trim();
+      if (reason.length > 0) withReason += 1;
+    }
+
+    const total = lineRows.length;
+    const withoutReason = Math.max(0, total - withReason);
+
+    return [
+      { label: 'No discrepancy', value: withoutReason, color: '#059669' },
+      { label: 'Has discrepancy', value: withReason, color: '#DC2626' },
+    ];
+  }, [discReasons, lineRows]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-md mx-auto">
@@ -364,6 +383,15 @@ export default function PODPage() {
                   })}
                 </div>
               </div>
+
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-2">
+                  <p className="text-xs text-gray-500 uppercase font-medium tracking-wide">Discrepancies</p>
+                  <span className="text-xs text-gray-400">{lineRows.length} lines</span>
+                </div>
+                <DonutChart data={discrepancySlices} height={170} showLegend={false} />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t.receiverName}</label>
                 <input

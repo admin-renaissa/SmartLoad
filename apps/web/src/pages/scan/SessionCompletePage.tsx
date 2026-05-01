@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { CheckCircle, AlertTriangle, ChevronLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../lib/axios.ts';
 import { Button } from '../../components/ui/Button.tsx';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 export default function SessionCompletePage() {
   const { sessionId = '' } = useParams<{ sessionId: string }>();
@@ -46,6 +47,17 @@ export default function SessionCompletePage() {
   const incompleteItems = lineItems.filter(
     (li) => (li.loadedBoxes as number) < (li.orderedBoxes as number),
   );
+
+  const completion = useMemo(() => {
+    let ordered = 0;
+    let loaded = 0;
+    for (const li of lineItems) {
+      ordered += (li.orderedBoxes as number) ?? 0;
+      loaded += (li.loadedBoxes as number) ?? 0;
+    }
+    const remaining = Math.max(0, ordered - loaded);
+    return { ordered, loaded, remaining };
+  }, [lineItems]);
 
   const handleClose = () => {
     if (incompleteItems.length > 0) {
@@ -95,6 +107,25 @@ export default function SessionCompletePage() {
           </div>
         </>
       )}
+
+      <div className="w-full max-w-sm bg-white/10 rounded-xl p-4 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-white/60 text-sm">Session completion</span>
+          <span className="text-white font-mono text-xs">
+            {completion.loaded}/{completion.ordered}
+          </span>
+        </div>
+        <div className="h-[160px]">
+          <DonutChart
+            data={[
+              { label: 'LOADED', value: completion.loaded, color: '#16A34A' },
+              { label: 'REMAINING', value: completion.remaining, color: '#2563EB' },
+            ]}
+            height={160}
+            showLegend={true}
+          />
+        </div>
+      </div>
 
       <div className="w-full max-w-sm bg-white/10 rounded-xl p-4 mb-6 text-sm">
         <div className="flex justify-between py-1">

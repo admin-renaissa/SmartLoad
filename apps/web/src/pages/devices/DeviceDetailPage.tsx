@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -20,6 +20,7 @@ import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
+import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
 import api from '../../lib/axios.ts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -391,6 +392,18 @@ export default function DeviceDetailPage() {
 
   const { label: statusLabel, cls: statusCls } = lastSeenLabel(device.lastSeenAt, device.isActive);
 
+  const scanOutcomeSlices = useMemo<DonutSlice[]>(() => {
+    const success = device.stats.successScans;
+    const errors = device.stats.errorScans;
+    const total = success + errors;
+    if (total === 0) return [];
+
+    return [
+      { label: 'Success', value: success, color: '#059669' },
+      { label: 'Errors', value: errors, color: '#DC2626' },
+    ];
+  }, [device.stats.successScans, device.stats.errorScans]);
+
   return (
     <div className="space-y-6">
       {/* Back nav */}
@@ -489,6 +502,16 @@ export default function DeviceDetailPage() {
           sub="dispatch sessions"
         />
       </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <h3 className="text-sm font-semibold text-gray-900">Scan outcomes</h3>
+            <p className="text-xs text-gray-500">{device.stats.totalScans} total</p>
+          </div>
+          <DonutChart data={scanOutcomeSlices} height={190} showLegend />
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <div>

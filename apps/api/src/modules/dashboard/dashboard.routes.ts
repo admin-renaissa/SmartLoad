@@ -5,7 +5,7 @@ import { buildExecutiveDashboardData } from './executive-dashboard.data.js';
 export const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/dashboard/executive
   fastify.get('/executive', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (_request, reply) => {
-    const cacheKey = 'dashboard:executive:v4';
+    const cacheKey = 'dashboard:executive:v5';
     const cached = await fastify.redis.get(cacheKey);
     if (cached) return reply.send(successResponse(JSON.parse(cached)));
 

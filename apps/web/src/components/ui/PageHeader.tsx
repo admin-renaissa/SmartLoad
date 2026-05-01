@@ -11,7 +11,7 @@ export function PageHeader({ title, subtitle, actions, className }: PageHeaderPr
   return (
     <div className={cn('flex items-start justify-between mb-6', className)}>
       <div>
-        <h1 className="text-2xl font-bold text-primary">{title}</h1>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-gray-500">{subtitle}</p>}
       </div>
       {actions && <div className="flex items-center gap-2 ml-4">{actions}</div>}

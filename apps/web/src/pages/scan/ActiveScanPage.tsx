@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle, XCircle, AlertTriangle, Scan, LayoutDashboard } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -14,6 +14,7 @@ import { offlineBannerText } from '../../i18n/messages.ts';
 import { CameraModal } from './CameraModal.tsx';
 import api from '../../lib/axios.ts';
 import type { ScanProcessResult } from '@smartload/shared';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 export default function ActiveScanPage() {
   const { sessionId = '' } = useParams<{ sessionId: string }>();
@@ -257,6 +258,29 @@ export default function ActiveScanPage() {
           }
         : null;
 
+  const recentScanSlices = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of recentScans) {
+      const key = String(s.result ?? 'UNKNOWN');
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const palette: Record<string, string> = {
+      SUCCESS: '#16A34A',
+      processing: '#ffffff',
+      OFFLINE_QUEUED: '#F59E0B',
+      EXCESS_QUANTITY: '#F59E0B',
+      error: '#DC2626',
+      warning: '#F59E0B',
+      UNKNOWN: '#6B7280',
+    };
+    const entries = [...counts.entries()].map(([label, value]): { label: string; value: number; color: string } => ({
+      label,
+      value,
+      color: palette[label] ?? '#2563EB',
+    }));
+    return entries.sort((a, b) => b.value - a.value);
+  }, [recentScans]);
+
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden select-none">
 
@@ -325,6 +349,20 @@ export default function ActiveScanPage() {
             </p>
           </div>
         )}
+      </div>
+
+      <div className="flex-[2] bg-[#0F2044] border-t border-white/10 px-4 py-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-white/50 text-xs uppercase tracking-widest">Scan result mix</span>
+          <span className="text-white/60 text-xs font-mono">{recentScans.length}</span>
+        </div>
+        <div className="h-[150px]">
+          <DonutChart
+            data={recentScanSlices.map((s) => ({ label: s.label, value: s.value, color: s.color }))}
+            height={150}
+            showLegend={false}
+          />
+        </div>
       </div>
 
       <div className="flex-[2.5] bg-[#0F2044] border-t border-white/10 px-4 py-3 overflow-hidden">

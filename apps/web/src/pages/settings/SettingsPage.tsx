@@ -14,6 +14,7 @@ import api from '../../lib/axios.ts';
 import { useAuthStore } from '../../store/authStore.ts';
 import { getUiLang, type UiLang } from '../../i18n/messages.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -218,9 +219,30 @@ export default function SettingsPage() {
     return <div className="text-gray-500">Loading…</div>;
   }
 
+  const twoFaEnabled = Boolean(profile?.twoFactorEnabled);
+
   return (
     <div className="space-y-6 max-w-2xl">
       <PageHeader title="Account" subtitle="Your profile and security" />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Security health</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-gray-500 mb-3">
+            Two-factor authentication status for this account
+          </div>
+          <DonutChart
+            data={[
+              { label: '2FA enabled', value: twoFaEnabled ? 1 : 0, color: '#16A34A' },
+              { label: '2FA disabled', value: twoFaEnabled ? 0 : 1, color: '#DC2626' },
+            ]}
+            height={220}
+            showLegend
+          />
+        </CardContent>
+      </Card>
 
       {canManageUsers && (
         <Link

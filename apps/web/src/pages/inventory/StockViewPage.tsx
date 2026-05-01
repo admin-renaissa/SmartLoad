@@ -10,6 +10,7 @@ import { cn } from '../../utils/cn.ts';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 import { useAuthStore } from '../../store/authStore.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 import {
   useStockSummary,
   useLowStockVariants,
@@ -62,6 +63,25 @@ export default function StockViewPage() {
 
   const { data: stockRes, isLoading } = useStockSummary(summaryQuery);
   const stocks = useMemo(() => (stockRes?.data as Record<string, unknown>[]) ?? [], [stockRes]);
+  const stockHealthSlices = useMemo(() => {
+    let ok = 0;
+    let low = 0;
+    let out = 0;
+    for (const row of stocks) {
+      const r = row as Record<string, unknown>;
+      const isOut = !!r.isOutOfStock;
+      const isLow = !!r.isLowStock && !isOut;
+      if (isOut) out++;
+      else if (isLow) low++;
+      else ok++;
+    }
+
+    return [
+      { label: 'OK', value: ok, color: '#16A34A' },
+      { label: 'LOW', value: low, color: '#F59E0B' },
+      { label: 'OUT', value: out, color: '#DC2626' },
+    ];
+  }, [stocks]);
   const meta = stockRes?.meta as {
     total?: number;
     totalPages?: number;
@@ -243,6 +263,16 @@ export default function StockViewPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <div className="p-4 border-b border-gray-100">
+          <p className="text-sm font-medium text-gray-900">Stock health</p>
+          <p className="text-xs text-gray-500 mt-0.5">OK vs LOW vs OUT based on current page filters</p>
+        </div>
+        <div className="p-4">
+          <DonutChart data={stockHealthSlices} height={220} showLegend />
+        </div>
+      </Card>
 
       <Card className="overflow-hidden">
         <CardContent className="p-0">

@@ -17,6 +17,7 @@ import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { CreateSessionModal } from './CreateSessionModal.tsx';
 import { POStatus, PODStatus } from '@smartload/shared';
+import { motion } from 'framer-motion';
 
 interface DashboardSummary {
   sessionsOpenedToday: number;
@@ -342,7 +343,13 @@ function CompletedSessionRow({ session }: { session: Record<string, unknown> }) 
   const client = po?.client as Record<string, unknown> | undefined;
   const closedAt = session.closedAt as string | null | undefined;
   return (
-    <div className="py-3 px-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+    <motion.div
+      className="py-3 px-4 flex flex-wrap items-center justify-between gap-3 text-sm"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      whileHover={{ y: -1 }}
+    >
       <div className="min-w-0">
         <p className="font-mono font-semibold text-gray-900">{session.sessionCode as string}</p>
         <p className="text-gray-500 text-xs truncate">
@@ -360,7 +367,7 @@ function CompletedSessionRow({ session }: { session: Record<string, unknown> }) 
       <Link to={`/app/sessions/${session.id as string}`}>
         <Button size="sm" variant="outline">{t('orders.view')}</Button>
       </Link>
-    </div>
+    </motion.div>
   );
 }
 
@@ -371,7 +378,13 @@ function DisputedSessionRow({ session }: { session: Record<string, unknown> }) {
   const client = po?.client as Record<string, unknown> | undefined;
   const vehicle = session.vehicle as Record<string, unknown> | undefined;
   return (
-    <div className="py-3 px-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+    <motion.div
+      className="py-3 px-4 flex flex-wrap items-center justify-between gap-3 text-sm"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      whileHover={{ y: -1 }}
+    >
       <div className="min-w-0">
         <p className="font-mono font-semibold text-gray-900">{session.sessionCode as string}</p>
         <p className="text-gray-500 text-xs truncate">
@@ -389,7 +402,7 @@ function DisputedSessionRow({ session }: { session: Record<string, unknown> }) {
           {t('dispatch.openSession')}
         </Button>
       </Link>
-    </div>
+    </motion.div>
   );
 }
 
@@ -401,7 +414,13 @@ function DisputedPodRow({ pod }: { pod: Record<string, unknown> }) {
   const vehicle = session?.vehicle as Record<string, unknown> | undefined;
   const sessionId = session?.id as string | undefined;
   return (
-    <div className="py-3 px-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+    <motion.div
+      className="py-3 px-4 flex flex-wrap items-center justify-between gap-3 text-sm"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      whileHover={{ y: -1 }}
+    >
       <div className="min-w-0">
         <p className="font-mono text-gray-800 truncate">{(po?.poNumber as string) ?? '—'}</p>
         <p className="text-gray-500 text-xs truncate">
@@ -415,7 +434,7 @@ function DisputedPodRow({ pod }: { pod: Record<string, unknown> }) {
           </Button>
         </Link>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -433,15 +452,17 @@ function StatCard({
   danger?: boolean;
 }) {
   return (
-    <Card className={danger ? 'border-red-200' : accent ? 'border-accent/30' : ''}>
-      <CardContent className="flex items-center gap-3 py-4">
-        <div className="p-2 rounded-lg bg-gray-100 text-gray-700">{icon}</div>
-        <div>
-          <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <motion.div whileHover={{ y: -2 }} transition={{ type: 'spring', stiffness: 300, damping: 22 }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <Card className={danger ? 'border-red-200' : accent ? 'border-accent/30' : ''}>
+        <CardContent className="flex items-center gap-3 py-4">
+          <div className="p-2 rounded-lg bg-gray-100 text-gray-700">{icon}</div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+            <p className="text-2xl font-bold text-gray-900">{value}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -459,8 +480,9 @@ function SessionCard({ session }: { session: Record<string, unknown> }) {
       : 0;
 
   return (
-    <Card>
-      <CardContent className="space-y-3">
+    <motion.div whileHover={{ y: -2 }} transition={{ type: 'spring', stiffness: 300, damping: 22 }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+      <Card>
+        <CardContent className="space-y-3">
         <div className="flex justify-between items-start">
           <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded">OPEN</span>
           <span className="font-mono text-sm text-gray-600">{session.sessionCode as string}</span>
@@ -494,7 +516,8 @@ function SessionCard({ session }: { session: Record<string, unknown> }) {
             <Button size="sm">{t('dispatch.openScanUi')}</Button>
           </Link>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

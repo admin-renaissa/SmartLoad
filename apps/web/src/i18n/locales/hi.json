@@ -122,6 +122,10 @@
     "inventoryNote": "हाथ में बक्से × वेरिएंट की नवीनतम पीओ लाइन दर (प्रॉक्सी; बहु-गोदाम मूल्यांकन नहीं)।",
     "podTrendTitle": "POD परिणाम (30 दिन)",
     "podTrendSubtitle": "दिन के अनुसार स्वीकृत बनाम विवादित (acknowledgedAt, UTC दिन बकेट)।",
+    "sessionsCount30dTitle": "सत्र थ्रूपुट (30 दिन)",
+    "sessionsCount30dSubtitle": "प्रति दिन बंद सत्र",
+    "scanErrorRateTrend7dTitle": "स्कैन त्रुटि दर ट्रेंड (7 दिन)",
+    "scanErrorRateTrend7dSubtitle": "प्रति दिन कुल स्कैन के मुकाबले त्रुटियाँ %",
     "legendAck": "स्वीकृत",
     "legendDisputed": "विवादित",
     "pageTitle": "कार्यकारी डैशबोर्ड"

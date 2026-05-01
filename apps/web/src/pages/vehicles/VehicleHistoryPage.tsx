@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button.tsx';
 import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { useVehicleHistory } from '../../hooks/useVehicles.ts';
+import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
 
 function plateWrap(reg: string) {
   const spaced =
@@ -45,6 +46,22 @@ export default function VehicleHistoryPage() {
     const t = vehicle?.type as string | undefined;
     return t ? t.replace('_', ' ') : '—';
   }, [vehicle?.type]);
+
+  const statusSlices = useMemo<DonutSlice[]>(() => {
+    if (!sessions.length) return [];
+    const counts = new Map<string, number>();
+    for (const s of sessions) {
+      const st = String((s as Record<string, unknown>).status ?? 'UNKNOWN');
+      counts.set(st, (counts.get(st) ?? 0) + 1);
+    }
+
+    const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+    return sorted.map(([label, value], i) => ({
+      label,
+      value,
+      color: ['#2563EB', '#059669', '#DC2626', '#F59E0B', '#7C3AED'][i % 5],
+    }));
+  }, [sessions]);
 
   if (isLoading && !bundle) {
     return (
@@ -114,6 +131,16 @@ export default function VehicleHistoryPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between gap-4 mb-2">
+            <h3 className="text-sm font-semibold text-gray-900">Session status mix</h3>
+            <span className="text-xs text-gray-500">{sessions.length} sessions</span>
+          </div>
+          <DonutChart data={statusSlices} height={190} showLegend />
+        </CardContent>
+      </Card>
 
       <div className="space-y-6">
         <h3 className="font-semibold text-gray-900">Dispatch timeline</h3>

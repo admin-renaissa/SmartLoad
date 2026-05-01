@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import {
   Truck,
   Package,
@@ -54,6 +55,7 @@ export type ExecutiveDashboardData = {
     disputedPODs: number;
   };
   dispatchVolume30d: { date: string; label: string; boxes: number }[];
+  sessionsCount30d: { date: string; label: string; sessions: number }[];
   ordersByStatus: { status: string; count: number }[];
   topClientsMonth: { clientId: string; clientName: string; boxes: number }[];
   topProductsMonth: { productId: string; productName: string; boxes: number }[];
@@ -77,6 +79,7 @@ export type ExecutiveDashboardData = {
     failedJobsCount: number;
   };
   podDisputeTrend?: { date: string; label: string; acknowledged: number; disputed: number }[];
+  scanErrorRateTrend7d?: { date: string; label: string; errorRate: number; errors: number; total: number }[];
   inventoryValuePaise?: number;
 };
 
@@ -87,12 +90,14 @@ export default function ExecutiveDashboard({ data }: Props) {
   const {
     kpis,
     dispatchVolume30d,
+    sessionsCount30d = [],
     ordersByStatus,
     topClientsMonth,
     topProductsMonth,
     recentSessions,
     lowStockAlerts,
     tallySync,
+    scanErrorRateTrend7d = [],
     podDisputeTrend = [],
     inventoryValuePaise = 0,
   } = data;
@@ -105,7 +110,8 @@ export default function ExecutiveDashboard({ data }: Props) {
   const spark = kpis.boxesWeekSparkline;
 
   return (
-    <div className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }}>
+      <div className="space-y-6">
       <PageHeader
         title={t('executive.pageTitle')}
         subtitle={new Date().toLocaleDateString('en-IN', {
@@ -238,6 +244,78 @@ export default function ExecutiveDashboard({ data }: Props) {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Row 2.5 — Sessions throughput + Scan error rate */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.25 }}>
+          <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-accent" />
+              <CardTitle>{t('executive.sessionsCount30dTitle')}</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.sessionsCount30dSubtitle')}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={sessionsCount30d} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10 }}
+                    interval={3}
+                    tickFormatter={(v: string) => (v ? v.slice(5).replace('-', '/') : '')}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip formatter={(v: number) => [v, 'Sessions']} labelFormatter={(v) => String(v)} />
+                  <Line type="monotone" dataKey="sessions" stroke="#0D9488" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.25, delay: 0.04 }}>
+          <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-accent" />
+              <CardTitle>{t('executive.scanErrorRateTrend7dTitle')}</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.scanErrorRateTrend7dSubtitle')}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={scanErrorRateTrend7d}
+                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorErrRate" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#DC2626" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#DC2626" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10 }}
+                    interval={2}
+                    tickFormatter={(v: string) => (v ? v.slice(5).replace('-', '/') : '')}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip formatter={(v: number) => [`${v}%`, 'Error rate']} labelFormatter={(v) => String(v)} />
+                  <Area type="monotone" dataKey="errorRate" stroke="#DC2626" fill="url(#colorErrRate)" fillOpacity={1} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Row 2 — 60% area + 40% donut */}
@@ -484,6 +562,7 @@ export default function ExecutiveDashboard({ data }: Props) {
           <ExternalLink className="h-3.5 w-3.5" />
         </Link>
       </div>
-    </div>
+      </div>
+    </motion.div>
   );
 }

@@ -51,7 +51,13 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status] || { label: status, className: 'bg-gray-100 text-gray-600' };
 
   return (
-    <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', config.className, className)}>
+    <span
+      className={cn(
+        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-black/5',
+        config.className,
+        className,
+      )}
+    >
       {config.label}
     </span>
   );

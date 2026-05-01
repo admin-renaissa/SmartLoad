@@ -13,9 +13,10 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
-import { Card, CardContent } from '../../components/ui/Card.tsx';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import api from '../../lib/axios.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -339,6 +340,28 @@ export default function AuditLogPage() {
   const todayCount = entries.filter((e) => isToday(e.createdAt)).length;
   const uniqueUsers = new Set(entries.map((e) => e.user?.id ?? e.userEmail)).size;
 
+  const methodSlices = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const e of entries) {
+      const { method } = parseAction(e.action);
+      const key = String(method ?? 'UNKNOWN');
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+
+    const palette: Record<string, string> = {
+      POST: '#16A34A',
+      PATCH: '#2563EB',
+      PUT: '#2563EB',
+      DELETE: '#DC2626',
+      API: '#0D9488',
+      UNKNOWN: '#6B7280',
+    };
+
+    return [...counts.entries()]
+      .map(([label, value]) => ({ label, value, color: palette[label] }))
+      .sort((a, b) => b.value - a.value);
+  }, [entries]);
+
   const inputCls =
     'px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 bg-white';
 
@@ -383,6 +406,16 @@ export default function AuditLogPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Action methods</CardTitle>
+          <p className="text-sm text-gray-500 font-normal">Distribution in loaded entries</p>
+        </CardHeader>
+        <CardContent>
+          <DonutChart data={methodSlices} height={220} showLegend />
+        </CardContent>
+      </Card>
 
       {/* Filter bar */}
       <Card>
@@ -472,7 +505,56 @@ export default function AuditLogPage() {
         </div>
       ) : (
         <Card>
-          <div className="overflow-x-auto">
+          {/* Mobile: stacked cards */}
+          <div className="sm:hidden divide-y divide-gray-50">
+            {entries.length > 0 ? (
+              entries.map((entry) => {
+                const { method, path } = parseAction(entry.action);
+                return (
+                  <div key={entry.id} className="px-4 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500 whitespace-nowrap">
+                          {formatTs(entry.createdAt)}
+                        </p>
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {entry.user?.name ?? entry.userEmail}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`text-xs px-1.5 py-0.5 rounded font-mono font-semibold ${METHOD_COLORS[method] ?? 'bg-gray-100 text-gray-700'}`}
+                          >
+                            {method}
+                          </span>
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${resourceChipColor(entry.resourceType)}`}
+                          >
+                            {resourceLabel(entry.resourceType)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 break-all">
+                          {path || entry.action}
+                          {entry.resourceId ? ` · ${entry.resourceId}` : ''}
+                        </p>
+                        {entry.ipAddress ? (
+                          <p className="text-xs font-mono text-gray-500 mt-1">{entry.ipAddress}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="px-6 py-16 text-center text-gray-400">
+                <Shield className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p className="font-medium">No audit log entries found</p>
+                <p className="text-xs mt-1">Try adjusting the filters above.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop: full table */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">

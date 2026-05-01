@@ -8,6 +8,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { usePermission } from '../../hooks/usePermission.ts';
 import { useDeactivateVehicle, useVehicles } from '../../hooks/useVehicles.ts';
 import { VehicleFormModal } from './VehicleFormModal.tsx';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 function Plate({ reg }: { reg: string }) {
   const spaced =
@@ -86,6 +87,24 @@ export default function VehicleListPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <div className="p-4 border-b border-gray-100">
+          <p className="text-sm font-medium text-gray-900">Fleet status</p>
+          <p className="text-xs text-gray-500 mt-0.5">Availability across registered vehicles</p>
+        </div>
+        <div className="p-4">
+          <DonutChart
+            data={[
+              { label: 'AVAILABLE', value: totals.avail, color: '#16A34A' },
+              { label: 'DISPATCHING', value: totals.busy, color: '#F59E0B' },
+              { label: 'INACTIVE', value: totals.inactive, color: '#6B7280' },
+            ]}
+            height={220}
+            showLegend
+          />
+        </div>
+      </Card>
 
       {isLoading ?
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

@@ -1,15 +1,18 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PageTransition } from '../components/animation/PageTransition.tsx';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, UserCog, Warehouse,
   Truck, Activity, BarChart3, Settings, RefreshCw, ClipboardList,
-  LogOut, ChevronLeft, ChevronRight, Menu, X, Scan, User, MonitorSmartphone,
+  LogOut, ChevronLeft, ChevronRight, ChevronDown, Menu, X, Scan, MonitorSmartphone,
+  Phone,
 } from 'lucide-react';
-import { useAuthStore } from '../store/authStore.ts';
+import { useAuthStore, type AuthUser } from '../store/authStore.ts';
 import { cn } from '../utils/cn.ts';
 import api from '../lib/axios.ts';
 import { usePermission } from '../hooks/usePermission.ts';
+import { GlobalSearch } from '../components/ui/GlobalSearch.tsx';
 
 const navPermissionKeys = [
   'dashboard:supervisor',
@@ -52,6 +55,144 @@ const navItems: NavItemDef[] = [
   { href: '/app/settings', icon: Settings, labelKey: 'nav.account' },
   { href: '/app/users', icon: UserCog, labelKey: 'nav.users', permission: 'users:manage' },
 ];
+
+// ── User initials helper ───────────────────────────────────────────────────────
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+}
+
+// ── UserProfileMenu ────────────────────────────────────────────────────────────
+
+function UserProfileMenu({ user, onLogout }: { user: AuthUser; onLogout: () => void }) {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPanelStyle({
+        position: 'fixed',
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+        zIndex: 9999,
+        width: 280,
+      });
+    }
+  }, [open]);
+
+  // Close only when clicking outside BOTH the trigger and the panel
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      const target = e.target as Node;
+      const outsideTrigger = triggerRef.current && !triggerRef.current.contains(target);
+      const outsidePanel = panelRef.current && !panelRef.current.contains(target);
+      if (outsideTrigger && outsidePanel) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  const initials = getInitials(user.name);
+
+  function goSettings() {
+    setOpen(false);
+    navigate('/app/settings');
+  }
+
+  function handleLogout() {
+    setOpen(false);
+    onLogout();
+  }
+
+  return (
+    <div className="relative">
+      {/* Trigger button */}
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((s) => !s)}
+        className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-100 transition-colors group"
+      >
+        {/* Avatar circle */}
+        <span className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          {initials}
+        </span>
+        {/* Name — hidden on small screens, no artificial max-width */}
+        <span className="hidden sm:block text-sm font-medium text-gray-700 group-hover:text-gray-900">
+          {user.name}
+        </span>
+        <ChevronDown className={cn('hidden sm:block h-3.5 w-3.5 text-gray-400 flex-shrink-0 transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {/* Dropdown panel — fixed width so text never truncates */}
+      {open && (
+        <div
+          ref={panelRef}
+          style={panelStyle}
+          className="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden"
+        >
+          {/* Profile header */}
+          <div className="px-4 py-4 flex items-start gap-3">
+            <span className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white text-base font-bold flex-shrink-0">
+              {initials}
+            </span>
+            <div className="flex-1 overflow-hidden">
+              <p className="font-semibold text-gray-900 break-words">{user.name}</p>
+              <p className="text-xs text-gray-500 break-all mt-0.5">{user.email}</p>
+              <span className="inline-block mt-1.5 text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">
+                {user.role}
+              </span>
+              {user.phone && (
+                <p className="flex items-center gap-1 mt-1.5 text-xs text-gray-500">
+                  <Phone className="h-3 w-3 flex-shrink-0" />
+                  {user.phone}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100" />
+
+          {/* Actions */}
+          <div className="py-1.5">
+            <button
+              type="button"
+              onClick={goSettings}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+            >
+              <Settings className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              Account Settings
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+            >
+              <LogOut className="h-4 w-4 flex-shrink-0" />
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function NavItem({ href, icon: Icon, label, exact, collapsed }: {
   href: string; icon: typeof LayoutDashboard; label: string; exact?: boolean; collapsed: boolean;
@@ -232,19 +373,18 @@ export function AppLayout() {
             <Menu className="h-6 w-6" />
           </button>
 
+          <GlobalSearch />
+
           <div className="flex-1" />
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-700">
-              <User className="h-4 w-4 text-gray-400" />
-              <span className="font-medium">{user?.name}</span>
-            </div>
-          </div>
+          {user && <UserProfileMenu user={user} onLogout={handleLogout} />}
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto p-6">
-          <Outlet />
+        <main className="flex-1 overflow-auto p-4 sm:p-6">
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </main>
       </div>
     </div>

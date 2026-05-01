@@ -122,6 +122,10 @@
     "inventoryNote": "On-hand boxes × latest PO line rate per variant (proxy; not multi-warehouse valuation).",
     "podTrendTitle": "POD outcomes (30 days)",
     "podTrendSubtitle": "Acknowledged vs disputed by day (acknowledgedAt, UTC date bucket).",
+    "sessionsCount30dTitle": "Sessions throughput (30 days)",
+    "sessionsCount30dSubtitle": "Closed sessions per day",
+    "scanErrorRateTrend7dTitle": "Scan error rate trend (7 days)",
+    "scanErrorRateTrend7dSubtitle": "Errors as % of total scans per day",
     "legendAck": "Acknowledged",
     "legendDisputed": "Disputed",
     "pageTitle": "Executive dashboard"

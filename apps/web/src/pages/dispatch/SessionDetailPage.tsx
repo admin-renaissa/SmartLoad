@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -7,6 +7,7 @@ import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
+import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 import { useDownloadChallan, useDownloadManifest } from '../../hooks/useSessions.ts';
@@ -86,6 +87,25 @@ export default function SessionDetailPage() {
   const po = session?.purchaseOrder as Record<string, unknown> | undefined;
   const poId = po?.id as string | undefined;
   const lineItems = (po?.lineItems as Record<string, unknown>[]) ?? [];
+
+  const completionSlices = useMemo<DonutSlice[]>(() => {
+    const lineCount = lineItems.length;
+    if (lineCount === 0) return [];
+
+    const completed = lineItems.filter((li) => {
+      const ordered = Number(li.orderedBoxes ?? 0);
+      const loaded = Number(li.loadedBoxes ?? 0);
+      return ordered > 0 && loaded >= ordered;
+    }).length;
+
+    const incomplete = Math.max(0, lineCount - completed);
+
+    return [
+      { label: 'Completed', value: completed, color: '#059669' },
+      { label: 'Incomplete', value: incomplete, color: '#DC2626' },
+    ];
+  }, [lineItems]);
+
   const vehicle = session?.vehicle as Record<string, unknown> | undefined;
   const pod = session?.pod as Record<string, unknown> | null | undefined;
 
@@ -251,6 +271,16 @@ export default function SessionDetailPage() {
                   className="w-full mt-2 border rounded-lg px-2 py-1 text-xs"
                 />
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between gap-4 mb-2">
+                <h3 className="text-sm font-semibold text-gray-900">Line item completion</h3>
+                <span className="text-xs text-gray-500">{lineItems.length} lines</span>
+              </div>
+              <DonutChart data={completionSlices} height={190} showLegend={false} />
             </CardContent>
           </Card>
 

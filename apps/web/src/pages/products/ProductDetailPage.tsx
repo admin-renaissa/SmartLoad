@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Plus, QrCode, Edit2, Package } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button.tsx';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
+import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 
@@ -159,6 +160,18 @@ export default function ProductDetailPage() {
   if (isLoading) return <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>;
   if (!product) return <div className="text-center py-20 text-gray-500">Product not found</div>;
 
+  const variantHealthSlices = useMemo<DonutSlice[]>(() => {
+    const total = product.variants.length;
+    if (total === 0) return [];
+    const active = product.variants.filter((v) => v.isActive).length;
+    const inactive = total - active;
+
+    return [
+      { label: 'Active', value: active, color: '#059669' },
+      { label: 'Inactive', value: inactive, color: '#DC2626' },
+    ];
+  }, [product.variants]);
+
   return (
     <div className="space-y-6">
       {showAddVariant && <AddVariantModal productId={product.id} onClose={() => setShowAddVariant(false)} />}
@@ -201,6 +214,14 @@ export default function ProductDetailPage() {
                 </div>
               ))}
             </dl>
+
+            <div className="mt-4">
+              <div className="flex items-center justify-between gap-4 mb-2">
+                <p className="text-xs text-gray-500 uppercase font-medium tracking-wide">Variant health</p>
+                <span className="text-xs text-gray-400">{product.variants.length} total</span>
+              </div>
+              <DonutChart data={variantHealthSlices} height={160} showLegend={false} />
+            </div>
           </CardContent>
         </Card>
 

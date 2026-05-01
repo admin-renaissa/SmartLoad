@@ -9,6 +9,7 @@ import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { usePermission } from '../../hooks/usePermission.ts';
 import api from '../../lib/axios.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -122,7 +123,7 @@ function SetupInstructions({ device }: { device: ScannerDevice }) {
               <li>Stop bits: 1</li>
               <li>Flow control: None</li>
             </ul>
-            <p>Map the COM port in the server environment. The API's <span className="font-mono">serial</span> driver will strip STX/ETX control characters automatically.</p>
+            <p>Map the COM port in the server environment. The API&apos;s <span className="font-mono">serial</span> driver will strip STX/ETX control characters automatically.</p>
           </div>
         );
       case 'zebra-datawedge':
@@ -525,6 +526,22 @@ export default function ScannerDevicesPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <div className="p-4 border-b border-gray-100">
+          <p className="text-sm font-medium text-gray-900">Driver types mix</p>
+          <p className="text-xs text-gray-500 mt-0.5">Distribution across registered scanners</p>
+        </div>
+        <div className="p-4">
+          <DonutChart
+            data={Object.entries(stats.byDriver)
+              .map(([k, v]) => ({ label: deviceTypeLabel(k), value: v }))
+              .sort((a, b) => b.value - a.value)}
+            height={220}
+            showLegend
+          />
+        </div>
+      </Card>
 
       {/* Device grid */}
       {isLoading ? (

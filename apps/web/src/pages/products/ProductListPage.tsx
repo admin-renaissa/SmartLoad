@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 interface Category {
   id: string;
@@ -59,6 +60,15 @@ export default function ProductListPage() {
 
   const products = data?.items ?? [];
   const meta = data?.meta;
+
+  const activeStatusSlices = useMemo(() => {
+    const active = products.filter((p) => p.isActive).length;
+    const inactive = Math.max(0, products.length - active);
+    return [
+      { label: 'ACTIVE', value: active, color: '#16A34A' },
+      { label: 'INACTIVE', value: inactive, color: '#6B7280' },
+    ];
+  }, [products]);
 
   const allPageSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
 
@@ -159,6 +169,16 @@ export default function ProductListPage() {
           </div>
         }
       />
+
+      <Card>
+        <div className="p-4 border-b border-gray-100">
+          <p className="text-sm font-medium text-gray-900">Product status</p>
+          <p className="text-xs text-gray-500 mt-0.5">Active vs inactive variants on this page</p>
+        </div>
+        <div className="p-4">
+          <DonutChart data={activeStatusSlices} height={210} showLegend={false} />
+        </div>
+      </Card>
 
       {canManage && (
         <p className="text-sm text-gray-500">{t('products.selectForLabels')}</p>

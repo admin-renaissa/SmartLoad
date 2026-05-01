@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button.tsx';
 import api from '../../lib/axios.ts';
 import { downloadJsonRowsAsCsv } from '../../utils/csvDownload.ts';
 import { useAuthStore } from '../../store/authStore.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 function defaultDateFrom(): string {
   const d = new Date();
@@ -264,6 +265,7 @@ function ReportCard({
 export default function ReportsPage() {
   const { user } = useAuthStore();
   const visibleReports = useMemo(() => filterReportsForRole(user?.role), [user?.role]);
+  const hiddenReportsCount = Math.max(0, REPORTS.length - visibleReports.length);
   const [dateFrom, setDateFrom] = useState(defaultDateFrom);
   const [dateTo, setDateTo] = useState(defaultDateTo);
   const [clientId, setClientId] = useState('');
@@ -274,6 +276,25 @@ export default function ReportsPage() {
         title="Reports & export"
         subtitle="Load data for preview, then download CSV from the browser or Excel/PDF from the server (full filtered extract, 50k row cap)."
       />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Reports available</CardTitle>
+          <p className="text-sm text-gray-500 font-normal">
+            Based on your current role permissions
+          </p>
+        </CardHeader>
+        <CardContent>
+          <DonutChart
+            data={[
+              { label: 'VISIBLE', value: visibleReports.length, color: '#2563EB' },
+              { label: 'HIDDEN', value: hiddenReportsCount, color: '#94A3B8' },
+            ]}
+            height={210}
+            showLegend
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
