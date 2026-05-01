@@ -30,11 +30,16 @@ const updateUserSchema = z.object({
 
 export const userRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/users
-  fastify.get('/', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
+  fastify.get('/', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR) }, async (request, reply) => {
     const query = request.query as { page?: string; limit?: string; role?: UserRole };
     const { page, limit, skip } = parsePagination({ page: Number(query.page), limit: Number(query.limit) });
 
-    const where = query.role ? { role: query.role } : {};
+    const where =
+      request.user.role === UserRole.SUPERVISOR
+        ? { role: UserRole.OPERATOR, isActive: true }
+        : query.role
+          ? { role: query.role }
+          : {};
     const [users, total] = await Promise.all([
       fastify.prisma.user.findMany({
         where,

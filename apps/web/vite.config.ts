@@ -43,13 +43,14 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src'),
       '@shared': path.resolve(__dirname, '../../packages/shared/src'),
+      '@ui': path.resolve(__dirname, '../../packages/ui/src'),
     },
   },
   server: {
     port: 3000,
     proxy: {
-      '/api': { target: 'http://localhost:4001', changeOrigin: true },
-      '/socket.io': { target: 'http://localhost:4001', ws: true, changeOrigin: true },
+      '/api': { target: 'http://localhost:4000', changeOrigin: true },
+      '/socket.io': { target: 'http://localhost:4000', ws: true, changeOrigin: true },
     },
   },
 });

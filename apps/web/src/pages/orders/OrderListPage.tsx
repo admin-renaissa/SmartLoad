@@ -13,7 +13,7 @@ export default function OrderListPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ['orders'],
-    queryFn: async () => { const r = await api.get('/api/v1/orders?limit=50'); return r.data.data; },
+    queryFn: async () => { const r = await api.get('/orders?limit=50'); return r.data.data; },
   });
   const orders = Array.isArray(data) ? data : [];
   return (

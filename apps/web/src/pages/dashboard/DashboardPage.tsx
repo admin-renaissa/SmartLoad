@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const { data: execData, isLoading, isError } = useQuery({
     queryKey: ['dashboard', isSupervisorOnly ? 'supervisor' : 'executive'],
     queryFn: async () => {
-      const endpoint = isSupervisorOnly ? '/api/v1/dashboard/supervisor' : '/api/v1/dashboard/executive';
+      const endpoint = isSupervisorOnly ? '/dashboard/supervisor' : '/dashboard/executive';
       const res = await api.get(endpoint);
       return res.data.data as ExecutiveDashboardData | Record<string, unknown>;
     },

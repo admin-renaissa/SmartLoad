@@ -67,7 +67,8 @@ export default function App() {
 
           {/* Protected app routes with layout */}
           <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-            <Route index element={<DashboardPage />} />
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="orders" element={<OrderListPage />} />
             <Route path="orders/new" element={<CreateOrderPage />} />
             <Route path="orders/:id" element={<OrderDetailPage />} />

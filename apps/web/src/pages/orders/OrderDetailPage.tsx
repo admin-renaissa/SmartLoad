@@ -61,14 +61,14 @@ export default function OrderDetailPage() {
   const { data: po, isLoading } = useQuery<PurchaseOrder>({
     queryKey: ['order', id],
     queryFn: async () => {
-      const r = await api.get(`/api/v1/orders/${id}`);
+      const r = await api.get(`/orders/${id}`);
       return r.data.data;
     },
     enabled: !!id,
   });
 
   const confirmMutation = useMutation({
-    mutationFn: async () => api.patch(`/api/v1/orders/${id}/confirm`),
+    mutationFn: async () => api.patch(`/orders/${id}/confirm`),
     onSuccess: () => {
       toast.success('Order confirmed');
       queryClient.invalidateQueries({ queryKey: ['order', id] });
@@ -78,7 +78,7 @@ export default function OrderDetailPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: async () => api.patch(`/api/v1/orders/${id}/cancel`),
+    mutationFn: async () => api.patch(`/orders/${id}/cancel`),
     onSuccess: () => {
       toast.success('Order cancelled');
       queryClient.invalidateQueries({ queryKey: ['order', id] });

@@ -41,7 +41,7 @@ export default function UserListPage() {
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: '25' });
       if (role) params.set('role', role);
-      const r = await api.get(`/api/v1/users?${params}`);
+      const r = await api.get(`/users?${params}`);
       return { items: r.data.data as UserRow[], meta: r.data.meta };
     },
     enabled: canManage,

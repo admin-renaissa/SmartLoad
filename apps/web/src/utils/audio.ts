@@ -1,54 +1,82 @@
-const AudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof window.AudioContext }).webkitAudioContext;
+/**
+ * Web Audio API — programmatic sound generation.
+ */
 
-function createContext(): AudioContext | null {
-  try {
-    return new AudioContext();
-  } catch {
-    return null;
+let audioCtx: AudioContext | null = null;
+
+export function initAudio(): void {
+  if (!audioCtx && typeof window !== 'undefined') {
+    audioCtx =
+      new (window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!)();
   }
 }
 
-function playTone(frequency: number, duration: number, gain = 0.3, ctx?: AudioContext): Promise<void> {
+function playTone(
+  frequency: number,
+  durationMs: number,
+  type: OscillatorType = 'sine',
+  gainValue = 0.4,
+  delayMs = 0,
+): Promise<void> {
   return new Promise((resolve) => {
-    const context = ctx || createContext();
-    if (!context) return resolve();
+    if (!audioCtx) {
+      resolve();
+      return;
+    }
 
-    const oscillator = context.createOscillator();
-    const gainNode = context.createGain();
+    setTimeout(() => {
+      const oscillator = audioCtx!.createOscillator();
+      const gainNode = audioCtx!.createGain();
 
-    oscillator.connect(gainNode);
-    gainNode.connect(context.destination);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx!.destination);
 
-    oscillator.frequency.value = frequency;
-    oscillator.type = 'sine';
-    gainNode.gain.value = gain;
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, audioCtx!.currentTime);
 
-    oscillator.start(context.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration / 1000);
-    oscillator.stop(context.currentTime + duration / 1000);
+      gainNode.gain.setValueAtTime(0, audioCtx!.currentTime);
+      gainNode.gain.linearRampToValueAtTime(gainValue, audioCtx!.currentTime + 0.01);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx!.currentTime + durationMs / 1000);
 
-    oscillator.onended = () => resolve();
+      oscillator.start(audioCtx!.currentTime);
+      oscillator.stop(audioCtx!.currentTime + durationMs / 1000);
+
+      oscillator.onended = () => resolve();
+    }, delayMs);
   });
 }
 
 export async function playSuccessBeep(): Promise<void> {
-  await playTone(880, 200);
+  await playTone(880, 180, 'sine', 0.35);
 }
 
 export async function playErrorBeep(): Promise<void> {
-  const ctx = createContext();
-  if (!ctx) return;
-  await playTone(220, 300, 0.5, ctx);
-  await new Promise((r) => setTimeout(r, 100));
-  await playTone(220, 300, 0.5, ctx);
-  await new Promise((r) => setTimeout(r, 100));
-  await playTone(220, 300, 0.5, ctx);
+  await playTone(440, 250, 'square', 0.5, 0);
+  await playTone(330, 250, 'square', 0.5, 350);
+  await playTone(220, 350, 'square', 0.5, 700);
 }
 
 export async function playWarningBeep(): Promise<void> {
-  const ctx = createContext();
-  if (!ctx) return;
-  await playTone(440, 300, 0.4, ctx);
-  await new Promise((r) => setTimeout(r, 100));
-  await playTone(440, 300, 0.4, ctx);
+  await playTone(660, 200, 'sine', 0.4, 0);
+  await playTone(660, 200, 'sine', 0.4, 300);
+}
+
+export async function playInfoBeep(): Promise<void> {
+  await playTone(523, 120, 'sine', 0.25);
+}
+
+export async function playScanSound(result: string): Promise<void> {
+  switch (result) {
+    case 'SUCCESS':
+      return playSuccessBeep();
+    case 'WRONG_PRODUCT':
+    case 'WRONG_COLOUR':
+    case 'UNKNOWN_BARCODE':
+      return playErrorBeep();
+    case 'EXCESS_QUANTITY':
+      return playWarningBeep();
+    default:
+      return playInfoBeep();
+  }
 }

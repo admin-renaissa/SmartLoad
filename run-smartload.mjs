@@ -579,12 +579,12 @@ async function startDockerServices() {
   updateState({ dockerStartedByManager: true });
 
   log.info('Waiting for postgres to become healthy…');
-  const pgOk = await waitForDockerContainer('smartload-postgres', 60000);
+  const pgOk = await waitForDockerContainer('smartload_postgres', 60000);
   if (!pgOk) log.warn('Postgres container did not become healthy in time.');
   else log.success('Postgres ready.');
 
   log.info('Waiting for redis to become healthy…');
-  const redisOk = await waitForDockerContainer('smartload-redis', 30000);
+  const redisOk = await waitForDockerContainer('smartload_redis', 30000);
   if (!redisOk) log.warn('Redis container did not become healthy in time.');
   else log.success('Redis ready.');
 
@@ -722,8 +722,8 @@ async function cmdStart() {
 
     // Start Docker infra
     if (!FLAGS.skipDb) {
-      const pgRunning = dockerContainerRunning('smartload-postgres');
-      const redisRunning = dockerContainerRunning('smartload-redis');
+      const pgRunning = dockerContainerRunning('smartload_postgres');
+      const redisRunning = dockerContainerRunning('smartload_redis');
       if (!pgRunning || !redisRunning) {
         await startDockerServices();
         await sleep(4000);
@@ -822,8 +822,8 @@ ${C.bold}${C.green}╔═══════════════════�
   ${C.bold}Backend API:${C.reset}  http://localhost:${bePort}   ${C.gray}(PID ${bePid})${C.reset}
   ${C.bold}Health:${C.reset}       http://localhost:${bePort}/health
   ${C.bold}Tally Bridge:${C.reset} http://localhost:${DEFAULT_PORTS.tallyBridge}
-  ${C.bold}Postgres:${C.reset}     localhost:${DEFAULT_PORTS.postgres}  ${C.gray}(docker: smartload-postgres)${C.reset}
-  ${C.bold}Redis:${C.reset}        localhost:${DEFAULT_PORTS.redis}  ${C.gray}(docker: smartload-redis)${C.reset}
+  ${C.bold}Postgres:${C.reset}     localhost:${DEFAULT_PORTS.postgres}  ${C.gray}(docker: smartload_postgres)${C.reset}
+  ${C.bold}Redis:${C.reset}        localhost:${DEFAULT_PORTS.redis}  ${C.gray}(docker: smartload_redis)${C.reset}
   ${C.bold}MinIO:${C.reset}        http://localhost:${DEFAULT_PORTS.minio}  ${C.gray}(console: http://localhost:${DEFAULT_PORTS.minioConsole})${C.reset}
 
 ${C.bold}Logs:${C.reset}
@@ -974,11 +974,11 @@ async function cmdStatus() {
   await checkService('TallyBridge', state.tallyBridge);
 
   // Docker
-  const pgRunning = dockerContainerRunning('smartload-postgres');
-  const redisRunning = dockerContainerRunning('smartload-redis');
+  const pgRunning = dockerContainerRunning('smartload_postgres');
+  const redisRunning = dockerContainerRunning('smartload_redis');
   const minioRunning = dockerContainerRunning('smartload-minio');
-  log.raw(`  ${C.bold}${'Postgres'.padEnd(14)}${C.reset}: ${pgRunning ? C.green+'RUNNING'+C.reset : C.red+'STOPPED'+C.reset} (smartload-postgres:${DEFAULT_PORTS.postgres})`);
-  log.raw(`  ${C.bold}${'Redis'.padEnd(14)}${C.reset}: ${redisRunning ? C.green+'RUNNING'+C.reset : C.red+'STOPPED'+C.reset} (smartload-redis:${DEFAULT_PORTS.redis})`);
+  log.raw(`  ${C.bold}${'Postgres'.padEnd(14)}${C.reset}: ${pgRunning ? C.green+'RUNNING'+C.reset : C.red+'STOPPED'+C.reset} (smartload_postgres:${DEFAULT_PORTS.postgres})`);
+  log.raw(`  ${C.bold}${'Redis'.padEnd(14)}${C.reset}: ${redisRunning ? C.green+'RUNNING'+C.reset : C.red+'STOPPED'+C.reset} (smartload_redis:${DEFAULT_PORTS.redis})`);
   log.raw(`  ${C.bold}${'MinIO'.padEnd(14)}${C.reset}: ${minioRunning ? C.green+'RUNNING'+C.reset : C.red+'STOPPED'+C.reset} (smartload-minio:${DEFAULT_PORTS.minio})`);
 
   // Health check
@@ -1101,7 +1101,7 @@ async function cmdDoctor() {
   check('.env file exists', existsSync(ENV_FILE), 'cp .env.example .env');
   if (existsSync(ENV_FILE)) {
     const env = parseEnvFile(ENV_FILE);
-    const required = ['DATABASE_URL', 'REDIS_URL', 'JWT_SECRET', 'PORT'];
+    const required = ['DATABASE_URL', 'DIRECT_DATABASE_URL', 'REDIS_URL', 'JWT_SECRET', 'PORT'];
     for (const key of required) {
       check(`.env: ${key}`, Boolean(env[key]), `Set ${key} in .env`);
     }
@@ -1113,8 +1113,8 @@ async function cmdDoctor() {
   check('Prisma schema', existsSync(PRISMA_SCHEMA), 'Ensure packages/db/prisma/schema.prisma exists');
 
   // Docker containers
-  const pgOk = dockerContainerRunning('smartload-postgres');
-  const redisOk = dockerContainerRunning('smartload-redis');
+  const pgOk = dockerContainerRunning('smartload_postgres');
+  const redisOk = dockerContainerRunning('smartload_redis');
   check('Postgres container running', pgOk, 'node run-smartload.mjs start (or docker compose up -d postgres)');
   check('Redis container running', redisOk, 'node run-smartload.mjs start (or docker compose up -d redis)');
 

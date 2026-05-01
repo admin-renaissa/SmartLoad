@@ -37,7 +37,7 @@ const REPORTS: ReportDef[] = [
       p.set('dateFrom', dateFrom);
       p.set('dateTo', dateTo);
       if (clientId.trim()) p.set('clientId', clientId.trim());
-      return `/api/v1/reports/dispatch-register?${p.toString()}`;
+      return `/reports/dispatch-register?${p.toString()}`;
     },
     clientFilter: true,
   },
@@ -50,7 +50,7 @@ const REPORTS: ReportDef[] = [
       const p = new URLSearchParams();
       p.set('dateFrom', dateFrom);
       p.set('dateTo', dateTo);
-      return `/api/v1/reports/vehicle-loading-history?${p.toString()}`;
+      return `/reports/vehicle-loading-history?${p.toString()}`;
     },
   },
   {
@@ -62,7 +62,7 @@ const REPORTS: ReportDef[] = [
       const p = new URLSearchParams();
       p.set('dateFrom', dateFrom);
       p.set('dateTo', dateTo);
-      return `/api/v1/reports/inventory-ledger?${p.toString()}`;
+      return `/reports/inventory-ledger?${p.toString()}`;
     },
   },
   {
@@ -74,7 +74,7 @@ const REPORTS: ReportDef[] = [
       const p = new URLSearchParams();
       p.set('dateFrom', dateFrom);
       p.set('dateTo', dateTo);
-      return `/api/v1/reports/error-alert-log?${p.toString()}`;
+      return `/reports/error-alert-log?${p.toString()}`;
     },
   },
   {
@@ -86,20 +86,20 @@ const REPORTS: ReportDef[] = [
       const p = new URLSearchParams();
       p.set('dateFrom', dateFrom);
       p.set('dateTo', dateTo);
-      return `/api/v1/reports/pod-status?${p.toString()}`;
+      return `/reports/pod-status?${p.toString()}`;
     },
   },
   {
     id: 'tally-sync-log',
     title: 'Tally sync log',
     description: 'Push/pull jobs with status, direction, and errors.',
-    buildUrl: () => '/api/v1/reports/tally-sync-log',
+    buildUrl: () => '/reports/tally-sync-log',
   },
   {
     id: 'outstanding-pos',
     title: 'Outstanding POs',
     description: 'Confirmed / loading / partially dispatched orders not yet fully delivered.',
-    buildUrl: () => '/api/v1/reports/outstanding-pos',
+    buildUrl: () => '/reports/outstanding-pos',
   },
   {
     id: 'client-dispatch-history',
@@ -109,7 +109,7 @@ const REPORTS: ReportDef[] = [
     buildUrl: ({ clientId }) => {
       const p = new URLSearchParams();
       if (clientId.trim()) p.set('clientId', clientId.trim());
-      return `/api/v1/reports/client-dispatch-history?${p.toString()}`;
+      return `/reports/client-dispatch-history?${p.toString()}`;
     },
   },
 ];

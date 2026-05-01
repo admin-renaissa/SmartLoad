@@ -1,26 +1,37 @@
-import { BarcodeFormat, validateBarcodeFormat } from '@smartload/shared';
+/**
+ * RS-232 / Serial COM Port Driver
+ */
+
+import { BarcodeFormat, detectBarcodeFormat } from '@smartload/shared';
 import type { IScannerDriver, ScannerInput } from '../hal.interface.js';
 
-function stripSerialFraming(raw: string): string {
-  return raw.replace(/^\x02+/, '').replace(/\x03+$/, '').trim();
-}
-
-/**
- * RS-232 serial scanner path (placeholder). Real integration requires opening a COM port
- * (e.g. node-serialport) and streaming bytes; this stub only normalizes a raw string
- * as if it were read from a serial buffer.
- */
-export class SerialScannerDriver implements IScannerDriver {
+export class SerialDriver implements IScannerDriver {
   readonly driverName = 'serial';
-  readonly supportedFormats = Object.values(BarcodeFormat) as BarcodeFormat[];
+  readonly description = 'RS-232 serial port scanner (legacy industrial)';
+  readonly supportedFormats = [BarcodeFormat.CODE128, BarcodeFormat.CODE39, BarcodeFormat.QR];
 
-  async init(_config: Record<string, unknown>): Promise<void> {
-    console.log('Serial driver loaded — configure COM port in settings');
-  }
+  parseRawInput(raw: string, deviceId?: string): ScannerInput {
+    try {
+      const cleaned = raw
+        .replace(/[\x02\x03]/g, '')
+        .replace(/[\x00-\x1F\x7F]/g, '')
+        .trim();
 
-  parseRawInput(raw: string): ScannerInput {
-    const rawValue = stripSerialFraming(raw);
-    const format = validateBarcodeFormat(rawValue);
-    return { rawValue, format };
+      return {
+        rawValue: raw,
+        cleaned,
+        format: detectBarcodeFormat(cleaned),
+        deviceId,
+        scannedAt: new Date(),
+      };
+    } catch {
+      return {
+        rawValue: raw,
+        cleaned: '',
+        format: BarcodeFormat.UNKNOWN,
+        deviceId,
+        scannedAt: new Date(),
+      };
+    }
   }
 }

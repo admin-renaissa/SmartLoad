@@ -71,9 +71,9 @@ function ClientFormModal({ client, onClose }: { client?: Client; onClose: () => 
         },
       };
       if (client) {
-        await api.patch(`/api/v1/clients/${client.id}`, payload);
+        await api.patch(`/clients/${client.id}`, payload);
       } else {
-        await api.post('/api/v1/clients', payload);
+        await api.post('/clients', payload);
       }
     },
     onSuccess: () => {
@@ -163,7 +163,7 @@ export default function ClientListPage() {
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
       if (search) params.set('search', search);
-      const r = await api.get(`/api/v1/clients?${params}`);
+      const r = await api.get(`/clients?${params}`);
       return { items: r.data.data, meta: r.data.meta };
     },
   });

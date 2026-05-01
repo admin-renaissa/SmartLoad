@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: FormData) => {
-      const res = await api.post('/api/v1/auth/login', data);
+      const res = await api.post('/auth/login', data);
       return res.data.data;
     },
     onSuccess: (data) => {

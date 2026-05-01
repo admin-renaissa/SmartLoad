@@ -1,96 +1,95 @@
-import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Truck } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore.ts';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
-import { ProgressBar } from '../../components/ui/ProgressBar.tsx';
-import { Button } from '../../components/ui/Button.tsx';
+import { useQuery } from '@tanstack/react-query';
+import { Truck, Package, RefreshCw } from 'lucide-react';
 import api from '../../lib/axios.ts';
 
 export default function ScanSessionSelectPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
 
-  const { data: sessions, isLoading } = useQuery({
-    queryKey: ['sessions', 'active'],
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['active-sessions'],
     queryFn: async () => {
-      const r = await api.get('/api/v1/sessions/active');
-      return r.data.data;
+      const r = await api.get('/sessions/active');
+      return r.data.data as Record<string, unknown>[];
     },
-    refetchInterval: 10000,
+    refetchInterval: 10_000,
   });
 
-  const mySessions = (sessions || []).filter((s: Record<string, unknown>) =>
-    s.operatorId === user?.id || s.supervisorId === user?.id,
-  );
+  const sessions = data ?? [];
 
   return (
-    <div className="min-h-screen bg-primary flex flex-col">
-      <div className="px-6 py-6 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <Truck className="h-8 w-8 text-white" />
-          <div>
-            <h1 className="text-2xl font-bold text-white">Active Sessions</h1>
-            <p className="text-white/60 text-sm">Select a session to start scanning</p>
-          </div>
+    <div className="min-h-screen bg-[#0F2044] text-white flex flex-col">
+      <div className="px-6 pt-8 pb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">SmartLoad</h1>
+          <p className="text-white/50 text-sm mt-1">Select a dispatch session to begin scanning</p>
         </div>
+        <button type="button" onClick={() => refetch()} className="text-white/50 hover:text-white">
+          <RefreshCw className="w-5 h-5" />
+        </button>
       </div>
 
-      <div className="flex-1 px-6 py-6">
-        {isLoading ? (
-          <div className="flex justify-center py-20"><LoadingSpinner /></div>
-        ) : mySessions.length === 0 ? (
-          <div className="text-center py-20">
-            <Truck className="h-16 w-16 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60 text-lg">No active sessions</p>
-            <p className="text-white/40 text-sm mt-1">Ask your supervisor to create a dispatch session</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 max-w-2xl mx-auto">
-            {mySessions.map((session: Record<string, unknown>) => {
-              const po = session.po as Record<string, unknown>;
-              const vehicle = session.vehicle as Record<string, unknown>;
-              const client = po?.client as Record<string, unknown>;
-              return (
-                <div
-                  key={session.id as string}
-                  className="bg-white/10 backdrop-blur rounded-xl p-6 cursor-pointer hover:bg-white/15 transition"
-                  onClick={() => navigate(`/scan/${session.id}`)}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <p className="text-white text-2xl font-black font-mono tracking-wider">
-                        {vehicle?.registrationNumber as string}
-                      </p>
-                      <p className="text-white/70 text-sm mt-0.5">{client?.name as string}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-white/60 text-sm font-mono">{session.sessionCode as string}</p>
-                      <p className="text-white/50 text-xs mt-0.5">{po?.poNumber as string}</p>
-                    </div>
-                  </div>
-                  <ProgressBar
-                    value={session.totalBoxesScanned as number}
-                    max={session.totalBoxesExpected as number}
-                    size="lg"
-                  />
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-white/70 text-sm">
-                      {session.totalBoxesScanned as number} / {session.totalBoxesExpected as number} boxes scanned
-                    </span>
-                    <Button
-                      size="sm"
-                      className="bg-white text-primary hover:bg-white/90"
-                      onClick={(e) => { e.stopPropagation(); navigate(`/scan/${session.id}`); }}
-                    >
-                      Enter Session →
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+      <div className="flex-1 px-4 pb-6 space-y-3">
+        {isLoading && (
+          <div className="flex justify-center pt-20">
+            <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           </div>
         )}
+
+        {!isLoading && sessions.length === 0 && (
+          <div className="text-center pt-20 text-white/40">
+            <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>No active dispatch sessions</p>
+            <p className="text-sm mt-1">Ask your supervisor to create a session</p>
+          </div>
+        )}
+
+        {!isLoading &&
+          sessions.map((s) => {
+            const po = s.purchaseOrder as Record<string, unknown>;
+            const client = po?.client as Record<string, unknown>;
+            const vehicle = s.vehicle as Record<string, unknown>;
+            const lineItems = (po?.lineItems as Record<string, unknown>[]) ?? [];
+            const totalOrdered = lineItems.reduce((sum, li) => sum + (li.orderedBoxes as number), 0);
+            const totalLoaded = lineItems.reduce((sum, li) => sum + (li.loadedBoxes as number), 0);
+            const pct = totalOrdered === 0 ? 0 : Math.round((totalLoaded / totalOrdered) * 100);
+
+            return (
+              <button
+                type="button"
+                key={s.id as string}
+                onClick={() => navigate(`/scan/${s.id as string}`)}
+                className="w-full bg-white/10 hover:bg-white/20 rounded-2xl p-5 text-left transition-colors border border-white/10"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <Truck className="w-6 h-6 text-accent shrink-0" />
+                  <span className="text-2xl font-black tracking-wider">
+                    {(vehicle?.registrationNumber as string) ?? '—'}
+                  </span>
+                </div>
+
+                <div className="text-sm text-white/70 mb-1">
+                  <span className="font-mono text-white/90">{po?.poNumber as string}</span>
+                  {' · '}
+                  {(client?.name as string) ?? 'Client'}
+                </div>
+
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-white/50 mb-1">
+                    <span>Loading progress</span>
+                    <span>
+                      {totalLoaded} / {totalOrdered} boxes
+                    </span>
+                  </div>
+                  <div className="w-full bg-white/10 rounded-full h-2">
+                    <div className="h-2 rounded-full bg-accent transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+
+                <div className="mt-3 text-xs text-white/40">Tap to enter session →</div>
+              </button>
+            );
+          })}
       </div>
     </div>
   );

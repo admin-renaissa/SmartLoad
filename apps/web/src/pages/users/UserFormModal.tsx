@@ -39,7 +39,7 @@ export function CreateUserModal({ onClose }: { onClose: () => void }) {
         const msg = parsed.error.errors[0]?.message ?? 'Invalid form';
         throw new Error(msg);
       }
-      await api.post('/api/v1/users', {
+      await api.post('/users', {
         email: parsed.data.email,
         name: parsed.data.name,
         role: parsed.data.role,

@@ -45,7 +45,7 @@ export default function CreateOrderPage() {
     queryKey: ['client-search', clientSearch],
     queryFn: async () => {
       if (!clientSearch || clientSearch.length < 2) return [];
-      const r = await api.get(`/api/v1/clients/search?q=${encodeURIComponent(clientSearch)}&limit=8`);
+      const r = await api.get(`/clients/search?q=${encodeURIComponent(clientSearch)}&limit=8`);
       return r.data.data;
     },
     enabled: clientSearch.length >= 2,
@@ -58,11 +58,11 @@ export default function CreateOrderPage() {
     variantSearchRef.current = setTimeout(async () => {
       setSearchingVariants(true);
       try {
-        const r = await api.get(`/api/v1/products?search=${encodeURIComponent(q)}&limit=5`);
+        const r = await api.get(`/products?search=${encodeURIComponent(q)}&limit=5`);
         const products = r.data.data as Array<{ id: string; sku: string; name: string; piecesPerBox: number; variants: Variant[] }>;
         const variants: Variant[] = [];
         for (const p of products) {
-          const r2 = await api.get(`/api/v1/products/${p.id}/variants`);
+          const r2 = await api.get(`/products/${p.id}/variants`);
           const pvs: Variant[] = r2.data.data;
           pvs.forEach((v) => { (v as Variant & { product: typeof p }).product = p; });
           variants.push(...pvs.filter((v) => (v as { isActive?: boolean }).isActive));
@@ -104,7 +104,7 @@ export default function CreateOrderPage() {
 
   const createMutation = useMutation({
     mutationFn: async (confirm: boolean) => {
-      const r = await api.post('/api/v1/orders', {
+      const r = await api.post('/orders', {
         clientId: selectedClient!.id,
         orderDate,
         expectedDispatchDate: expectedDispatchDate || undefined,

@@ -16,6 +16,7 @@ import { redisPlugin } from './plugins/redis.js';
 import { authPlugin } from './plugins/auth.js';
 import { auditPlugin } from './plugins/audit.js';
 import { bullmqPlugin } from './plugins/bullmq.js';
+import { halPlugin } from './plugins/hal.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { socketPlugin } from './plugins/socket.js';
 
@@ -26,6 +27,7 @@ import { productVariantRoutes } from './modules/products/product-variant.routes.
 import { clientRoutes } from './modules/clients/client.routes.js';
 import { orderRoutes } from './modules/orders/order.routes.js';
 import { sessionRoutes } from './modules/dispatch/session.routes.js';
+import { scanRoutes } from './modules/scan/scan.routes.js';
 import { inventoryRoutes } from './modules/inventory/inventory.routes.js';
 import { grnRoutes } from './modules/inventory/grn.routes.js';
 import { vehicleRoutes } from './modules/vehicles/vehicle.routes.js';
@@ -36,6 +38,7 @@ import { reportRoutes } from './modules/reports/report.routes.js';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js';
 import { settingsRoutes } from './modules/settings/settings.routes.js';
 import { auditLogRoutes } from './modules/audit/audit.routes.js';
+import { healthRoutes } from './modules/health/health.routes.js';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -81,31 +84,13 @@ export async function buildServer() {
   await app.register(authPlugin);
   await app.register(auditPlugin);
   await app.register(bullmqPlugin);
+  await app.register(halPlugin);
   await app.register(socketPlugin);
 
   // Error handler
   app.setErrorHandler(errorHandler);
 
-  app.get('/health', async () => {
-    let database: 'ok' | 'error' = 'ok';
-    let redisStatus: 'ok' | 'error' = 'ok';
-    try {
-      await app.prisma.$queryRaw`SELECT 1`;
-    } catch {
-      database = 'error';
-    }
-    try {
-      await app.redis.ping();
-    } catch {
-      redisStatus = 'error';
-    }
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0',
-      services: { database, redis: redisStatus },
-    };
-  });
+  await app.register(healthRoutes);
 
   // API routes under /api/v1
   const apiPrefix = '/api/v1';
@@ -116,6 +101,7 @@ export async function buildServer() {
   await app.register(clientRoutes, { prefix: `${apiPrefix}/clients` });
   await app.register(orderRoutes, { prefix: `${apiPrefix}/orders` });
   await app.register(sessionRoutes, { prefix: `${apiPrefix}/sessions` });
+  await app.register(scanRoutes, { prefix: `${apiPrefix}/scan` });
   await app.register(inventoryRoutes, { prefix: `${apiPrefix}/inventory` });
   await app.register(grnRoutes, { prefix: `${apiPrefix}/grn` });
   await app.register(vehicleRoutes, { prefix: `${apiPrefix}/vehicles` });

@@ -21,7 +21,7 @@ export default function PODPage() {
   const { data: pod, isLoading, isSuccess, isError, error: podError } = useQuery<Record<string, unknown>>({
     queryKey: ['pod', token],
     queryFn: async () => {
-      const r = await api.get(`/api/v1/pod/link/${token}`);
+      const r = await api.get(`/pod/link/${token}`);
       return r.data.data as Record<string, unknown>;
     },
     enabled: !!token,
@@ -38,12 +38,12 @@ export default function PODPage() {
   }
 
   const requestOtpMutation = useMutation({
-    mutationFn: async () => api.post(`/api/v1/pod/${podId}/request-otp`, { receiverPhone: `+91${phone}` }),
+    mutationFn: async () => api.post(`/pod/${podId}/request-otp`, { receiverPhone: `+91${phone}` }),
     onSuccess: () => { setStep('otp'); toast.success('OTP sent!'); },
   });
 
   const verifyOtpMutation = useMutation({
-    mutationFn: async () => api.post(`/api/v1/pod/${podId}/verify-otp`, { otp: otp.join('') }),
+    mutationFn: async () => api.post(`/pod/${podId}/verify-otp`, { otp: otp.join('') }),
     onSuccess: (res) => {
       setPodToken(res.data.data.podToken);
       setStep('items');
@@ -54,7 +54,7 @@ export default function PODPage() {
   const acknowledgeMutation = useMutation({
     mutationFn: async () => {
       const lineItems = (pod?.lineItems || []) as Array<{ lineItemId: string; deliveredBoxes: number }>;
-      return api.post(`/api/v1/pod/${podId}/acknowledge`, {
+      return api.post(`/pod/${podId}/acknowledge`, {
         receiverName,
         acknowledgedItems: lineItems.map((li: { lineItemId: string; deliveredBoxes: number }) => ({
           lineItemId: li.lineItemId,

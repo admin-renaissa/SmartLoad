@@ -43,9 +43,9 @@ function VehicleFormModal({ vehicle, onClose }: { vehicle?: Vehicle; onClose: ()
         capacityBoxes: form.capacityBoxes ? Number(form.capacityBoxes) : undefined,
       };
       if (vehicle) {
-        await api.patch(`/api/v1/vehicles/${vehicle.id}`, payload);
+        await api.patch(`/vehicles/${vehicle.id}`, payload);
       } else {
-        await api.post('/api/v1/vehicles', payload);
+        await api.post('/vehicles', payload);
       }
     },
     onSuccess: () => {
@@ -142,7 +142,7 @@ export default function VehicleListPage() {
   const { data: vehicles, isLoading } = useQuery<Vehicle[]>({
     queryKey: ['vehicles'],
     queryFn: async () => {
-      const r = await api.get('/api/v1/vehicles?limit=100');
+      const r = await api.get('/vehicles?limit=100');
       return r.data.data;
     },
   });

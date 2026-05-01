@@ -65,9 +65,3 @@ export interface ScanProcessResult {
   }
   scanEvent: { id: string; scannedAt: string }
 }
-
-export interface ScannerInput {
-  rawValue: string
-  format: import('./enums.js').BarcodeFormat
-  deviceId?: string
-}

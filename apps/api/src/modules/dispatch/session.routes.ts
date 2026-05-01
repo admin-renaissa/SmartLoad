@@ -1,106 +1,90 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { successResponse, errorResponse, UserRole } from '@smartload/shared';
-import { parsePagination, buildPaginationMeta } from '@smartload/shared';
+import { successResponse, errorResponse, UserRole, AppError } from '@smartload/shared';
+import { ScanResult } from '@prisma/client';
 import { SessionService } from './session.service.js';
-import { SessionStatus } from '@prisma/client';
+import {
+  createSessionSchema,
+  closeSessionSchema,
+  processScanSchema,
+  listSessionsQuerySchema,
+} from './session.schema.js';
+
+const svc = (fastify: Parameters<FastifyPluginAsync>[0]) => new SessionService(fastify);
 
 export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
-  const getService = () => new SessionService(fastify.prisma, fastify.redis);
-
-  // GET /api/v1/sessions
-  fastify.get('/', { preHandler: fastify.requireAuth }, async (request, reply) => {
-    const query = request.query as { page?: string; limit?: string; status?: SessionStatus; vehicleId?: string };
-    const { page, limit, skip } = parsePagination({ page: Number(query.page), limit: Number(query.limit) });
-
-    const where: Record<string, unknown> = {};
-    if (query.status) where.status = query.status;
-    if (query.vehicleId) where.vehicleId = query.vehicleId;
-
-    const [sessions, total] = await Promise.all([
-      fastify.prisma.dispatchSession.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { openedAt: 'desc' },
-        include: {
-          purchaseOrder: { include: { client: { select: { id: true, name: true } } } },
-          vehicle: true,
-          supervisor: { select: { id: true, name: true } },
-        },
-      }),
-      fastify.prisma.dispatchSession.count({ where }),
-    ]);
-
-    return reply.send(successResponse(sessions, buildPaginationMeta(total, page, limit)));
+  fastify.get('/drivers', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (_request, reply) => {
+    return reply.send(successResponse(fastify.hal.listDrivers()));
   });
 
-  // GET /api/v1/sessions/active
+  fastify.patch(
+    '/drivers/active',
+    { preHandler: fastify.requireRole(UserRole.ADMIN) },
+    async (request, reply) => {
+      const body = z.object({ driverName: z.string().min(1) }).parse(request.body);
+      await fastify.hal.setDriver(body.driverName);
+      return reply.send(successResponse({ active: fastify.hal.getActiveDriver().driverName }));
+    },
+  );
+
+  fastify.get(
+    '/supervisor-summary',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR) },
+    async (_request, reply) => {
+      const summary = await svc(fastify).getSupervisorDashboardSummary();
+      return reply.send(successResponse(summary));
+    },
+  );
+
+  fastify.get(
+    '/errors/recent',
+    { preHandler: fastify.requireAuth },
+    async (request, reply) => {
+      const q = z.object({ limit: z.coerce.number().min(1).max(50).default(10) }).parse(request.query);
+      const events = await svc(fastify).listRecentScanErrors(q.limit);
+      return reply.send(successResponse(events));
+    },
+  );
+
+  fastify.get(
+    '/',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS) },
+    async (request, reply) => {
+      const parsed = listSessionsQuerySchema.safeParse(request.query);
+      const query = parsed.success ? parsed.data : listSessionsQuerySchema.parse({});
+      const { sessions, meta } = await svc(fastify).listSessions(query);
+      return reply.send(successResponse(sessions, meta));
+    },
+  );
+
   fastify.get('/active', { preHandler: fastify.requireAuth }, async (_request, reply) => {
-    const sessions = await getService().listActiveSessions();
+    const sessions = await svc(fastify).listActiveSessions();
     return reply.send(successResponse(sessions));
   });
 
-  // POST /api/v1/sessions
-  fastify.post('/', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR) }, async (request, reply) => {
-    const dto = z.object({
-      poId: z.string().cuid(),
-      vehicleId: z.string().cuid(),
-      operatorId: z.string().cuid().optional(),
-    }).parse(request.body);
+  fastify.post(
+    '/',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR) },
+    async (request, reply) => {
+      const dto = createSessionSchema.parse(request.body);
+      const session = await svc(fastify).createSession(dto, request.user.userId);
+      return reply.code(201).send(successResponse(session));
+    },
+  );
 
-    const session = await getService().createSession({
-      ...dto,
-      supervisorId: request.user.userId,
-    });
-    return reply.code(201).send(successResponse(session));
-  });
-
-  // GET /api/v1/sessions/:id
-  fastify.get('/:id', { preHandler: fastify.requireAuth }, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const session = await getService().getSessionDetails(id);
-    if (!session) return reply.code(404).send(errorResponse('Session not found'));
-    return reply.send(successResponse(session));
-  });
-
-  // POST /api/v1/sessions/:id/close
-  fastify.post('/:id/close', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR) }, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const dto = z.object({
-      notes: z.string().optional(),
-      forcePartial: z.boolean().optional(),
-    }).parse(request.body || {});
-
-    const session = await getService().closeSession(id, request.user.userId, dto.notes, dto.forcePartial);
-    return reply.send(successResponse(session));
-  });
-
-  // POST /api/v1/sessions/:id/scan (REST fallback — primary path is WebSocket)
-  fastify.post('/:id/scan', { preHandler: fastify.requireAuth }, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const dto = z.object({
-      rawBarcode: z.string().min(1),
-      deviceId: z.string().optional(),
-    }).parse(request.body);
-
-    const result = await getService().processScan(id, dto.rawBarcode, request.user.userId, dto.deviceId);
-
-    // Broadcast to WebSocket room
-    fastify.io.of('/scan').to(`session:${id}`).emit('scan:result', result);
-
-    return reply.send(successResponse(result));
-  });
-
-  // GET /api/v1/sessions/:id/scan-log
   fastify.get('/:id/scan-log', { preHandler: fastify.requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const query = request.query as { page?: string; limit?: string };
-    const { page, limit, skip } = parsePagination({ page: Number(query.page), limit: Number(query.limit) });
+    const query = request.query as { page?: string; limit?: string; result?: ScanResult };
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 25));
+    const skip = (page - 1) * limit;
+
+    const where: { sessionId: string; result?: ScanResult } = { sessionId: id };
+    if (query.result) where.result = query.result;
 
     const [events, total] = await Promise.all([
       fastify.prisma.scanEvent.findMany({
-        where: { sessionId: id },
+        where,
         skip,
         take: limit,
         orderBy: { scannedAt: 'desc' },
@@ -109,17 +93,25 @@ export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
           resolvedVariant: { include: { product: true } },
         },
       }),
-      fastify.prisma.scanEvent.count({ where: { sessionId: id } }),
+      fastify.prisma.scanEvent.count({ where }),
     ]);
 
-    return reply.send(successResponse(events, buildPaginationMeta(total, page, limit)));
+    const meta = {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      hasNext: page * limit < total,
+      hasPrev: page > 1,
+    };
+
+    return reply.send(successResponse(events, meta));
   });
 
-  // GET /api/v1/sessions/:id/errors
   fastify.get('/:id/errors', { preHandler: fastify.requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const events = await fastify.prisma.scanEvent.findMany({
-      where: { sessionId: id, result: { not: 'SUCCESS' } },
+      where: { sessionId: id, result: { not: ScanResult.SUCCESS } },
       orderBy: { scannedAt: 'desc' },
       include: {
         operator: { select: { id: true, name: true } },
@@ -127,4 +119,49 @@ export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
     });
     return reply.send(successResponse(events));
   });
+
+  fastify.get('/:id', { preHandler: fastify.requireAuth }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const session = await svc(fastify).getSessionById(id);
+      return reply.send(successResponse(session));
+    } catch (e) {
+      if (e instanceof AppError && e.statusCode === 404) {
+        return reply.code(404).send(errorResponse(e.message));
+      }
+      throw e;
+    }
+  });
+
+  fastify.post(
+    '/:id/close',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR) },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const dto = closeSessionSchema.parse(request.body ?? {});
+      const session = await svc(fastify).closeSession(id, request.user.userId, dto);
+      return reply.send(successResponse(session));
+    },
+  );
+
+  fastify.post(
+    '/:id/scan',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.OPERATOR) },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const dto = z.object({ rawBarcode: z.string().min(1), deviceId: z.string().optional() }).parse(request.body);
+
+      const input = processScanSchema.parse({
+        sessionId: id,
+        rawBarcode: dto.rawBarcode,
+        deviceId: dto.deviceId,
+      });
+
+      const result = await svc(fastify).processScan(input, request.user.userId);
+
+      fastify.io.of('/scan').to(`session:${id}`).emit('scan:result', result);
+
+      return reply.send(successResponse(result));
+    },
+  );
 };

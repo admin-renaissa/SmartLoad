@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const { data: profile, isLoading } = useQuery({
     queryKey: ['users', 'me'],
     queryFn: async () => {
-      const r = await api.get('/api/v1/users/me');
+      const r = await api.get('/users/me');
       return r.data.data as { id: string; email: string; name: string; role: string; phone: string | null; isActive: boolean };
     },
   });
@@ -68,7 +68,7 @@ export default function SettingsPage() {
 
   const profileMutation = useMutation({
     mutationFn: (data: ProfileForm) =>
-      api.patch('/api/v1/users/me', { name: data.name, phone: data.phone || undefined }),
+      api.patch('/users/me', { name: data.name, phone: data.phone || undefined }),
     onSuccess: (res) => {
       const u = res.data.data;
       setUser({
@@ -89,7 +89,7 @@ export default function SettingsPage() {
 
   const passwordMutation = useMutation({
     mutationFn: (data: PasswordForm) =>
-      api.post('/api/v1/auth/change-password', {
+      api.post('/auth/change-password', {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       }),

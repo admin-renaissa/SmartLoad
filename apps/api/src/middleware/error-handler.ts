@@ -1,9 +1,20 @@
 import type { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { AppError } from '@smartload/shared';
 
 export function errorHandler(error: FastifyError | Error, request: FastifyRequest, reply: FastifyReply) {
   request.log.error({ err: error }, 'Request error');
+
+  if (error instanceof AppError) {
+    const payload: Record<string, unknown> = {
+      success: false,
+      data: null,
+      error: error.message,
+    };
+    if (error.code) payload.code = error.code;
+    return reply.code(error.statusCode).send(payload);
+  }
 
   // Zod validation errors
   if (error instanceof ZodError) {

@@ -4,7 +4,7 @@ import type { Prisma } from '@prisma/client';
 
 const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-const SKIP_PATHS = new Set<string>(['/health', '/api/v1/auth/login', '/api/v1/auth/refresh']);
+const SKIP_PATHS = new Set<string>(['/health', '/api/v1/auth/login', '/api/v1/auth/refresh', '/api/v1/scan/datawedge']);
 
 const auditPluginImpl: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('onResponse', async (request, reply) => {

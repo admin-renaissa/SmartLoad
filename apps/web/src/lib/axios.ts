@@ -1,12 +1,27 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore.ts';
 
+/** Dev: `/api/v1` → Vite proxies to API. Prod / Docker: set `VITE_API_URL` to API origin (no `/api/v1` suffix). */
+export function resolveApiBaseURL(): string {
+  const root = import.meta.env.VITE_API_URL as string | undefined;
+  if (root?.trim()) {
+    return `${root.replace(/\/$/, '')}/api/v1`;
+  }
+  return '/api/v1';
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4001',
+  baseURL: resolveApiBaseURL(),
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor — attach Bearer token
+const refreshClient = axios.create({
+  baseURL: resolveApiBaseURL(),
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
@@ -15,7 +30,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — handle 401 → refresh → retry
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (value: string) => void; reject: (reason?: unknown) => void }> = [];
 
@@ -51,14 +65,12 @@ api.interceptors.response.use(
       const refreshToken = useAuthStore.getState().refreshToken;
       if (!refreshToken) {
         useAuthStore.getState().logout();
+        window.location.assign('/login');
         return Promise.reject(error);
       }
 
       try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:4001'}/api/v1/auth/refresh`,
-          { refreshToken },
-        );
+        const response = await refreshClient.post('/auth/refresh', { refreshToken });
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
         useAuthStore.getState().setTokens(accessToken, newRefreshToken);
         processQueue(null, accessToken);
@@ -67,6 +79,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         useAuthStore.getState().logout();
+        window.location.assign('/login');
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

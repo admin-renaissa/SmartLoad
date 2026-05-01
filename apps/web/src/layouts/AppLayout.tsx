@@ -86,7 +86,7 @@ export function AppLayout() {
   const handleLogout = async () => {
     const { refreshToken } = useAuthStore.getState();
     try {
-      await api.post('/api/v1/auth/logout', refreshToken ? { refreshToken } : {});
+      await api.post('/auth/logout', refreshToken ? { refreshToken } : {});
     } catch {
       // ignore
     }

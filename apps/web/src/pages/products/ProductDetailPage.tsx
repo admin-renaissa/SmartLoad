@@ -53,7 +53,7 @@ function AddVariantModal({ productId, onClose }: { productId: string; onClose: (
 
   const mutation = useMutation({
     mutationFn: async () => {
-      await api.post(`/api/v1/products/${productId}/variants`, {
+      await api.post(`/products/${productId}/variants`, {
         colourCode: form.colourCode.toUpperCase(),
         colourName: form.colourName,
         lengthMm: form.lengthMm ? Number(form.lengthMm) : undefined,
@@ -136,7 +136,7 @@ export default function ProductDetailPage() {
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ['product', id],
     queryFn: async () => {
-      const r = await api.get(`/api/v1/products/${id}`);
+      const r = await api.get(`/products/${id}`);
       return r.data.data;
     },
     enabled: !!id,
@@ -145,7 +145,7 @@ export default function ProductDetailPage() {
   async function handleGenerateLabel(variantId: string) {
     setGeneratingLabels((prev) => [...prev, variantId]);
     try {
-      const r = await api.post('/api/v1/variants/generate-labels', { variantIds: [variantId] }, { responseType: 'blob' });
+      const r = await api.post('/variants/generate-labels', { variantIds: [variantId] }, { responseType: 'blob' });
       const url = URL.createObjectURL(r.data);
       window.open(url, '_blank');
       URL.revokeObjectURL(url);

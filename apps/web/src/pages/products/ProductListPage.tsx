@@ -32,7 +32,7 @@ export default function ProductListPage() {
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['product-categories'],
     queryFn: async () => {
-      const r = await api.get('/api/v1/products/categories');
+      const r = await api.get('/products/categories');
       return r.data.data;
     },
   });
@@ -43,7 +43,7 @@ export default function ProductListPage() {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
       if (search) params.set('search', search);
       if (categoryId) params.set('categoryId', categoryId);
-      const r = await api.get(`/api/v1/products?${params}`);
+      const r = await api.get(`/products?${params}`);
       return { items: r.data.data, meta: r.data.meta };
     },
   });
@@ -57,7 +57,7 @@ export default function ProductListPage() {
   }
 
   async function handleExport() {
-    const r = await api.get('/api/v1/products/export', { responseType: 'blob' });
+    const r = await api.get('/products/export', { responseType: 'blob' });
     const url = URL.createObjectURL(r.data);
     const a = document.createElement('a');
     a.href = url;

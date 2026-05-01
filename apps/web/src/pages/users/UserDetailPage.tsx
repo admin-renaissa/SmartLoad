@@ -23,7 +23,7 @@ export default function UserDetailPage() {
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['user', id],
     queryFn: async () => {
-      const r = await api.get(`/api/v1/users/${id}`);
+      const r = await api.get(`/users/${id}`);
       return r.data.data as UserRow;
     },
     enabled: Boolean(id && canManage),
@@ -49,7 +49,7 @@ export default function UserDetailPage() {
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      const r = await api.patch(`/api/v1/users/${id}`, {
+      const r = await api.patch(`/users/${id}`, {
         name: form.name,
         role: form.role,
         phone: form.phone || undefined,
@@ -79,7 +79,7 @@ export default function UserDetailPage() {
 
   const deactivateMutation = useMutation({
     mutationFn: async () => {
-      await api.delete(`/api/v1/users/${id}`);
+      await api.delete(`/users/${id}`);
     },
     onSuccess: () => {
       toast.success('User deactivated');

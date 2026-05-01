@@ -53,7 +53,7 @@ export default function TallySyncPage() {
   const { data: tallyStatus, isLoading: tl } = useQuery({
     queryKey: ['tally', 'status'],
     queryFn: async () => {
-      const r = await api.get('/api/v1/tally/status');
+      const r = await api.get('/tally/status');
       return r.data.data as TallyStatus;
     },
     enabled: canView,
@@ -62,7 +62,7 @@ export default function TallySyncPage() {
   const { data: notifStatus, isLoading: ni } = useQuery({
     queryKey: ['integrations', 'notifications'],
     queryFn: async () => {
-      const r = await api.get('/api/v1/integrations/notifications');
+      const r = await api.get('/integrations/notifications');
       return r.data.data as NotifStatus;
     },
     enabled: canView,
@@ -71,7 +71,7 @@ export default function TallySyncPage() {
   const { data: syncLog, isLoading: sl } = useQuery({
     queryKey: ['tally', 'sync-log'],
     queryFn: async () => {
-      const r = await api.get('/api/v1/tally/sync-log?limit=25&page=1');
+      const r = await api.get('/tally/sync-log?limit=25&page=1');
       return { items: r.data.data as TallyJob[], meta: r.data.meta as { total: number; page: number; limit: number } };
     },
     enabled: canView,
@@ -178,7 +178,7 @@ export default function TallySyncPage() {
                 type="button"
                 size="sm"
                 loading={actionKey === 'pull-stock'}
-                onClick={() => run('pull-stock', '/api/v1/tally/sync/pull-stock')}
+                onClick={() => run('pull-stock', '/tally/sync/pull-stock')}
               >
                 Pull stock
               </Button>
@@ -187,7 +187,7 @@ export default function TallySyncPage() {
                 size="sm"
                 variant="outline"
                 loading={actionKey === 'pull-parties'}
-                onClick={() => run('pull-parties', '/api/v1/tally/sync/pull-parties')}
+                onClick={() => run('pull-parties', '/tally/sync/pull-parties')}
               >
                 Pull parties
               </Button>
@@ -196,7 +196,7 @@ export default function TallySyncPage() {
                 size="sm"
                 variant="outline"
                 loading={actionKey === 'pull-orders'}
-                onClick={() => run('pull-orders', '/api/v1/tally/sync/pull-orders')}
+                onClick={() => run('pull-orders', '/tally/sync/pull-orders')}
               >
                 Pull orders
               </Button>
@@ -218,7 +218,7 @@ export default function TallySyncPage() {
                 variant="secondary"
                 disabled={!pushSessionId.trim()}
                 loading={actionKey === 'push'}
-                onClick={() => run('push', `/api/v1/tally/sync/push/${pushSessionId.trim()}`)}
+                onClick={() => run('push', `/tally/sync/push/${pushSessionId.trim()}`)}
               >
                 Queue push
               </Button>

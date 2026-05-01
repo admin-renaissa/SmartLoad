@@ -1,71 +1,165 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
-import { Button } from '../../components/ui/Button.tsx';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
-import api from '../../lib/axios.ts';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
+import api from '../../lib/axios.ts';
+import { Button } from '../../components/ui/Button.tsx';
 
 export default function SessionCompletePage() {
-  const { sessionId } = useParams();
+  const { sessionId = '' } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
+  const [notes, setNotes] = useState('');
+  const [showPartialConfirm, setShowPartialConfirm] = useState(false);
+  const [partialReason, setPartialReason] = useState('');
 
-  const { data: session, isLoading } = useQuery({
-    queryKey: ['session', sessionId],
-    queryFn: async () => { const r = await api.get(`/api/v1/sessions/${sessionId}`); return r.data.data; },
+  const { data } = useQuery({
+    queryKey: ['session', sessionId, 'complete'],
+    queryFn: async () => {
+      const r = await api.get(`/sessions/${sessionId}`);
+      return r.data.data as Record<string, unknown>;
+    },
+    enabled: !!sessionId,
   });
+
+  const session = data;
 
   const closeMutation = useMutation({
-    mutationFn: async ({ notes, forcePartial }: { notes?: string; forcePartial?: boolean }) =>
-      api.post(`/api/v1/sessions/${sessionId}/close`, { notes, forcePartial }),
-    onSuccess: () => { toast.success('Session closed successfully!'); navigate('/scan'); },
+    mutationFn: async (body: Record<string, unknown>) => {
+      const r = await api.post(`/sessions/${sessionId}/close`, body);
+      return r.data.data;
+    },
+    onSuccess: () => {
+      toast.success('Session closed');
+      navigate(`/app/sessions/${sessionId}`);
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Close failed';
+      toast.error(msg);
+    },
   });
 
-  if (isLoading) return <div className="min-h-screen bg-green-500 flex items-center justify-center"><LoadingSpinner /></div>;
+  const purchaseOrder = session?.purchaseOrder as Record<string, unknown> | undefined;
+  const lineItems = (purchaseOrder?.lineItems as Record<string, unknown>[]) ?? [];
 
-  const lineItems = session?.po?.lineItems || [];
-  const underLoaded = lineItems.filter((li: { orderedBoxes: number; loadedBoxes: number }) => li.loadedBoxes < li.orderedBoxes);
-  const allComplete = underLoaded.length === 0;
+  const incompleteItems = lineItems.filter(
+    (li) => (li.loadedBoxes as number) < (li.orderedBoxes as number),
+  );
+
+  const handleClose = () => {
+    if (incompleteItems.length > 0) {
+      setShowPartialConfirm(true);
+    } else {
+      closeMutation.mutate({ notes });
+    }
+  };
 
   return (
-    <div className={`min-h-screen ${allComplete ? 'bg-green-500' : 'bg-amber-500'} flex flex-col`}>
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
-        {allComplete
-          ? <CheckCircle className="h-28 w-28 text-white mb-6" strokeWidth={1.5} />
-          : <AlertTriangle className="h-28 w-28 text-white mb-6" strokeWidth={1.5} />}
-        <h1 className="text-4xl font-black text-white text-center">
-          {allComplete ? 'ALL ITEMS VERIFIED ✓' : 'PARTIAL LOAD'}
-        </h1>
-        <p className="text-white/80 text-xl mt-3 text-center">
-          {session?.totalBoxesScanned} boxes scanned
-        </p>
+    <div className="min-h-screen bg-[#0F2044] flex flex-col items-center justify-center px-6 text-white">
 
-        {!allComplete && (
-          <div className="mt-6 bg-black/20 rounded-xl p-4 w-full max-w-md">
-            <p className="text-white font-semibold mb-2">Under-loaded items:</p>
-            {underLoaded.map((li: Record<string, unknown>) => (
-              <p key={li.id as string} className="text-white/80 text-sm">
-                • {(li.variant as Record<string, unknown>)?.colourName as string}: {li.loadedBoxes as number}/{li.orderedBoxes as number} boxes
-              </p>
+      {incompleteItems.length === 0 ? (
+        <>
+          <CheckCircle className="w-24 h-24 text-green-400 mb-6" />
+          <h1 className="text-3xl font-black mb-2">ALL ITEMS VERIFIED ✓</h1>
+          <p className="text-white/60 mb-8">All boxes have been scanned and accepted</p>
+        </>
+      ) : (
+        <>
+          <AlertTriangle className="w-24 h-24 text-amber-400 mb-6" />
+          <h1 className="text-2xl font-black mb-2">SESSION INCOMPLETE</h1>
+          <p className="text-white/60 mb-4">{incompleteItems.length} item(s) are not fully loaded</p>
+          <div className="w-full max-w-sm bg-white/10 rounded-xl p-4 mb-6">
+            {incompleteItems.map((li) => (
+              <div key={li.lineItemId as string} className="flex justify-between text-sm py-1">
+                <span className="text-white/80">
+                  {(li.productName as string) ?? 'Product'} — {(li.colourName as string) ?? ''}
+                </span>
+                <span className="text-amber-400 font-mono">
+                  {li.loadedBoxes as number}/{li.orderedBoxes as number}
+                </span>
+              </div>
             ))}
           </div>
-        )}
+        </>
+      )}
+
+      <div className="w-full max-w-sm bg-white/10 rounded-xl p-4 mb-6 text-sm">
+        <div className="flex justify-between py-1">
+          <span className="text-white/60">Session Code</span>
+          <span className="font-mono">{session?.sessionCode as string}</span>
+        </div>
+        <div className="flex justify-between py-1">
+          <span className="text-white/60">Total Boxes Loaded</span>
+          <span className="font-bold">{session?.totalBoxesScanned as number}</span>
+        </div>
+        <div className="flex justify-between py-1">
+          <span className="text-white/60">Scan Errors</span>
+          <span className={(session?.errorCount as number) > 0 ? 'text-red-400 font-bold' : 'text-green-400'}>
+            {session?.errorCount as number}
+          </span>
+        </div>
       </div>
 
-      <div className="px-6 pb-8">
-        {session?.status === 'OPEN' && (
-          <Button
-            className="w-full bg-white text-primary hover:bg-white/90 font-bold text-lg h-14"
-            onClick={() => closeMutation.mutate({ forcePartial: !allComplete })}
-            loading={closeMutation.isPending}
-          >
-            {allComplete ? 'Close Session & Dispatch' : 'Close as Partial Dispatch'}
-          </Button>
-        )}
-        <Button variant="ghost" className="w-full mt-3 text-white/70 hover:text-white hover:bg-white/10" onClick={() => navigate('/scan')}>
-          Back to Sessions
-        </Button>
-      </div>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder="Add dispatch notes (optional)..."
+        className="w-full max-w-sm bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 resize-none mb-4 focus:outline-none focus:ring-2 focus:ring-accent"
+        rows={3}
+      />
+
+      <Button
+        variant="primary"
+        size="lg"
+        className="max-w-sm w-full"
+        loading={closeMutation.isPending}
+        onClick={handleClose}
+      >
+        {incompleteItems.length === 0 ? 'Close & Confirm Dispatch' : 'Close with Partial Dispatch'}
+      </Button>
+
+      {showPartialConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm text-gray-900">
+            <h3 className="font-bold text-lg mb-2">Confirm Partial Dispatch</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {incompleteItems.length} item(s) will be marked as not dispatched. Provide a reason (min 10 chars).
+            </p>
+            <textarea
+              autoFocus
+              value={partialReason}
+              onChange={(e) => setPartialReason(e.target.value)}
+              placeholder="e.g. Item not available in warehouse"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
+              rows={3}
+            />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPartialConfirm(false)}
+                className="flex-1 py-2 border border-gray-200 rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={partialReason.trim().length < 10}
+                onClick={() =>
+                  closeMutation.mutate({
+                    notes,
+                    forcePartial: true,
+                    partialReason,
+                  })
+                }
+                className="flex-1 py-2 bg-red-600 text-white rounded-lg text-sm font-medium disabled:opacity-40"
+              >
+                Confirm Partial
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
