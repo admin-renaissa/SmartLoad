@@ -1,9 +1,20 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
 
-export default defineConfig({
+const REPO_ROOT = path.resolve(__dirname, '../..');
+
+export default defineConfig(({ mode }) => {
+  // Load monorepo root .env so VITE_* and PORT match the API (apps/web has no .env by default).
+  const env = loadEnv(mode, REPO_ROOT, '');
+  const apiOrigin = (env.VITE_API_URL || `http://localhost:${env.PORT || '4000'}`).replace(
+    /\/$/,
+    '',
+  );
+
+  return {
+  envDir: REPO_ROOT,
   plugins: [
     react(),
     VitePWA({
@@ -49,8 +60,9 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api': { target: 'http://localhost:4000', changeOrigin: true },
-      '/socket.io': { target: 'http://localhost:4000', ws: true, changeOrigin: true },
+      '/api': { target: apiOrigin, changeOrigin: true },
+      '/socket.io': { target: apiOrigin, ws: true, changeOrigin: true },
     },
   },
+  };
 });

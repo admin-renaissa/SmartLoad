@@ -16,9 +16,12 @@ const CreateOrderPage = lazy(() => import('./pages/orders/CreateOrderPage.tsx'))
 const ProductListPage = lazy(() => import('./pages/products/ProductListPage.tsx'));
 const ProductDetailPage = lazy(() => import('./pages/products/ProductDetailPage.tsx'));
 const ClientListPage = lazy(() => import('./pages/clients/ClientListPage.tsx'));
-const InventoryPage = lazy(() => import('./pages/inventory/InventoryPage.tsx'));
-const GRNCreatePage = lazy(() => import('./pages/grn/GRNCreatePage.tsx'));
+const StockViewPage = lazy(() => import('./pages/inventory/StockViewPage.tsx'));
+const GRNCreatePage = lazy(() => import('./pages/inventory/GRNCreatePage.tsx'));
+const GRNListPage = lazy(() => import('./pages/inventory/GRNListPage.tsx'));
+const GRNDetailPage = lazy(() => import('./pages/inventory/GRNDetailPage.tsx'));
 const VehicleListPage = lazy(() => import('./pages/vehicles/VehicleListPage.tsx'));
+const VehicleHistoryPage = lazy(() => import('./pages/vehicles/VehicleHistoryPage.tsx'));
 const DispatchDashboard = lazy(() => import('./pages/dispatch/DispatchDashboard.tsx'));
 const SessionDetailPage = lazy(() => import('./pages/dispatch/SessionDetailPage.tsx'));
 const TallySyncPage = lazy(() => import('./pages/tally/TallySyncPage.tsx'));
@@ -75,9 +78,12 @@ export default function App() {
             <Route path="products" element={<ProductListPage />} />
             <Route path="products/:id" element={<ProductDetailPage />} />
             <Route path="clients" element={<ClientListPage />} />
-            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="inventory" element={<StockViewPage />} />
+            <Route path="inventory/grn" element={<GRNListPage />} />
             <Route path="inventory/grn/new" element={<GRNCreatePage />} />
+            <Route path="inventory/grn/:id" element={<GRNDetailPage />} />
             <Route path="vehicles" element={<VehicleListPage />} />
+            <Route path="vehicles/:id/history" element={<VehicleHistoryPage />} />
             <Route path="dispatch" element={<DispatchDashboard />} />
             <Route path="sessions/:id" element={<SessionDetailPage />} />
             <Route path="tally" element={<TallySyncPage />} />

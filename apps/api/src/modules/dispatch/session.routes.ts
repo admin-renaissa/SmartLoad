@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { successResponse, errorResponse, UserRole, AppError } from '@smartload/shared';
 import { ScanResult } from '@prisma/client';
 import { SessionService } from './session.service.js';
+import { ManifestService } from './manifest.service.js';
 import {
   createSessionSchema,
   closeSessionSchema,
@@ -11,6 +12,8 @@ import {
 } from './session.schema.js';
 
 const svc = (fastify: Parameters<FastifyPluginAsync>[0]) => new SessionService(fastify);
+const manifestSvc = (fastify: Parameters<FastifyPluginAsync>[0]) =>
+  new ManifestService(fastify);
 
 export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/drivers', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (_request, reply) => {
@@ -119,6 +122,61 @@ export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
     });
     return reply.send(successResponse(events));
   });
+
+  fastify.get(
+    '/:id/manifest',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR) },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const row = await fastify.prisma.dispatchSession.findUnique({
+          where: { id },
+          select: { sessionCode: true },
+        });
+        if (!row) return reply.code(404).send(errorResponse('Session not found'));
+        const pdf = await manifestSvc(fastify).generateManifestPDF(id);
+        reply.header('Content-Type', 'application/pdf');
+        reply.header('Content-Disposition', `attachment; filename="manifest-${row.sessionCode}.pdf"`);
+        return reply.send(pdf);
+      } catch (e: unknown) {
+        if (e instanceof AppError && e.statusCode === 404) {
+          return reply.code(404).send(errorResponse(e.message));
+        }
+        throw e;
+      }
+    },
+  );
+
+  fastify.get(
+    '/:id/challan',
+    {
+      preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS),
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const row = await fastify.prisma.dispatchSession.findUnique({
+          where: { id },
+          select: { sessionCode: true, status: true },
+        });
+        if (!row) return reply.code(404).send(errorResponse('Session not found'));
+        if (row.status !== 'CLOSED') {
+          return reply
+            .code(400)
+            .send(errorResponse('Delivery challan is only available after the session is closed'));
+        }
+        const pdf = await manifestSvc(fastify).generateDeliveryChallan(id);
+        reply.header('Content-Type', 'application/pdf');
+        reply.header('Content-Disposition', `attachment; filename="challan-${row.sessionCode}.pdf"`);
+        return reply.send(pdf);
+      } catch (e: unknown) {
+        if (e instanceof AppError) {
+          return reply.code(e.statusCode).send(errorResponse(e.message));
+        }
+        throw e;
+      }
+    },
+  );
 
   fastify.get('/:id', { preHandler: fastify.requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };

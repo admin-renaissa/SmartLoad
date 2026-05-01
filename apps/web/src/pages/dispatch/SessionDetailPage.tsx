@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { useDownloadChallan, useDownloadManifest } from '../../hooks/useSessions.ts';
 
 function formatDuration(openedAt: string, closedAt?: string | null) {
   const start = new Date(openedAt).getTime();
@@ -31,6 +32,10 @@ export default function SessionDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const canClose = usePermission('sessions:close');
+  const canManifest = usePermission('sessions:manifest');
+  const canChallan = usePermission('sessions:challan');
+  const manifestDl = useDownloadManifest();
+  const challanDl = useDownloadChallan();
 
   const [feedTab, setFeedTab] = useState<'all' | 'errors'>('all');
   const [scanPage, setScanPage] = useState(1);
@@ -104,22 +109,6 @@ export default function SessionDetailPage() {
     onError: () => toast.error('Could not resend POD'),
   });
 
-  const downloadManifest = async () => {
-    if (!poId) return;
-    try {
-      const r = await api.get(`/orders/${poId}/manifest`);
-      const blob = new Blob([JSON.stringify(r.data.data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `manifest-${poId}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Manifest download failed');
-    }
-  };
-
   const incompleteCount = lineItems.filter(
     (li) => (li.loadedBoxes as number) < (li.orderedBoxes as number),
   ).length;
@@ -142,6 +131,7 @@ export default function SessionDetailPage() {
 
   const status = session.status as string;
   const isOpen = status === 'OPEN';
+  const isClosed = status === 'CLOSED';
 
   const vehicleReg =
     vehicle && typeof vehicle.registrationNumber === 'string' ? vehicle.registrationNumber : 'Vehicle';
@@ -262,20 +252,40 @@ export default function SessionDetailPage() {
           <Card>
             <CardContent className="space-y-2">
               <h3 className="font-semibold text-gray-900 text-sm">Actions</h3>
-              <Button variant="outline" size="sm" className="w-full" onClick={downloadManifest}>
-                Download manifest (JSON)
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                disabled={isOpen}
-                onClick={() =>
-                  toast('Challan PDF is generated after dispatch workflows complete.', { icon: 'ℹ️' })
-                }
-              >
-                Download challan
-              </Button>
+              {canManifest ?
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  loading={manifestDl.isPending}
+                  onClick={() =>
+                    manifestDl.mutate({
+                      sessionId: id,
+                      sessionCode: typeof session.sessionCode === 'string' ? session.sessionCode : undefined,
+                    })
+                  }
+                >
+                  Download manifest (PDF)
+                </Button>
+              : null}
+              {canChallan ?
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={!isClosed || challanDl.isPending}
+                  loading={challanDl.isPending}
+                  title={!isClosed ? 'Available after session is closed' : undefined}
+                  onClick={() =>
+                    challanDl.mutate({
+                      sessionId: id,
+                      sessionCode: typeof session.sessionCode === 'string' ? session.sessionCode : undefined,
+                    })
+                  }
+                >
+                  Download challan
+                </Button>
+              : null}
               <Button
                 variant="outline"
                 size="sm"

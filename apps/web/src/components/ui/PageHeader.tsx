@@ -1,7 +1,7 @@
 import { cn } from '../../utils/cn.ts';
 
 interface PageHeaderProps {
-  title: string;
+  title: React.ReactNode;
   subtitle?: string;
   actions?: React.ReactNode;
   className?: string;

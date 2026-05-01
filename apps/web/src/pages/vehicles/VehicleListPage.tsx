@@ -1,134 +1,24 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Truck, X } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Plus, Truck, History } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
-import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
-import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { useDeactivateVehicle, useVehicles } from '../../hooks/useVehicles.ts';
+import { VehicleFormModal } from './VehicleFormModal.tsx';
 
-interface Vehicle {
-  id: string;
-  registrationNumber: string;
-  vehicleType: string;
-  driverName: string | null;
-  driverPhone: string | null;
-  capacityBoxes: number | null;
-  isActive: boolean;
-  _count?: { trips: number };
-}
-
-const VEHICLE_TYPES = ['TRUCK', 'MINI_TRUCK', 'TEMPO', 'OTHER'];
-
-function VehicleFormModal({ vehicle, onClose }: { vehicle?: Vehicle; onClose: () => void }) {
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState({
-    registrationNumber: vehicle?.registrationNumber ?? '',
-    vehicleType: vehicle?.vehicleType ?? 'TRUCK',
-    driverName: vehicle?.driverName ?? '',
-    driverPhone: vehicle?.driverPhone ?? '',
-    capacityBoxes: vehicle?.capacityBoxes?.toString() ?? '',
-  });
-
-  const mutation = useMutation({
-    mutationFn: async () => {
-      const payload = {
-        registrationNumber: form.registrationNumber.toUpperCase(),
-        vehicleType: form.vehicleType,
-        driverName: form.driverName || undefined,
-        driverPhone: form.driverPhone || undefined,
-        capacityBoxes: form.capacityBoxes ? Number(form.capacityBoxes) : undefined,
-      };
-      if (vehicle) {
-        await api.patch(`/vehicles/${vehicle.id}`, payload);
-      } else {
-        await api.post('/vehicles', payload);
-      }
-    },
-    onSuccess: () => {
-      toast.success(vehicle ? 'Vehicle updated' : 'Vehicle added');
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      onClose();
-    },
-    onError: (e: unknown) => {
-      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      toast.error(msg || 'Failed to save vehicle');
-    },
-  });
-
+function Plate({ reg }: { reg: string }) {
+  const spaced =
+    reg.length > 8 ? `${reg.slice(0, 2)} ${reg.slice(2, 4)} ${reg.slice(4, 6)} ${reg.slice(6)}` : reg;
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{vehicle ? 'Edit Vehicle' : 'Add Vehicle'}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-            <X className="h-4 w-4 text-gray-500" />
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number *</label>
-            <input
-              value={form.registrationNumber}
-              onChange={(e) => setForm({ ...form, registrationNumber: e.target.value })}
-              placeholder="e.g. MH12AB1234"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 font-mono uppercase"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type *</label>
-            <select
-              value={form.vehicleType}
-              onChange={(e) => setForm({ ...form, vehicleType: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
-            >
-              {VEHICLE_TYPES.map((t) => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Driver Name</label>
-              <input
-                value={form.driverName}
-                onChange={(e) => setForm({ ...form, driverName: e.target.value })}
-                placeholder="e.g. Suresh Kumar"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Driver Phone</label>
-              <input
-                value={form.driverPhone}
-                onChange={(e) => setForm({ ...form, driverPhone: e.target.value })}
-                placeholder="+919876543210"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Capacity (boxes)</label>
-            <input
-              type="number"
-              value={form.capacityBoxes}
-              onChange={(e) => setForm({ ...form, capacityBoxes: e.target.value })}
-              placeholder="e.g. 500"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
-            />
-          </div>
-        </div>
-        <div className="p-6 pt-0 flex gap-3 justify-end">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button
-            loading={mutation.isPending}
-            disabled={!form.registrationNumber}
-            onClick={() => mutation.mutate()}
-          >
-            {vehicle ? 'Save Changes' : 'Add Vehicle'}
-          </Button>
-        </div>
+    <div className="inline-flex flex-col items-center">
+      <div className="text-[10px] font-bold bg-yellow-900 text-yellow-100 w-full text-center uppercase tracking-[0.2em] px-6 py-0.5">
+        IND
+      </div>
+      <div className="border-4 border-black bg-[#fcecb5] px-5 py-2 font-black tracking-wider text-black text-xl md:text-2xl whitespace-nowrap">
+        {spaced}
       </div>
     </div>
   );
@@ -136,109 +26,174 @@ function VehicleFormModal({ vehicle, onClose }: { vehicle?: Vehicle; onClose: ()
 
 export default function VehicleListPage() {
   const canManage = usePermission('vehicles:manage');
-  const [showCreate, setShowCreate] = useState(false);
-  const [editVehicle, setEditVehicle] = useState<Vehicle | undefined>();
+  const [modal, setModal] = useState<Record<string, unknown> | 'new' | null>(null);
+  const deactivate = useDeactivateVehicle();
 
-  const { data: vehicles, isLoading } = useQuery<Vehicle[]>({
-    queryKey: ['vehicles'],
-    queryFn: async () => {
-      const r = await api.get('/vehicles?limit=100');
-      return r.data.data;
-    },
-  });
+  const { data, isLoading } = useVehicles({ limit: 100 });
+
+  const totals = useMemo(() => {
+    const list = ((data?.data as Record<string, unknown>[]) ?? []) as Record<string, unknown>[];
+    let avail = 0;
+    let busy = 0;
+    let inactive = 0;
+    for (const v of list) {
+      const open = !!(v.currentSession as Record<string, unknown> | null);
+      const active = v.isActive !== false;
+      if (!active) inactive++;
+      else if (open) busy++;
+      else avail++;
+    }
+    return {
+      avail,
+      busy,
+      inactive,
+    };
+  }, [data?.data]);
+
+  const list = ((data?.data as Record<string, unknown>[]) ?? []) as Record<string, unknown>[];
 
   return (
     <div className="space-y-6">
-      {(showCreate || editVehicle) && (
-        <VehicleFormModal
-          vehicle={editVehicle}
-          onClose={() => { setShowCreate(false); setEditVehicle(undefined); }}
-        />
-      )}
+      {modal &&
+        (modal === 'new' ?
+          <VehicleFormModal onClose={() => setModal(null)} />
+        : <VehicleFormModal vehicle={modal} onClose={() => setModal(null)} />)}
 
       <PageHeader
-        title="Vehicles"
-        subtitle="Fleet management and driver assignments"
+        title="Fleet Management"
+        subtitle="Fleet status · Indian plate layout"
         actions={
-          canManage && (
-            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setShowCreate(true)}>
-              Add Vehicle
+          canManage ?
+            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setModal('new')}>
+              Register Vehicle
             </Button>
-          )
+          : null
         }
       />
 
-      {isLoading ? (
-        <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {(vehicles ?? []).map((v) => (
-            <Card key={v.id} className={!v.isActive ? 'opacity-60' : ''}>
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                      <Truck className="h-5 w-5 text-accent" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-mono font-bold text-gray-900 truncate">{v.registrationNumber}</p>
-                      <p className="text-xs text-gray-500">{v.vehicleType?.replace('_', ' ')}</p>
-                    </div>
-                  </div>
-                  <StatusBadge status={v.isActive ? 'ACTIVE' : 'INACTIVE'} />
-                </div>
-                <div className="mt-3 space-y-1 text-sm text-gray-600">
-                  {v.driverName && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs w-12">Driver</span>
-                      <span>{v.driverName}</span>
-                    </div>
-                  )}
-                  {v.driverPhone && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs w-12">Phone</span>
-                      <span className="font-mono text-xs">{v.driverPhone}</span>
-                    </div>
-                  )}
-                  {v.capacityBoxes && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs w-12">Capacity</span>
-                      <span>{v.capacityBoxes} boxes</span>
-                    </div>
-                  )}
-                  {v._count && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-400 text-xs w-12">Trips</span>
-                      <span>{v._count.trips}</span>
-                    </div>
-                  )}
-                </div>
-                {canManage && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <Button variant="ghost" size="sm" onClick={() => setEditVehicle(v)}>Edit</Button>
-                  </div>
-                )}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          ['Total Vehicles', String(list.length)],
+          ['Available Now', String(totals.avail)],
+          ['Currently Dispatching', String(totals.busy)],
+          ['Inactive', String(totals.inactive)],
+        ].map(([k, v]) => (
+          <Card key={k}>
+            <CardContent className="py-4">
+              <p className="text-xs text-gray-500">{k}</p>
+              <p className="text-2xl font-bold">{v}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {isLoading ?
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="py-10 flex justify-center">
+                <LoadingSpinner />
               </CardContent>
             </Card>
           ))}
-          {(!vehicles || vehicles.length === 0) && (
-            <div className="col-span-full">
-              <Card>
-                <CardContent>
-                  <div className="text-center py-12">
-                    <Truck className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">No vehicles yet</p>
-                    {canManage && (
-                      <Button variant="outline" size="sm" className="mt-4" onClick={() => setShowCreate(true)}>
-                        Add First Vehicle
+        </div>
+      : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {list.map((v) => {
+            const sess = v.currentSession as Record<string, unknown> | null;
+            const open = !!sess;
+            const po = sess?.purchaseOrder as Record<string, unknown> | undefined;
+            const client = po?.client as Record<string, unknown> | undefined;
+            const cap = v.capacityKg as number | null | undefined;
+            const active = v.isActive !== false;
+            return (
+              <Card key={String(v.id)} className={`${!active ? 'opacity-60' : ''} overflow-hidden`}>
+                <CardContent className="pt-6 pb-5 space-y-4">
+                  <div className="flex justify-between items-start gap-4">
+                    <Plate reg={String(v.registrationNumber)} />
+                    <span
+                      className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                        open ? 'bg-amber-100 text-amber-800' :
+                        active ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {open ? 'IN USE' : active ? 'AVAILABLE' : 'INACTIVE'}
+                    </span>
+                  </div>
+                  <div className="text-xs uppercase text-gray-600 font-semibold tracking-wide inline-block bg-gray-100 px-3 py-1 rounded-full">
+                    {String(v.type).replace('_', ' ')}
+                  </div>
+                  {open && (
+                    <div className="text-sm text-gray-800 space-y-1 border-l-4 border-amber-400 pl-3">
+                      <p className="font-mono text-accent">{String(sess.sessionCode ?? '')}</p>
+                      <p className="text-xs">
+                        Client: {String(client?.name ?? '')}{' '}
+                        <span className="font-mono">· PO {(po?.poNumber as string) ?? ''}</span>
+                      </p>
+                    </div>
+                  )}
+                  <div className="text-sm space-y-1">
+                    <p className="font-semibold">{String(v.driverName)}</p>
+                    <a href={`tel:${String(v.driverPhone)}`} className="font-mono text-accent text-xs">
+                      {String(v.driverPhone)}
+                    </a>
+                    {cap != null && Number(cap) > 0 ?
+                      <p className="text-xs text-gray-500">Capacity: {Number(cap)} kg</p>
+                    : null}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-2 border-t justify-end">
+                    <Link to={`/app/vehicles/${String(v.id)}/history`}>
+                      <Button variant="outline" size="sm" icon={<History className="h-3.5 w-3.5" />}>
+                        History
                       </Button>
+                    </Link>
+                    {canManage && active && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => setModal(v)}>
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-700"
+                          onClick={() => {
+                            const ok =
+                              typeof window !== 'undefined' ?
+                                window.confirm('Deactivate this vehicle?')
+                              : false;
+                            if (!ok || !v.id) return;
+                            deactivate.mutate(String(v.id));
+                          }}
+                          disabled={open}
+                          title={
+                            open ? 'Close dispatch session before deactivating' : 'Deactivate'
+                          }
+                        >
+                          Off road
+                        </Button>
+                      </>
                     )}
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          )}
+            );
+          })}
         </div>
+      }
+
+      {!isLoading && !list.length && (
+        <Card>
+          <CardContent className="py-14 text-center text-gray-500">
+            <Truck className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+            <p className="font-medium mb-4">No vehicles registered</p>
+            {canManage ?
+              <Button variant="outline" onClick={() => setModal('new')}>
+                Register Vehicle
+              </Button>
+            : null}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

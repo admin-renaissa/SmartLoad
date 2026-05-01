@@ -30,7 +30,7 @@ import { sessionRoutes } from './modules/dispatch/session.routes.js';
 import { scanRoutes } from './modules/scan/scan.routes.js';
 import { inventoryRoutes } from './modules/inventory/inventory.routes.js';
 import { grnRoutes } from './modules/inventory/grn.routes.js';
-import { vehicleRoutes } from './modules/vehicles/vehicle.routes.js';
+import { vehiclesRoutes } from './modules/vehicles/vehicles.routes.js';
 import { podRoutes } from './modules/pod/pod.routes.js';
 import { tallyRoutes } from './modules/tally/tally.routes.js';
 import { integrationsRoutes } from './modules/integrations/integrations.routes.js';
@@ -104,7 +104,7 @@ export async function buildServer() {
   await app.register(scanRoutes, { prefix: `${apiPrefix}/scan` });
   await app.register(inventoryRoutes, { prefix: `${apiPrefix}/inventory` });
   await app.register(grnRoutes, { prefix: `${apiPrefix}/grn` });
-  await app.register(vehicleRoutes, { prefix: `${apiPrefix}/vehicles` });
+  await app.register(vehiclesRoutes, { prefix: `${apiPrefix}/vehicles` });
   await app.register(podRoutes, { prefix: `${apiPrefix}/pod` });
   await app.register(tallyRoutes, { prefix: `${apiPrefix}/tally` });
   await app.register(integrationsRoutes, { prefix: `${apiPrefix}/integrations` });
