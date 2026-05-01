@@ -1,0 +1,12 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+allowBuilds:
+  '@prisma/client': false
+  '@prisma/engines': false
+  bcrypt: false
+  esbuild: false
+  fastify-socket.io: false
+  msgpackr-extract: false
+  prisma: false
+  puppeteer: false

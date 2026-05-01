@@ -1,0 +1,93 @@
+// Timing
+export const SCAN_RESPONSE_TARGET_MS = 200
+export const SCAN_FEEDBACK_DISPLAY_MS = 1500
+export const ERROR_FEEDBACK_DISPLAY_MS = 3000
+export const WEBSOCKET_HEARTBEAT_MS = 30000
+export const DASHBOARD_REFRESH_MS = 5000
+
+// Auth & Security
+export const JWT_ACCESS_EXPIRY_MINUTES = 15
+export const JWT_REFRESH_EXPIRY_DAYS = 7
+export const BCRYPT_SALT_ROUNDS = 12
+export const MAX_LOGIN_ATTEMPTS = 5
+export const LOCKOUT_DURATION_MINUTES = 30
+
+// POD
+export const POD_LINK_EXPIRY_HOURS = 72
+export const POD_OTP_EXPIRY_MINUTES = 10
+export const POD_OTP_MAX_ATTEMPTS = 5
+export const POD_OTP_RESEND_COOLDOWN_S = 60
+
+// Tally
+export const TALLY_SYNC_RETRY_ATTEMPTS = 3
+export const TALLY_SYNC_RETRY_BACKOFF_MS = [5000, 30000, 120000] as const
+export const TALLY_PULL_INTERVAL_MINUTES = 15
+
+// Pagination
+export const DEFAULT_PAGE_SIZE = 25
+export const MAX_PAGE_SIZE = 100
+
+// Legacy shorter names (kept for existing routes / workers)
+export const ITEMS_PER_PAGE = DEFAULT_PAGE_SIZE
+export const SCAN_TIMEOUT_MS = SCAN_RESPONSE_TARGET_MS
+export const MAX_SCAN_RETRIES = 3
+export const MAX_FAILED_OTP_ATTEMPTS = POD_OTP_MAX_ATTEMPTS
+export const OTP_EXPIRY_MINUTES = POD_OTP_EXPIRY_MINUTES
+export const POD_TOKEN_EXPIRY = '2h'
+export const ACCESS_TOKEN_EXPIRY = '15m'
+export const REFRESH_TOKEN_EXPIRY = '7d'
+
+// Redis TTLs (seconds)
+export const REDIS_TTL = {
+  VARIANT_LOOKUP: 3600,
+  SESSION_CONTEXT: 1800,
+  DASHBOARD: 60,
+  INVENTORY_LIST: 30,
+  STOCK_SUMMARY: 30,
+} as const
+
+export const BARCODE_CACHE_TTL_SECONDS = REDIS_TTL.VARIANT_LOOKUP
+export const SESSION_CONTEXT_CACHE_TTL_SECONDS = REDIS_TTL.SESSION_CONTEXT
+export const DASHBOARD_CACHE_TTL_SECONDS = REDIS_TTL.DASHBOARD
+export const INVENTORY_CACHE_TTL_SECONDS = REDIS_TTL.INVENTORY_LIST
+
+// Session code and document number prefixes
+export const CODE_PREFIXES = {
+  DISPATCH_SESSION: 'DS',
+  GRN: 'GRN',
+  DELIVERY_CHALLAN: 'DC',
+  POD: 'POD',
+} as const
+
+// BullMQ queue names
+export const QUEUES = {
+  INVENTORY_DEDUCTION: 'inventory-deduction',
+  TALLY_SYNC: 'tally-sync',
+  POD_CREATION: 'pod-creation',
+  NOTIFICATIONS: 'notifications',
+} as const
+
+export const TALLY_DATA_TYPES = {
+  DISPATCH_OUTWARD: 'DISPATCH_OUTWARD',
+  GRN_INWARD: 'GRN_INWARD',
+  PULL_STOCK_ITEMS: 'PULL_STOCK_ITEMS',
+  PULL_PARTIES: 'PULL_PARTIES',
+  PULL_ORDERS: 'PULL_ORDERS',
+  RECONCILIATION: 'RECONCILIATION',
+} as const
+
+export const NOTIFICATION_TYPES = {
+  POD_DISPATCH: 'POD_DISPATCH',
+  POD_OTP: 'POD_OTP',
+  LOW_STOCK: 'LOW_STOCK',
+  DISPATCH_ERROR: 'DISPATCH_ERROR',
+  TALLY_SYNC_FAIL: 'TALLY_SYNC_FAIL',
+  POD_DISPUTED: 'POD_DISPUTED',
+  WELCOME_USER: 'WELCOME_USER',
+} as const
+
+export const NOTIFICATION_CHANNELS = {
+  SMS: 'SMS',
+  WHATSAPP: 'WHATSAPP',
+  EMAIL: 'EMAIL',
+} as const

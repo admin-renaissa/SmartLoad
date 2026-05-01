@@ -1,0 +1,33 @@
+; SmartLoad TDL - Custom fields for Stock Items
+; Installation: Place this file in TallyPrime's TDL configuration folder
+; and load it via F12 > Configuration > TDL Configuration
+
+[#Object: Stock Item]
+  Field : SLColourCode : Alpha : 20
+  Field : SLVariantId  : Alpha : 50
+  Field : SLBarcode    : Alpha : 100
+
+[#Form: Stock Item]
+  Parts : SL Custom Fields
+
+[Part: SL Custom Fields]
+  Lines : SL Colour Line, SL Variant Line
+  Indent : Yes
+
+[Line: SL Colour Line]
+  Fields : SL Colour Field
+
+[Line: SL Variant Line]
+  Fields : SL Variant Field
+
+[Field: SL Colour Field]
+  Use    : Name Field
+  Info   : "SmartLoad Colour Code"
+  Set    : SLColourCode
+  Width  : 20
+
+[Field: SL Variant Field]
+  Use    : Name Field
+  Info   : "SmartLoad Variant ID"
+  Set    : SLVariantId
+  Width  : 50

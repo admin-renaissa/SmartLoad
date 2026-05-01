@@ -1,0 +1,26 @@
+{
+  "name": "@smartload/tally-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "install-service": "node install-service.cjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "fastify": "^4.27.0",
+    "@fastify/cors": "^9.0.1",
+    "fast-xml-parser": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.1",
+    "node-windows": "^1.0.0-beta.8",
+    "tsx": "^4.15.1",
+    "typescript": "^5.4.5"
+  }
+}
