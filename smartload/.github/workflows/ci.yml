@@ -96,7 +96,7 @@ jobs:
         run: pnpm db:generate
 
       - name: Run migrations
-        run: pnpm --filter @smartload/db run migrate:deploy
+        run: pnpm db:migrate:deploy
 
       - name: Seed database
         run: pnpm db:seed

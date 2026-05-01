@@ -13,7 +13,7 @@
     "seed": "tsx prisma/seed.ts",
     "typecheck": "prisma validate",
     "lint": "echo \"skip\"",
-    "build": "echo \"skip\"",
+    "build": "prisma generate",
     "test": "echo \"skip\""
   },
   "dependencies": {
