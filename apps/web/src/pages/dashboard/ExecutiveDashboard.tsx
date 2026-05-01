@@ -50,6 +50,7 @@ export type ExecutiveDashboardData = {
     totalScansToday: number;
     errorScansToday: number;
     pendingPODs: number;
+    disputedPODs: number;
   };
   dispatchVolume30d: { date: string; label: string; boxes: number }[];
   ordersByStatus: { status: string; count: number }[];
@@ -101,7 +102,7 @@ export default function ExecutiveDashboard({ data }: Props) {
       />
 
       {/* Row 1 — KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         <StatsCard
           title="Dispatches today"
           value={kpis.dispatchesToday}
@@ -162,6 +163,28 @@ export default function ExecutiveDashboard({ data }: Props) {
               )}
             >
               Review
+            </Link>
+          </div>
+        </div>
+        <div className="bg-white rounded-card shadow-card border-l-4 border-l-red-500 p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">POD disputed (qty mismatch)</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{kpis.disputedPODs}</p>
+            </div>
+            <div className="p-2 rounded-lg bg-red-50 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <Link
+              to="/app/reports"
+              className={cn(
+                'inline-flex items-center justify-center rounded-button font-medium h-8 px-3 text-sm',
+                'bg-primary text-white hover:bg-primary/90',
+              )}
+            >
+              POD report
             </Link>
           </div>
         </div>

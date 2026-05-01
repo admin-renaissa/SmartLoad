@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { UserRole } from '@smartload/shared';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { Button } from '../../components/ui/Button.tsx';
@@ -9,6 +10,7 @@ import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 import { useDownloadChallan, useDownloadManifest } from '../../hooks/useSessions.ts';
+import { useAuthStore } from '../../store/authStore.ts';
 
 function formatDuration(openedAt: string, closedAt?: string | null) {
   const start = new Date(openedAt).getTime();
@@ -42,6 +44,14 @@ export default function SessionDetailPage() {
   const [closeNotes, setCloseNotes] = useState('');
   const [showPartial, setShowPartial] = useState(false);
   const [partialReason, setPartialReason] = useState('');
+  const [podPdfLoading, setPodPdfLoading] = useState(false);
+
+  const user = useAuthStore((s) => s.user);
+  const canDownloadPodPdf =
+    user?.role === UserRole.ADMIN ||
+    user?.role === UserRole.SUPERVISOR ||
+    user?.role === UserRole.ACCOUNTS ||
+    user?.role === UserRole.CLIENT;
 
   const { data: session, isLoading } = useQuery({
     queryKey: ['session-detail', id],
@@ -108,6 +118,24 @@ export default function SessionDetailPage() {
     onSuccess: () => toast.success('POD link queued'),
     onError: () => toast.error('Could not resend POD'),
   });
+
+  const downloadPodPdf = async (podId: string) => {
+    setPodPdfLoading(true);
+    try {
+      const r = await api.get(`/pod/${podId}/pdf`, { responseType: 'blob' });
+      const blob = new Blob([r.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `POD-${podId.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Could not download POD PDF');
+    } finally {
+      setPodPdfLoading(false);
+    }
+  };
 
   const incompleteCount = lineItems.filter(
     (li) => (li.loadedBoxes as number) < (li.orderedBoxes as number),
@@ -248,6 +276,53 @@ export default function SessionDetailPage() {
               <p>{(po?.client as Record<string, unknown>)?.name as string}</p>
             </CardContent>
           </Card>
+
+          {pod?.id ? (
+            <Card>
+              <CardContent className="space-y-2 text-sm">
+                <h3 className="font-semibold text-gray-900">Proof of delivery</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={String(pod.status)} />
+                  {pod.acknowledgedAt != null ? (
+                    <span className="text-xs text-gray-500">
+                      Acknowledged{' '}
+                      {new Date(String(pod.acknowledgedAt)).toLocaleString('en-IN', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
+                    </span>
+                  ) : null}
+                </div>
+                {pod.receiverName ? (
+                  <p className="text-gray-600">
+                    <span className="text-gray-500">Receiver</span> {pod.receiverName as string}
+                  </p>
+                ) : null}
+                {pod.discrepancyNotes ? (
+                  <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md p-2">
+                    {pod.discrepancyNotes as string}
+                  </p>
+                ) : null}
+                {pod.podPdfUrl ? (
+                  <p className="text-xs text-gray-500">Signed POD PDF is on file.</p>
+                ) : null}
+                <div className="flex flex-col gap-2 pt-1">
+                  {canDownloadPodPdf && !isOpen ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      loading={podPdfLoading}
+                      onClick={() => void downloadPodPdf(pod.id as string)}
+                    >
+                      Download POD (PDF)
+                    </Button>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardContent className="space-y-2">

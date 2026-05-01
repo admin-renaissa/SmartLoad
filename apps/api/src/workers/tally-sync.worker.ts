@@ -1,7 +1,7 @@
 import { Worker, type Job } from 'bullmq';
 import { PrismaClient } from '@prisma/client';
 import { QUEUES } from '@smartload/shared';
-import { runTallySyncEnqueue } from './tally-sync.processor.js';
+import { processTallySyncJob } from './tally-sync.processor.js';
 
 const prisma = new PrismaClient();
 
@@ -19,9 +19,13 @@ interface JobData {
 export const tallySyncWorker = new Worker<JobData>(
   QUEUES.TALLY_SYNC,
   async (job: Job<JobData>) => {
-    await runTallySyncEnqueue(prisma, job.data, async (msg) => {
-      await job.log(msg);
-    });
+    await processTallySyncJob(
+      prisma,
+      { ...job.data, attemptNumber: job.attemptsMade + 1 },
+      async (msg) => {
+        await job.log(msg);
+      },
+    );
   },
   {
     connection,

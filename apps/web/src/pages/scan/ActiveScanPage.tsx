@@ -1,9 +1,16 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle, XCircle, AlertTriangle, Scan } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useScanSession } from '../../hooks/useScanSession.ts';
 import { useBarcodeCapture } from '../../hooks/useBarcodeCapture.ts';
+import {
+  countQueuedForSession,
+  enqueueOfflineScan,
+  flushQueuedScansForSession,
+} from '../../hooks/useOfflineScanQueue.ts';
+import { offlineBannerText } from '../../i18n/messages.ts';
 import { CameraModal } from './CameraModal.tsx';
 import api from '../../lib/axios.ts';
 import type { ScanProcessResult } from '@smartload/shared';
@@ -15,6 +22,37 @@ export default function ActiveScanPage() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualBarcode, setManualBarcode] = useState('');
   const [recentScans, setRecentScans] = useState<Array<{ barcode: string; result: string; time: Date }>>([]);
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0);
+
+  const refreshQueueCount = useCallback(async () => {
+    const n = await countQueuedForSession(sessionId);
+    setOfflineQueueCount(n);
+  }, [sessionId]);
+
+  const postScan = useCallback(
+    async (raw: string, deviceId?: string) => {
+      const r = await api.post(`/sessions/${sessionId}/scan`, {
+        rawBarcode: raw,
+        deviceId,
+      });
+      return r.data.data as ScanProcessResult;
+    },
+    [sessionId],
+  );
+
+  useEffect(() => {
+    void refreshQueueCount();
+  }, [refreshQueueCount]);
+
+  useEffect(() => {
+    const onOnline = async () => {
+      const flushed = await flushQueuedScansForSession(sessionId, postScan);
+      if (flushed > 0) toast.success(`Replayed ${flushed} offline scan(s)`);
+      await refreshQueueCount();
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [sessionId, postScan, refreshQueueCount]);
 
   const { scanState, submitScan, isConnected } = useScanSession({
     sessionId,
@@ -34,19 +72,34 @@ export default function ActiveScanPage() {
   const vehicle = sessionMeta?.vehicle as Record<string, unknown> | undefined;
 
   const submitRestFallback = async (raw: string, deviceId?: string) => {
-    try {
-      const r = await api.post(`/sessions/${sessionId}/scan`, {
-        rawBarcode: raw,
-        deviceId,
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      await enqueueOfflineScan({ sessionId, rawBarcode: raw, deviceId, ts: Date.now() });
+      await refreshQueueCount();
+      const n = await countQueuedForSession(sessionId);
+      setRecentScans((prev) => {
+        const [first, ...rest] = prev;
+        if (!first) return prev;
+        return [{ ...first, result: 'OFFLINE_QUEUED' }, ...rest];
       });
-      const payload = r.data.data as ScanProcessResult;
+      toast(offlineBannerText(n));
+      return;
+    }
+    try {
+      const payload = await postScan(raw, deviceId);
       setRecentScans((prev) => {
         const [first, ...rest] = prev;
         if (!first) return prev;
         return [{ ...first, result: payload.result }, ...rest];
       });
-    } catch (e) {
-      console.error(e);
+    } catch {
+      await enqueueOfflineScan({ sessionId, rawBarcode: raw, deviceId, ts: Date.now() });
+      await refreshQueueCount();
+      setRecentScans((prev) => {
+        const [first, ...rest] = prev;
+        if (!first) return prev;
+        return [{ ...first, result: 'OFFLINE_QUEUED' }, ...rest];
+      });
+      toast.error('Network issue — scan saved to retry when you are online.');
     }
   };
 
@@ -227,6 +280,11 @@ export default function ActiveScanPage() {
           {!isConnected && (
             <span className="text-amber-400 text-xs ml-2 shrink-0">REST fallback</span>
           )}
+          {offlineQueueCount > 0 && (
+            <span className="text-amber-300 text-xs ml-2 shrink-0 max-w-[200px] truncate" title={offlineBannerText(offlineQueueCount)}>
+              {offlineBannerText(offlineQueueCount)}
+            </span>
+          )}
         </div>
         <button
           type="button"
@@ -306,8 +364,10 @@ export default function ActiveScanPage() {
               className={`text-xs px-2 py-1 rounded font-mono truncate max-w-[120px] ${
                 s.result === 'SUCCESS'
                   ? 'bg-green-500/20 text-green-300'
-                  : s.result === 'processing'
-                    ? 'bg-white/10 text-white/40'
+                  :                 s.result === 'processing'
+                  ? 'bg-white/10 text-white/40'
+                  : s.result === 'OFFLINE_QUEUED'
+                    ? 'bg-amber-600/30 text-amber-100'
                     : s.result === 'EXCESS_QUANTITY'
                       ? 'bg-amber-500/20 text-amber-300'
                       : 'bg-red-500/20 text-red-300'

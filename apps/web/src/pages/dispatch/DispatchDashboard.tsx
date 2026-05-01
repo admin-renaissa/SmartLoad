@@ -15,7 +15,7 @@ import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { CreateSessionModal } from './CreateSessionModal.tsx';
-import { POStatus } from '@smartload/shared';
+import { POStatus, PODStatus } from '@smartload/shared';
 
 interface DashboardSummary {
   sessionsOpenedToday: number;
@@ -79,6 +79,29 @@ export default function DispatchDashboard() {
     refetchInterval: 30_000,
   });
 
+  const { data: disputedData, refetch: refetchDisputed } = useQuery({
+    queryKey: ['pods-disputed-dashboard'],
+    queryFn: async () => {
+      const r = await api.get(`/pod?status=${PODStatus.DISPUTED}&limit=15`);
+      const meta = r.data.meta as { total?: number } | undefined;
+      const items = r.data.data as Record<string, unknown>[];
+      return {
+        items,
+        total: meta?.total ?? items.length,
+      };
+    },
+    refetchInterval: 15_000,
+  });
+
+  const { data: disputedSessions, refetch: refetchDisputedSessions } = useQuery({
+    queryKey: ['sessions-pod-disputed-dashboard'],
+    queryFn: async () => {
+      const r = await api.get('/sessions?podStatus=DISPUTED&limit=15');
+      return r.data.data as Record<string, unknown>[];
+    },
+    refetchInterval: 15_000,
+  });
+
   const pendingPos = useMemo(() => {
     const map = new Map<string, Record<string, unknown>>();
     for (const o of confirmedOrders ?? []) map.set(o.id as string, o);
@@ -93,6 +116,8 @@ export default function DispatchDashboard() {
     void refetchSummary();
     void refetchActive();
     void refetchErrors();
+    void refetchDisputed();
+    void refetchDisputedSessions();
   };
 
   return (
@@ -120,7 +145,49 @@ export default function DispatchDashboard() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard label="PODs pending" value={summary?.podsPending ?? 0} icon={<CheckCircle />} />
+        <StatCard
+          label="PODs disputed"
+          value={disputedData?.total ?? 0}
+          danger
+          icon={<AlertTriangle />}
+        />
       </div>
+
+      {!!disputedData?.items.length && (
+        <div>
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            Disputed PODs
+            <span className="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
+              {disputedData.total}
+            </span>
+          </h2>
+          <Card className="border-amber-200">
+            <CardContent className="divide-y max-h-80 overflow-y-auto p-0">
+              {disputedData.items.map((pod) => (
+                <DisputedPodRow key={pod.id as string} pod={pod} />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {!!disputedSessions?.length && (
+        <div>
+          <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            Sessions with disputed POD
+            <span className="text-xs bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
+              {disputedSessions.length}
+            </span>
+          </h2>
+          <Card className="border-amber-200">
+            <CardContent className="divide-y max-h-64 overflow-y-auto p-0">
+              {disputedSessions.map((s) => (
+                <DisputedSessionRow key={s.id as string} session={s} />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -230,6 +297,57 @@ export default function DispatchDashboard() {
           setPrefillPoId(null);
         }}
       />
+    </div>
+  );
+}
+
+function DisputedSessionRow({ session }: { session: Record<string, unknown> }) {
+  const po = session.purchaseOrder as Record<string, unknown> | undefined;
+  const pod = session.pod as Record<string, unknown> | null | undefined;
+  const client = po?.client as Record<string, unknown> | undefined;
+  const vehicle = session.vehicle as Record<string, unknown> | undefined;
+  return (
+    <div className="py-3 px-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+      <div className="min-w-0">
+        <p className="font-mono font-semibold text-gray-900">{session.sessionCode as string}</p>
+        <p className="text-gray-500 text-xs truncate">
+          {(po?.poNumber as string) ?? '—'} · {(client?.name as string) ?? '—'} ·{' '}
+          {(vehicle?.registrationNumber as string) ?? '—'}
+        </p>
+        {pod?.status != null ? (
+          <p className="text-xs text-amber-800 mt-1">POD: {String(pod.status)}</p>
+        ) : null}
+      </div>
+      <Link to={`/app/sessions/${session.id as string}`}>
+        <Button size="sm" variant="outline">
+          Open session →
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+function DisputedPodRow({ pod }: { pod: Record<string, unknown> }) {
+  const session = pod.session as Record<string, unknown> | undefined;
+  const po = session?.purchaseOrder as Record<string, unknown> | undefined;
+  const client = po?.client as Record<string, unknown> | undefined;
+  const vehicle = session?.vehicle as Record<string, unknown> | undefined;
+  const sessionId = session?.id as string | undefined;
+  return (
+    <div className="py-3 px-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+      <div className="min-w-0">
+        <p className="font-mono text-gray-800 truncate">{(po?.poNumber as string) ?? '—'}</p>
+        <p className="text-gray-500 text-xs truncate">
+          {(client?.name as string) ?? 'Client'} · {(vehicle?.registrationNumber as string) ?? '—'}
+        </p>
+      </div>
+      {sessionId && (
+        <Link to={`/app/sessions/${sessionId}`}>
+          <Button size="sm" variant="outline">
+            View session →
+          </Button>
+        </Link>
+      )}
     </div>
   );
 }

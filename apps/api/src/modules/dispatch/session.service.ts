@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { Prisma } from '@prisma/client';
-import { ScanResult, SessionStatus, POStatus, UserRole } from '@prisma/client';
+import { ScanResult, SessionStatus, POStatus, UserRole, PODStatus } from '@prisma/client';
 import {
   AppError,
   generateDocCode,
@@ -30,6 +30,7 @@ type VariantLookupRow = Prisma.ProductVariantGetPayload<{ include: typeof varian
 interface CachedLineItem {
   lineItemId: string;
   variantId: string;
+  productId: string;
   orderedBoxes: number;
   loadedBoxes: number;
   productName: string;
@@ -90,6 +91,7 @@ export class SessionService {
       lineItems: session.purchaseOrder.lineItems.map((li) => ({
         lineItemId: li.id,
         variantId: li.variantId,
+        productId: li.variant.productId,
         orderedBoxes: li.orderedBoxes,
         loadedBoxes: li.loadedBoxes,
         productName: li.variant.product.name,
@@ -298,6 +300,31 @@ export class SessionService {
     const matchedLineItem = context.lineItems.find((li) => li.variantId === variant.id);
 
     if (!matchedLineItem) {
+      const orderProductIds = new Set(context.lineItems.map((li) => li.productId));
+      if (orderProductIds.has(variant.productId)) {
+        const coloursExpected = context.lineItems
+          .filter((li) => li.productId === variant.productId)
+          .map((li) => li.colourName);
+        const colourList = [...new Set(coloursExpected)].join(', ');
+        const msg = `WRONG COLOUR: This SKU is on the PO in colour(s): ${colourList}. Scanned "${variant.colourName}". Use the correct box.`;
+        this.logScanEvent(
+          sessionId,
+          operatorId,
+          scannerInput.cleaned,
+          variant.id,
+          ScanResult.WRONG_COLOUR,
+          msg,
+          deviceId,
+        );
+        return this.buildResult(
+          ScanResult.WRONG_COLOUR,
+          variant as unknown as Record<string, unknown>,
+          null,
+          context,
+          startMs,
+          msg,
+        );
+      }
       this.logScanEvent(
         sessionId,
         operatorId,
@@ -314,6 +341,33 @@ export class SessionService {
         context,
         startMs,
         `WRONG PRODUCT: "${variant.product.name} — ${variant.colourName}" (${variant.product.sku}) is NOT in this order. Return to shelf immediately.`,
+      );
+    }
+
+    /**
+     * Duplicate-scan policy: same raw barcode for the same session within ~8s (Redis key scan:dup)
+     * returns DUPLICATE_SCAN — idempotent "soft reject" so double physical triggers / debounce
+     * do not consume load quota. Re-scan after TTL expires if the box was not already counted.
+     */
+    const dupKey = `scan:dup:${sessionId}:${scannerInput.cleaned}`;
+    const dupRecent = await this.app.redis.get(dupKey);
+    if (dupRecent) {
+      this.logScanEvent(
+        sessionId,
+        operatorId,
+        scannerInput.cleaned,
+        variant.id,
+        ScanResult.DUPLICATE_SCAN,
+        'Duplicate scan of same barcode within debounce window',
+        deviceId,
+      );
+      return this.buildResult(
+        ScanResult.DUPLICATE_SCAN,
+        variant as unknown as Record<string, unknown>,
+        matchedLineItem,
+        context,
+        startMs,
+        'DUPLICATE SCAN: This barcode was just scanned. If the box is correct, wait a moment and try again.',
       );
     }
 
@@ -360,6 +414,8 @@ export class SessionService {
     );
 
     this.logScanEvent(sessionId, operatorId, scannerInput.cleaned, variant.id, ScanResult.SUCCESS, null, deviceId);
+
+    await this.app.redis.setex(dupKey, 8, '1');
 
     const result = this.buildResult(
       ScanResult.SUCCESS,
@@ -411,7 +467,11 @@ export class SessionService {
     alertMessage: string,
   ): ScanProcessResult {
     const alertLevel =
-      result === ScanResult.SUCCESS ? 'success' : result === ScanResult.EXCESS_QUANTITY ? 'warning' : 'error';
+      result === ScanResult.SUCCESS
+        ? 'success'
+        : result === ScanResult.EXCESS_QUANTITY || result === ScanResult.DUPLICATE_SCAN
+          ? 'warning'
+          : 'error';
 
     const lineItemProgress: LineItemProgress[] = context.lineItems.map((li) => ({
       lineItemId: li.lineItemId,
@@ -555,7 +615,19 @@ export class SessionService {
         vehicle: true,
         supervisor: { select: { id: true, name: true, email: true, role: true } },
         operator: { select: { id: true, name: true, email: true, role: true } },
-        pod: { select: { id: true, status: true, linkToken: true, linkExpiresAt: true, createdAt: true } },
+        pod: {
+          select: {
+            id: true,
+            status: true,
+            linkToken: true,
+            linkExpiresAt: true,
+            createdAt: true,
+            acknowledgedAt: true,
+            podPdfUrl: true,
+            receiverName: true,
+            discrepancyNotes: true,
+          },
+        },
         scanEvents: {
           orderBy: { scannedAt: 'desc' },
           take: 50,
@@ -601,6 +673,9 @@ export class SessionService {
     if (query.status) where.status = query.status as SessionStatus;
     if (query.vehicleId) where.vehicleId = query.vehicleId;
     if (query.poId) where.poId = query.poId;
+    if (query.podStatus) {
+      where.pod = { status: query.podStatus as PODStatus };
+    }
     if (query.dateFrom || query.dateTo) {
       where.openedAt = {
         ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
@@ -619,6 +694,7 @@ export class SessionService {
           vehicle: true,
           supervisor: { select: { id: true, name: true } },
           operator: { select: { id: true, name: true } },
+          pod: { select: { id: true, status: true, acknowledgedAt: true } },
           _count: { select: { scanEvents: true } },
         },
       }),

@@ -51,7 +51,7 @@ export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.get(
     '/',
-    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS) },
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS, UserRole.CLIENT) },
     async (request, reply) => {
       const parsed = listSessionsQuerySchema.safeParse(request.query);
       const query = parsed.success ? parsed.data : listSessionsQuerySchema.parse({});
@@ -150,7 +150,7 @@ export const sessionRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/:id/challan',
     {
-      preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS),
+      preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS, UserRole.CLIENT),
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };

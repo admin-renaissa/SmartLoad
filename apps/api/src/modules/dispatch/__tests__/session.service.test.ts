@@ -286,9 +286,10 @@ describe('SessionService.processScan', () => {
     vi.clearAllMocks();
   });
 
-  function variantFixture(id: string, barcode: string) {
+  function variantFixture(id: string, barcode: string, productId = 'p1') {
     return {
       id,
+      productId,
       barcodeValue: barcode,
       colourName: 'Red',
       product: { name: 'Prod', sku: 'SKU', piecesPerBox: 2 },
@@ -310,6 +311,7 @@ describe('SessionService.processScan', () => {
         {
           lineItemId: 'li1',
           variantId: 'v1',
+          productId: 'p1',
           orderedBoxes,
           loadedBoxes,
           productName: 'Prod',
@@ -400,7 +402,7 @@ describe('SessionService.processScan', () => {
       return null;
     });
     (app.prisma.productVariant.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(
-      variantFixture('v999', 'BAR'),
+      variantFixture('v999', 'BAR', 'p-other'),
     );
 
     const result = await svc.processScan({ sessionId: 'sess1', rawBarcode: 'BAR' }, 'op');

@@ -16,6 +16,8 @@ import {
   ScanResult,
 } from '@prisma/client';
 import Redis from 'ioredis';
+import { Queue } from 'bullmq';
+import { QUEUES } from '@smartload/shared';
 import { runInventoryDeductionForSession } from '../inventory-deduction.processor.js';
 import { runPodCreationForSession } from '../pod-creation.processor.js';
 import { runTallySyncEnqueue } from '../tally-sync.processor.js';
@@ -199,7 +201,7 @@ describe.skipIf(!RUN)('worker processors — integration (real DB + Redis)', () 
     await prisma.product.delete({ where: { id: product.id } });
   });
 
-  it('runPodCreationForSession creates POD, lines, notification payload on Redis', async () => {
+  it('runPodCreationForSession creates POD, lines, enqueues BullMQ notification jobs', async () => {
     const sfx = randomBytes(6).toString('hex');
     const admin = await prisma.user.findFirst({ where: { role: UserRole.ADMIN } });
     const category = await prisma.productCategory.findFirst({ where: { isActive: true } });
@@ -302,10 +304,16 @@ describe.skipIf(!RUN)('worker processors — integration (real DB + Redis)', () 
       },
     });
 
-    const beforeLen = await redis.llen('notification-queue');
+    const notifQueue = new Queue(QUEUES.NOTIFICATIONS, {
+      connection: {
+        host: new URL(redisUrl).hostname,
+        port: parseInt(new URL(redisUrl).port || '6379', 10),
+      },
+    });
+    const beforeWaiting = await notifQueue.getWaitingCount();
 
     const log = async (_msg: string) => {};
-    const result = await runPodCreationForSession(prisma, redis, session.id, log);
+    const result = await runPodCreationForSession(prisma, session.id, log);
     expect(result.podId).toBeDefined();
     expect(result.podUrl).toContain('/pod/');
 
@@ -319,8 +327,10 @@ describe.skipIf(!RUN)('worker processors — integration (real DB + Redis)', () 
     const updated = await prisma.dispatchSession.findUniqueOrThrow({ where: { id: session.id } });
     expect(updated.podCreated).toBe(true);
 
-    const afterLen = await redis.llen('notification-queue');
-    expect(afterLen).toBeGreaterThan(beforeLen);
+    const afterWaiting = await notifQueue.getWaitingCount();
+    expect(afterWaiting).toBeGreaterThanOrEqual(beforeWaiting + 2);
+
+    await notifQueue.close();
 
     await prisma.pODLineItem.deleteMany({ where: { podId: pod!.id } });
     await prisma.proofOfDelivery.delete({ where: { id: pod!.id } });
@@ -333,10 +343,6 @@ describe.skipIf(!RUN)('worker processors — integration (real DB + Redis)', () 
     await prisma.productVariant.delete({ where: { id: variant.id } });
     await prisma.product.delete({ where: { id: product.id } });
 
-    const pushed = afterLen - beforeLen;
-    for (let i = 0; i < pushed; i++) {
-      await redis.lpop('notification-queue');
-    }
   });
 
   it('runTallySyncEnqueue persists TallySyncJob', async () => {

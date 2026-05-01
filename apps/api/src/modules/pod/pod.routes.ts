@@ -2,9 +2,12 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { successResponse, errorResponse } from '@smartload/shared';
+import { successResponse, errorResponse, UserRole } from '@smartload/shared';
 import { parsePagination, buildPaginationMeta } from '@smartload/shared';
 import { PODStatus, POStatus } from '@prisma/client';
+import { enqueuePodDispatchNotifications } from '../../workers/pod-creation.processor.js';
+import { dataUrlToBuffer, uploadObject } from '../../lib/object-storage.js';
+import { generatePodPdfBuffer } from './pod-pdf.service.js';
 
 export const podRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/pod/link/:token — PUBLIC
@@ -81,6 +84,7 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
       type: 'POD_OTP',
       variables: { otp, expiryMinutes: '10' },
     });
+    await notifQueue.close();
 
     const maskedPhone = receiverPhone.slice(0, 3) + 'XXXXXX' + receiverPhone.slice(-2);
     return reply.send(successResponse({ message: `OTP sent to ${maskedPhone}` }));
@@ -207,13 +211,82 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
       }
     });
 
+    let signatureImageUrl: string | null = null;
+    if (dto.signatureDataUrl) {
+      const parsed = dataUrlToBuffer(dto.signatureDataUrl);
+      if (parsed) {
+        try {
+          signatureImageUrl = await uploadObject(
+            `pod/${id}/signature-${Date.now()}.png`,
+            parsed.buffer,
+            parsed.contentType || 'image/png',
+          );
+          await fastify.prisma.proofOfDelivery.update({
+            where: { id },
+            data: { signatureImageUrl },
+          });
+        } catch (err) {
+          fastify.log.warn({ err }, 'POD signature upload failed (check S3 / MinIO env)');
+        }
+      }
+    }
+
+    let podPdfUrl: string | null = null;
+    try {
+      const pdfBuf = await generatePodPdfBuffer(fastify.prisma, id, dto.signatureDataUrl ?? null);
+      podPdfUrl = await uploadObject(`pod/${id}/pod-${Date.now()}.pdf`, pdfBuf, 'application/pdf');
+      await fastify.prisma.proofOfDelivery.update({
+        where: { id },
+        data: { podPdfUrl },
+      });
+    } catch (err) {
+      fastify.log.warn({ err }, 'POD PDF generation or upload failed');
+    }
+
+    const accountsEmail = process.env.ACCOUNTS_NOTIFICATION_EMAIL;
+    if (accountsEmail) {
+      const { Queue } = await import('bullmq');
+      const { QUEUES } = await import('@smartload/shared');
+      const q = new Queue(QUEUES.NOTIFICATIONS, {
+        connection: {
+          host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+          port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+        },
+      });
+      try {
+        await q.add('pod-ack-email', {
+          channel: 'EMAIL',
+          recipientEmail: accountsEmail,
+          type: 'POD_ACK_ACCOUNTS',
+          variables: { podId: id, podPdfUrl: podPdfUrl ?? '' },
+        });
+      } finally {
+        await q.close();
+      }
+    }
+
     return reply.send(successResponse({
       status: hasDiscrepancy ? 'DISPUTED' : 'ACKNOWLEDGED',
       message: hasDiscrepancy
         ? 'Delivery acknowledged with discrepancies. Our team will contact you.'
         : 'Delivery successfully acknowledged. Thank you!',
+      podPdfUrl,
     }));
   });
+
+  fastify.get(
+    '/:id/pdf',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS, UserRole.CLIENT) },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const pod = await fastify.prisma.proofOfDelivery.findUnique({ where: { id } });
+      if (!pod) return reply.code(404).send(errorResponse('POD not found'));
+      const buf = await generatePodPdfBuffer(fastify.prisma, id, null);
+      reply.header('Content-Type', 'application/pdf');
+      reply.header('Content-Disposition', `attachment; filename="POD-${id.slice(0, 8)}.pdf"`);
+      return reply.send(buf);
+    },
+  );
 
   // GET /api/v1/pod — PRIVATE: list all PODs
   fastify.get('/', { preHandler: fastify.requireAuth }, async (request, reply) => {
@@ -248,10 +321,11 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
     const pod = await fastify.prisma.proofOfDelivery.findUnique({
       where: { id },
       include: {
+        lineItems: true,
         session: {
           include: {
             purchaseOrder: { include: { client: true } },
-            vehicle: { select: { registrationNumber: true } },
+            vehicle: true,
           },
         },
       },
@@ -261,23 +335,22 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
 
     const podUrl = `${process.env.APP_BASE_URL}/pod/${pod.linkToken}`;
     const phone = pod.receiverPhone || pod.session.purchaseOrder.client.phone;
-    const poNumber = pod.session.purchaseOrder.poNumber;
+    const v = pod.session.vehicle;
 
-    const { Queue } = await import('bullmq');
-    const notifQueue = new Queue('notifications', {
-      connection: {
-        host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-        port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
-      },
-    });
+    const variables = {
+      companyName: process.env.COMPANY_NAME ?? 'SmartLoad',
+      poNumber: pod.session.purchaseOrder.poNumber,
+      vehicleReg: v.registrationNumber,
+      driverName: v.driverName ?? '',
+      driverPhone: v.driverPhone ?? '',
+      podUrl,
+      clientName: pod.session.purchaseOrder.client.name,
+      itemCount: String(pod.lineItems.length),
+      totalBoxes: String(pod.session.totalBoxesScanned ?? 0),
+    };
 
-    await notifQueue.add('send', {
-      channel: 'SMS',
-      recipientPhone: phone,
-      type: 'POD_DISPATCH',
-      variables: { poNumber, podUrl, vehicleReg: pod.session.vehicle?.registrationNumber || '' },
-    });
+    await enqueuePodDispatchNotifications(phone, pod.session.purchaseOrder.client.email, variables);
 
-    return reply.send(successResponse({ message: `POD link resent to ${phone}` }));
+    return reply.send(successResponse({ message: `POD link resent to ${phone ?? 'client'}` }));
   });
 };

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { RefreshCw, Server, MessageSquare, KeyRound, Mail, AlertTriangle } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.tsx';
@@ -75,6 +76,18 @@ export default function TallySyncPage() {
       return { items: r.data.data as TallyJob[], meta: r.data.meta as { total: number; page: number; limit: number } };
     },
     enabled: canView,
+  });
+
+  const retryMut = useMutation({
+    mutationFn: async (jobId: string) => api.post(`/tally/sync/retry/${jobId}`),
+    onSuccess: async () => {
+      toast.success('Job re-queued');
+      await qc.invalidateQueries({ queryKey: ['tally', 'sync-log'] });
+    },
+    onError: (e: unknown) => {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Retry failed';
+      toast.error(msg);
+    },
   });
 
   const run = async (key: string, path: string) => {
@@ -311,7 +324,8 @@ export default function TallySyncPage() {
                     <th className="py-2 pr-2 font-medium">Dir</th>
                     <th className="py-2 pr-2 font-medium">Type</th>
                     <th className="py-2 pr-2 font-medium">Status</th>
-                    <th className="py-2 font-medium">Note</th>
+                    <th className="py-2 pr-2 font-medium">Note</th>
+                    <th className="py-2 font-medium w-24">Retry</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -327,8 +341,22 @@ export default function TallySyncPage() {
                       <td className="py-2 pr-2">
                         <StatusBadge status={j.status} />
                       </td>
-                      <td className="py-2 text-gray-500 text-xs max-w-xs truncate" title={j.errorMessage || j.tallyVoucherId || j.referenceId || ''}>
+                      <td className="py-2 pr-2 text-gray-500 text-xs max-w-xs truncate" title={j.errorMessage || j.tallyVoucherId || j.referenceId || ''}>
                         {j.errorMessage || j.tallyVoucherId || j.referenceId || '—'}
+                      </td>
+                      <td className="py-2">
+                        {(['FAILED', 'PERMANENTLY_FAILED', 'COMPLETED'] as const).some((st) => st === j.status) && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            loading={retryMut.isPending && retryMut.variables === j.id}
+                            onClick={() => retryMut.mutate(j.id)}
+                          >
+                            {j.status === 'COMPLETED' ? 'Re-run' : 'Retry'}
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}

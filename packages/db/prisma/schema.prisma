@@ -17,6 +17,7 @@ enum UserRole {
   OPERATOR
   ACCOUNTS
   DRIVER
+  CLIENT
 }
 
 enum POStatus {
@@ -133,6 +134,8 @@ model User {
   phone        String?
   isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
+  totpSecret   String?
+  twoFactorEnabled Boolean @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -251,7 +254,7 @@ model PurchaseOrder {
   status               POStatus  @default(DRAFT)
   totalAmountPaise     Int       @default(0)
   notes                String?
-  tallyVoucherId       String?
+  tallyVoucherId       String?   @unique
   createdById          String
   createdBy            User      @relation("POCreator", fields: [createdById], references: [id])
   updatedById          String?

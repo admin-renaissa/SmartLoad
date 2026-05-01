@@ -34,7 +34,13 @@ async function main(): Promise<void> {
   const adminPassword = await bcrypt.hash('Admin@123', 12)
   const admin = await prisma.user.upsert({
     where: { email: 'admin@smartload.in' },
-    update: {},
+    update: {
+      passwordHash: adminPassword,
+      name: 'System Administrator',
+      role: UserRole.ADMIN,
+      phone: '+91 9000000001',
+      isActive: true,
+    },
     create: {
       email: 'admin@smartload.in',
       passwordHash: adminPassword,
@@ -57,11 +63,38 @@ async function main(): Promise<void> {
     const hash = await bcrypt.hash('Demo@123', 12)
     await prisma.user.upsert({
       where: { email: u.email },
-      update: {},
+      update: {
+        passwordHash: hash,
+        name: u.name,
+        role: u.role,
+        phone: u.phone,
+        isActive: true,
+      },
       create: { ...u, passwordHash: hash, isActive: true },
     })
   }
   console.log('✅ Demo users seeded (password: Demo@123)')
+
+  const clientHash = await bcrypt.hash('Demo@123', 12)
+  await prisma.user.upsert({
+    where: { email: 'client@smartload.in' },
+    update: {
+      passwordHash: clientHash,
+      name: 'Demo Client Portal',
+      role: UserRole.CLIENT,
+      phone: '+91 9000000006',
+      isActive: true,
+    },
+    create: {
+      email: 'client@smartload.in',
+      passwordHash: clientHash,
+      name: 'Demo Client Portal',
+      role: UserRole.CLIENT,
+      phone: '+91 9000000006',
+      isActive: true,
+    },
+  })
+  console.log('✅ Client portal user: client@smartload.in (password: Demo@123)')
 
   // ── Product Categories ─────────────────────────────────────────────────────
   const categories = [

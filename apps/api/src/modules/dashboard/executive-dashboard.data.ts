@@ -27,6 +27,7 @@ export type ExecutiveDashboardPayload = {
     totalScansToday: number;
     errorScansToday: number;
     pendingPODs: number;
+    disputedPODs: number;
   };
   dispatchVolume30d: { date: string; label: string; boxes: number }[];
   ordersByStatus: { status: string; count: number }[];
@@ -69,6 +70,7 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     totalScansToday,
     errorScansToday,
     pendingPODs,
+    disputedPODs,
     ordersByStatusRaw,
     sessions30d,
     sessionsThisMonth,
@@ -89,6 +91,9 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     prisma.scanEvent.count({ where: { scannedAt: { gte: today }, result: { not: 'SUCCESS' } } }),
     prisma.proofOfDelivery.count({
       where: { status: { in: ['PENDING', 'LINK_SENT', 'OTP_VERIFIED'] } },
+    }),
+    prisma.proofOfDelivery.count({
+      where: { status: 'DISPUTED' },
     }),
     prisma.purchaseOrder.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.dispatchSession.findMany({
@@ -234,6 +239,7 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
       totalScansToday,
       errorScansToday,
       pendingPODs,
+      disputedPODs,
     },
     dispatchVolume30d,
     ordersByStatus,

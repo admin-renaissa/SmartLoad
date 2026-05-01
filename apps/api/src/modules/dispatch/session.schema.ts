@@ -32,6 +32,8 @@ export const listSessionsQuerySchema = z.object({
   poId: z.string().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
+  /** Filter sessions whose linked POD has this status (e.g. DISPUTED). */
+  podStatus: z.enum(['PENDING', 'LINK_SENT', 'OTP_VERIFIED', 'ACKNOWLEDGED', 'DISPUTED', 'EXPIRED']).optional(),
 });
 
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;

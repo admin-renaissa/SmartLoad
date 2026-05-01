@@ -58,7 +58,17 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/me', { preHandler: fastify.requireAuth }, async (request, reply) => {
     const user = await fastify.prisma.user.findUnique({
       where: { id: request.user.userId },
-      select: { id: true, email: true, name: true, role: true, phone: true, isActive: true, lastLoginAt: true, createdAt: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        phone: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+        twoFactorEnabled: true,
+      },
     });
     if (!user) return reply.code(404).send(errorResponse('User not found'));
     return reply.send(successResponse(user));
