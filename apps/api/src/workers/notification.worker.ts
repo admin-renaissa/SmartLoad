@@ -31,6 +31,7 @@ function buildMessage(type: string, variables: Record<string, string>): string {
     POD_DISPATCH:
       `{companyName}: Order {poNumber} dispatched. Vehicle {vehicleReg}, driver {driverName} ({driverPhone}). Acknowledge: {podUrl} (72h).`,
     POD_OTP: `Your SmartLoad delivery OTP is {otp}. Valid for {expiryMinutes} minutes. Do not share.`,
+    POD_ACK_CLIENT: `Thank you {receiverName}! Delivery for PO {poNumber} acknowledged. A copy of the POD has been saved.`,
     LOW_STOCK: `⚠ Low stock alert: {productName} {colourName} — {availableBoxes} boxes remaining.`,
     POD_ACK_ACCOUNTS: `POD {podId} acknowledged. PDF: {podPdfUrl}`,
   };
@@ -42,7 +43,7 @@ function buildMessage(type: string, variables: Record<string, string>): string {
   return message;
 }
 
-async function sendSMS(phone: string, message: string) {
+async function sendSMS(phone: string, message: string, type?: string) {
   if (isSmsMockSend()) {
     console.log(`[SMS MOCK] To: ${phone} | ${message}`);
     return { messageId: `mock-${Date.now()}` };
@@ -51,10 +52,16 @@ async function sendSMS(phone: string, message: string) {
     throw new Error('MSG91 misconfiguration: set MSG91_TEMPLATE_ID_POD and MSG91_SENDER_ID');
   }
 
+  // Use dedicated OTP template when available and type is POD_OTP
+  const templateId =
+    type === 'POD_OTP' && process.env.MSG91_TEMPLATE_ID_OTP?.trim()
+      ? process.env.MSG91_TEMPLATE_ID_OTP.trim()
+      : process.env.MSG91_TEMPLATE_ID_POD;
+
   const response = await axios.post(
     'https://api.msg91.com/api/v5/flow/',
     {
-      template_id: process.env.MSG91_TEMPLATE_ID_POD,
+      template_id: templateId,
       sender: process.env.MSG91_SENDER_ID,
       mobiles: phone.replace('+', ''),
       VAR1: message,
@@ -143,13 +150,16 @@ export function startNotificationWorker() {
         let externalId: string | undefined;
 
         if (channel === 'SMS' && recipientPhone) {
-          const result = await sendSMS(recipientPhone, message);
+          const result = await sendSMS(recipientPhone, message, type);
           externalId = (result as { messageId?: string }).messageId;
         } else if (channel === 'WHATSAPP' && recipientPhone) {
+          // For OTP via WhatsApp, use dedicated template name or fallback
           const templateName =
-            type === 'POD_DISPATCH' && process.env.WATI_TEMPLATE_POD_DISPATCH?.trim()
-              ? process.env.WATI_TEMPLATE_POD_DISPATCH.trim()
-              : type.toLowerCase().replace(/_/g, '-');
+            type === 'POD_OTP'
+              ? (process.env.WATI_TEMPLATE_POD_OTP?.trim() || 'pod-otp')
+              : type === 'POD_DISPATCH' && process.env.WATI_TEMPLATE_POD_DISPATCH?.trim()
+                ? process.env.WATI_TEMPLATE_POD_DISPATCH.trim()
+                : type.toLowerCase().replace(/_/g, '-');
           const result = await sendWhatsApp(recipientPhone, templateName, variables);
           externalId = (result as { id?: string }).id;
         } else if (channel === 'EMAIL' && recipientEmail) {

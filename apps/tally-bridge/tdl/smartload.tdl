@@ -1,33 +1,144 @@
-; SmartLoad TDL - Custom fields for Stock Items
-; Installation: Place this file in TallyPrime's TDL configuration folder
-; and load it via F12 > Configuration > TDL Configuration
+;; ============================================================================
+;; SmartLoad TDL (Tally Definition Language) Extension
+;; Version: 1.1
+;; Author:  SmartLoad Engineering
+;; Purpose: Adds SmartLoad-specific UDF fields to Stock Items in TallyPrime
+;;          enabling bidirectional product mapping between TallyPrime and
+;;          the SmartLoad cloud dispatch system.
+;;
+;; INSTALLATION:
+;;   1. Copy this file to your TallyPrime data directory
+;;      (e.g. C:\TallyPrime\data\tdl\smartload.tdl)
+;;   2. Open TallyPrime
+;;   3. Gateway of Tally → F12: Configure → Advanced Configuration
+;;   4. Select "TDL Configuration"
+;;   5. Set "Load TDL Files on Startup" = Yes
+;;   6. Add the full path to this file
+;;   7. Restart TallyPrime
+;;
+;; FIELDS ADDED TO STOCK ITEM:
+;;   SLVariantId  — SmartLoad internal variant UUID (set during Tally mapping)
+;;   SLColourCode — SmartLoad colour code (e.g. WHT, IVR, GRY, BLK)
+;;   SLSku        — SmartLoad product SKU (e.g. PVC-4X8-3MM-WHT)
+;;
+;; HOW MAPPING WORKS:
+;;   1. From SmartLoad admin panel → Integrations → Tally Mapping
+;;   2. Select a SmartLoad variant and the corresponding TallyPrime stock item
+;;   3. SmartLoad writes the variant ID/SKU into these UDF fields via
+;;      the Tally Bridge import API
+;;   4. The Bridge uses these fields when pulling stock items to auto-match
+;;      TallyPrime items to SmartLoad variants without manual configuration
+;; ============================================================================
 
-[#Object: Stock Item]
-  Field : SLColourCode : Alpha : 20
-  Field : SLVariantId  : Alpha : 50
-  Field : SLBarcode    : Alpha : 100
+;; ── UDF Field Definitions ──────────────────────────────────────────────────
 
-[#Form: Stock Item]
-  Parts : SL Custom Fields
+[Field: SL Variant Id]
+    Use     : Short Name Field
+    Label   : "SmartLoad Variant ID"
+    Storage : SLVariantId
+    Set as  : $$Value
 
-[Part: SL Custom Fields]
-  Lines : SL Colour Line, SL Variant Line
-  Indent : Yes
+[Field: SL Colour Code]
+    Use     : Short Name Field
+    Label   : "SmartLoad Colour Code"
+    Storage : SLColourCode
+    Set as  : $$Value
 
-[Line: SL Colour Line]
-  Fields : SL Colour Field
+[Field: SL Sku]
+    Use     : Short Name Field
+    Label   : "SmartLoad SKU"
+    Storage : SLSku
+    Set as  : $$Value
 
-[Line: SL Variant Line]
-  Fields : SL Variant Field
+;; ── Form Integration ────────────────────────────────────────────────────────
 
-[Field: SL Colour Field]
-  Use    : Name Field
-  Info   : "SmartLoad Colour Code"
-  Set    : SLColourCode
-  Width  : 20
+[Part: SL Stock Item UDF Part]
+    Lines  : SL Stock Item UDF Line
+    Scroll : Vertical
 
-[Field: SL Variant Field]
-  Use    : Name Field
-  Info   : "SmartLoad Variant ID"
-  Set    : SLVariantId
-  Width  : 50
+[Line: SL Stock Item UDF Line]
+    Fields  : SL Variant Id, SL Colour Code, SL Sku
+    Local   : Field : Default : Invisible : Yes
+
+;; Add our UDF part after the main stock item part in the form
+[Form: Stock Item]
+    Add : Part : SL Stock Item UDF Part : After : Main Stock Item Part
+
+;; ── Collection for SmartLoad Bridge API ─────────────────────────────────────
+;; This collection is used by the Tally Bridge when pulling stock items.
+;; It fetches standard fields + all three SmartLoad UDF fields in one request.
+
+[Collection: SL Stock Items]
+    Type    : Stock Item
+    Fetch   : Name, Alias, Parent, BaseUnits,
+              OpeningBalance, OpeningRate,
+              SLVariantId, SLColourCode, SLSku
+    XMLTag  : STOCKITEM
+
+;; ── Report to expose the collection via HTTP ─────────────────────────────────
+
+[Report: SL Stock Items Report]
+    Form      : SL Stock Items Form
+    Title     : "SmartLoad Stock Items"
+    Variable  : SVExportFormat
+
+[Form: SL Stock Items Form]
+    Parts     : SL Stock Items Part
+
+[Part: SL Stock Items Part]
+    Lines     : SL Stock Items Line
+    Repeat    : SL Stock Items Line : SL Stock Items
+    Scroll    : Vertical
+
+[Line: SL Stock Items Line]
+    Fields    : SL Name, SL Alias, SL Parent, SL Unit,
+                SL OQty, SL ORate, SL VId, SL CC, SL Sku Field
+
+[Field: SL Name]
+    Use       : Name Field
+    Set as    : $Name
+    XMLTag    : NAME
+
+[Field: SL Alias]
+    Use       : Short Name Field
+    Set as    : $Alias
+    XMLTag    : ALIAS
+
+[Field: SL Parent]
+    Use       : Short Name Field
+    Set as    : $Parent
+    XMLTag    : PARENT
+
+[Field: SL Unit]
+    Use       : Short Name Field
+    Set as    : $BaseUnits
+    XMLTag    : BASEUNITS
+
+[Field: SL OQty]
+    Use       : Qty Field
+    Set as    : $OpeningBalance
+    XMLTag    : OPENINGBALANCE
+
+[Field: SL ORate]
+    Use       : Rate Field
+    Set as    : $OpeningRate
+    XMLTag    : OPENINGRATE
+
+[Field: SL VId]
+    Use       : Short Name Field
+    Set as    : $SLVariantId
+    XMLTag    : SLVARIANTID
+
+[Field: SL CC]
+    Use       : Short Name Field
+    Set as    : $SLColourCode
+    XMLTag    : SLCOLOURCODE
+
+[Field: SL Sku Field]
+    Use       : Short Name Field
+    Set as    : $SLSku
+    XMLTag    : SLSKU
+
+;; ============================================================================
+;; End of SmartLoad TDL Extension
+;; ============================================================================

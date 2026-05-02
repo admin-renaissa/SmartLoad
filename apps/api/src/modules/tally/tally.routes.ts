@@ -73,7 +73,20 @@ export const tallyRoutes: FastifyPluginAsync = async (fastify) => {
 
     const queue = await getTallyQueue();
     await queue.add('push', { sessionId, type: 'DISPATCH_OUTWARD' });
+    await queue.close();
     return reply.send(successResponse({ message: 'Tally push job queued' }));
+  });
+
+  // POST /api/v1/tally/sync/push-grn/:grnId
+  fastify.post('/sync/push-grn/:grnId', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (request, reply) => {
+    const { grnId } = request.params as { grnId: string };
+    const grn = await fastify.prisma.goodsReceiptNote.findUnique({ where: { id: grnId } });
+    if (!grn) return reply.code(404).send(errorResponse('GRN not found'));
+
+    const queue = await getTallyQueue();
+    await queue.add('push', { grnId, type: 'GRN_INWARD' });
+    await queue.close();
+    return reply.send(successResponse({ message: 'GRN Tally push job queued' }));
   });
 
   // POST /api/v1/tally/sync/retry/:jobId — re-queue from stored requestPayload
@@ -96,6 +109,17 @@ export const tallyRoutes: FastifyPluginAsync = async (fastify) => {
       await queue.close();
     }
     return reply.send(successResponse({ message: 'Tally job re-queued' }));
+  });
+
+  // GET /api/v1/tally/config-snapshot — returns last pull timestamps from systemConfig
+  fastify.get('/config-snapshot', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (_request, reply) => {
+    const keys = ['TALLY_LAST_STOCK_PULL', 'TALLY_LAST_PARTIES_PULL', 'TALLY_LAST_ORDERS_PULL'];
+    const rows = await fastify.prisma.systemConfig.findMany({ where: { key: { in: keys } } });
+    const snapshot: Record<string, unknown> = {};
+    for (const row of rows) {
+      try { snapshot[row.key] = JSON.parse(row.value); } catch { snapshot[row.key] = row.value; }
+    }
+    return reply.send(successResponse(snapshot));
   });
 
   // GET /api/v1/tally/sync-log

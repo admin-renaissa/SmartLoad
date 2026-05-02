@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { RefreshCw, Server, MessageSquare, KeyRound, Mail, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Server, MessageSquare, KeyRound, Mail, AlertTriangle, Database, Activity } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.tsx';
 import { Button } from '../../components/ui/Button.tsx';
@@ -51,6 +51,7 @@ export default function TallySyncPage() {
   const [actionKey, setActionKey] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [pushSessionId, setPushSessionId] = useState('');
+  const [pushGrnId, setPushGrnId] = useState('');
 
   const { data: tallyStatus, isLoading: tl } = useQuery({
     queryKey: ['tally', 'status'],
@@ -59,6 +60,7 @@ export default function TallySyncPage() {
       return r.data.data as TallyStatus;
     },
     enabled: canView,
+    refetchInterval: 30_000,
   });
 
   const { data: notifStatus, isLoading: ni } = useQuery({
@@ -77,6 +79,17 @@ export default function TallySyncPage() {
       return { items: r.data.data as TallyJob[], meta: r.data.meta as { total: number; page: number; limit: number } };
     },
     enabled: canView,
+    refetchInterval: 30_000,
+  });
+
+  const { data: configSnapshot } = useQuery({
+    queryKey: ['tally', 'config-snapshot'],
+    queryFn: async () => {
+      const r = await api.get('/tally/config-snapshot');
+      return r.data.data as Record<string, { pulledAt?: string; count?: number } | null>;
+    },
+    enabled: canView,
+    refetchInterval: 60_000,
   });
 
   const retryMut = useMutation({
@@ -196,9 +209,20 @@ export default function TallySyncPage() {
                 <div className="flex flex-wrap gap-2 items-center text-sm">
                   <span className="text-gray-500">API bridge</span>
                   {tallyStatus?.bridgeConnected ? (
-                    <StatusBadge status="COMPLETED" />
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                      </span>
+                      <StatusBadge status="COMPLETED" />
+                    </span>
                   ) : (
-                    <StatusBadge status="FAILED" />
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                      </span>
+                      <StatusBadge status="FAILED" />
+                    </span>
                   )}
                   <span className="text-gray-500 ml-2">Tally on host</span>
                   {tallyStatus?.tallyConnected ? <StatusBadge status="COMPLETED" /> : <StatusBadge status="PENDING" />}
@@ -209,6 +233,10 @@ export default function TallySyncPage() {
                     ? new Date(tallyStatus.lastSyncAt).toLocaleString('en-IN')
                     : '—'}
                 </p>
+                <div className="bg-gray-50 p-3 rounded-md text-xs font-mono space-y-1">
+                  <div className="flex justify-between"><span>Stock Snapshot:</span><span>{configSnapshot?.stock?.pulledAt ? new Date(configSnapshot.stock.pulledAt).toLocaleTimeString() : '—'} ({configSnapshot?.stock?.count ?? 0})</span></div>
+                  <div className="flex justify-between"><span>Parties Snapshot:</span><span>{configSnapshot?.parties?.pulledAt ? new Date(configSnapshot.parties.pulledAt).toLocaleTimeString() : '—'} ({configSnapshot?.parties?.count ?? 0})</span></div>
+                </div>
                 <p className="text-xs text-gray-500">
                   Configure TALLY_BRIDGE_URL and TALLY_BRIDGE_SECRET on the API host. The bridge process must be running on
                   the machine that can reach Tally.
@@ -244,27 +272,51 @@ export default function TallySyncPage() {
                 Pull orders
               </Button>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
-              <div className="flex-1 min-w-0">
-                <label className="block text-xs text-gray-500 mb-1">Session ID (CUID) to push to Tally</label>
-                <input
-                  type="text"
-                  value={pushSessionId}
-                  onChange={(e) => setPushSessionId(e.target.value)}
-                  placeholder="cuid of closed dispatch session"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
-                />
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                <div className="flex-1 min-w-0">
+                  <label className="block text-xs text-gray-500 mb-1">Session ID (CUID) to push</label>
+                  <input
+                    type="text"
+                    value={pushSessionId}
+                    onChange={(e) => setPushSessionId(e.target.value)}
+                    placeholder="cuid of closed dispatch session"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={!pushSessionId.trim()}
+                  loading={actionKey === 'push'}
+                  onClick={() => run('push', `/tally/sync/push/${pushSessionId.trim()}`)}
+                >
+                  Queue push
+                </Button>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                disabled={!pushSessionId.trim()}
-                loading={actionKey === 'push'}
-                onClick={() => run('push', `/tally/sync/push/${pushSessionId.trim()}`)}
-              >
-                Queue push
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                <div className="flex-1 min-w-0">
+                  <label className="block text-xs text-gray-500 mb-1">GRN ID to push</label>
+                  <input
+                    type="text"
+                    value={pushGrnId}
+                    onChange={(e) => setPushGrnId(e.target.value)}
+                    placeholder="grn identifier"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={!pushGrnId.trim()}
+                  loading={actionKey === 'push-grn'}
+                  onClick={() => run('push-grn', `/tally/sync/push-grn/${pushGrnId.trim()}`)}
+                >
+                  Queue GRN
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

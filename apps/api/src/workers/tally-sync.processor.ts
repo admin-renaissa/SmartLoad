@@ -23,7 +23,7 @@ export type ProcessorLogger = (message: string) => Promise<void>;
 function resolveDataType(type: string): TallySyncDataType {
   const allowed = Object.values(TallySyncDataType) as string[];
   if (allowed.includes(type)) return type as TallySyncDataType;
-  return TallySyncDataType.DISPATCH_OUTWARD;
+  throw new Error(`Invalid TallySyncDataType: ${type}`);
 }
 
 export async function runTallySyncEnqueue(
