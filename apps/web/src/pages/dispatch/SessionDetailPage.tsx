@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { UserRole } from '@smartload/shared';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Card, CardContent } from '../../components/ui/Card.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
+import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { useDownloadChallan, useDownloadManifest } from '../../hooks/useSessions.ts';
+import { useAuthStore } from '../../store/authStore.ts';
 
 function formatDuration(openedAt: string, closedAt?: string | null) {
   const start = new Date(openedAt).getTime();
@@ -31,12 +35,24 @@ export default function SessionDetailPage() {
   const { id = '' } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const canClose = usePermission('sessions:close');
+  const canManifest = usePermission('sessions:manifest');
+  const canChallan = usePermission('sessions:challan');
+  const manifestDl = useDownloadManifest();
+  const challanDl = useDownloadChallan();
 
   const [feedTab, setFeedTab] = useState<'all' | 'errors'>('all');
   const [scanPage, setScanPage] = useState(1);
   const [closeNotes, setCloseNotes] = useState('');
   const [showPartial, setShowPartial] = useState(false);
   const [partialReason, setPartialReason] = useState('');
+  const [podPdfLoading, setPodPdfLoading] = useState(false);
+
+  const user = useAuthStore((s) => s.user);
+  const canDownloadPodPdf =
+    user?.role === UserRole.ADMIN ||
+    user?.role === UserRole.SUPERVISOR ||
+    user?.role === UserRole.ACCOUNTS ||
+    user?.role === UserRole.CLIENT;
 
   const { data: session, isLoading } = useQuery({
     queryKey: ['session-detail', id],
@@ -71,6 +87,25 @@ export default function SessionDetailPage() {
   const po = session?.purchaseOrder as Record<string, unknown> | undefined;
   const poId = po?.id as string | undefined;
   const lineItems = (po?.lineItems as Record<string, unknown>[]) ?? [];
+
+  const completionSlices = useMemo<DonutSlice[]>(() => {
+    const lineCount = lineItems.length;
+    if (lineCount === 0) return [];
+
+    const completed = lineItems.filter((li) => {
+      const ordered = Number(li.orderedBoxes ?? 0);
+      const loaded = Number(li.loadedBoxes ?? 0);
+      return ordered > 0 && loaded >= ordered;
+    }).length;
+
+    const incomplete = Math.max(0, lineCount - completed);
+
+    return [
+      { label: 'Completed', value: completed, color: '#059669' },
+      { label: 'Incomplete', value: incomplete, color: '#DC2626' },
+    ];
+  }, [lineItems]);
+
   const vehicle = session?.vehicle as Record<string, unknown> | undefined;
   const pod = session?.pod as Record<string, unknown> | null | undefined;
 
@@ -104,19 +139,21 @@ export default function SessionDetailPage() {
     onError: () => toast.error('Could not resend POD'),
   });
 
-  const downloadManifest = async () => {
-    if (!poId) return;
+  const downloadPodPdf = async (podId: string) => {
+    setPodPdfLoading(true);
     try {
-      const r = await api.get(`/orders/${poId}/manifest`);
-      const blob = new Blob([JSON.stringify(r.data.data, null, 2)], { type: 'application/json' });
+      const r = await api.get(`/pod/${podId}/pdf`, { responseType: 'blob' });
+      const blob = new Blob([r.data], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `manifest-${poId}.json`;
+      a.download = `POD-${podId.slice(0, 8)}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      toast.error('Manifest download failed');
+      toast.error('Could not download POD PDF');
+    } finally {
+      setPodPdfLoading(false);
     }
   };
 
@@ -142,6 +179,7 @@ export default function SessionDetailPage() {
 
   const status = session.status as string;
   const isOpen = status === 'OPEN';
+  const isClosed = status === 'CLOSED';
 
   const vehicleReg =
     vehicle && typeof vehicle.registrationNumber === 'string' ? vehicle.registrationNumber : 'Vehicle';
@@ -237,6 +275,16 @@ export default function SessionDetailPage() {
           </Card>
 
           <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between gap-4 mb-2">
+                <h3 className="text-sm font-semibold text-gray-900">Line item completion</h3>
+                <span className="text-xs text-gray-500">{lineItems.length} lines</span>
+              </div>
+              <DonutChart data={completionSlices} height={190} showLegend={false} />
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardContent className="space-y-1 text-sm">
               <h3 className="font-semibold text-gray-900">Vehicle</h3>
               <p className="text-xl font-bold tracking-wide">{vehicle?.registrationNumber as string}</p>
@@ -259,23 +307,90 @@ export default function SessionDetailPage() {
             </CardContent>
           </Card>
 
+          {pod?.id ? (
+            <Card>
+              <CardContent className="space-y-2 text-sm">
+                <h3 className="font-semibold text-gray-900">Proof of delivery</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={String(pod.status)} />
+                  {pod.acknowledgedAt != null ? (
+                    <span className="text-xs text-gray-500">
+                      Acknowledged{' '}
+                      {new Date(String(pod.acknowledgedAt)).toLocaleString('en-IN', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
+                    </span>
+                  ) : null}
+                </div>
+                {pod.receiverName ? (
+                  <p className="text-gray-600">
+                    <span className="text-gray-500">Receiver</span> {pod.receiverName as string}
+                  </p>
+                ) : null}
+                {pod.discrepancyNotes ? (
+                  <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md p-2">
+                    {pod.discrepancyNotes as string}
+                  </p>
+                ) : null}
+                {pod.podPdfUrl ? (
+                  <p className="text-xs text-gray-500">Signed POD PDF is on file.</p>
+                ) : null}
+                <div className="flex flex-col gap-2 pt-1">
+                  {canDownloadPodPdf && !isOpen ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      loading={podPdfLoading}
+                      onClick={() => void downloadPodPdf(pod.id as string)}
+                    >
+                      Download POD (PDF)
+                    </Button>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
           <Card>
             <CardContent className="space-y-2">
               <h3 className="font-semibold text-gray-900 text-sm">Actions</h3>
-              <Button variant="outline" size="sm" className="w-full" onClick={downloadManifest}>
-                Download manifest (JSON)
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                disabled={isOpen}
-                onClick={() =>
-                  toast('Challan PDF is generated after dispatch workflows complete.', { icon: 'ℹ️' })
-                }
-              >
-                Download challan
-              </Button>
+              {canManifest ?
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  loading={manifestDl.isPending}
+                  onClick={() =>
+                    manifestDl.mutate({
+                      sessionId: id,
+                      sessionCode: typeof session.sessionCode === 'string' ? session.sessionCode : undefined,
+                    })
+                  }
+                >
+                  Download manifest (PDF)
+                </Button>
+              : null}
+              {canChallan ?
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={!isClosed || challanDl.isPending}
+                  loading={challanDl.isPending}
+                  title={!isClosed ? 'Available after session is closed' : undefined}
+                  onClick={() =>
+                    challanDl.mutate({
+                      sessionId: id,
+                      sessionCode: typeof session.sessionCode === 'string' ? session.sessionCode : undefined,
+                    })
+                  }
+                >
+                  Download challan
+                </Button>
+              : null}
               <Button
                 variant="outline"
                 size="sm"

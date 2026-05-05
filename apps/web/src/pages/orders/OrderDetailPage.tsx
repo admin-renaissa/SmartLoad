@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle, XCircle, Truck, AlertTriangle } from 'lucide-react';
@@ -8,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Ca
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import { ProgressBar } from '../../components/ui/ProgressBar.tsx';
+import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 
@@ -49,6 +51,12 @@ interface PurchaseOrder {
     openedAt: string;
     totalBoxesScanned: number;
     totalBoxesExpected: number;
+    pod?: {
+      id: string;
+      status: string;
+      acknowledgedAt: string | null;
+      linkExpiresAt: string;
+    } | null;
   }>;
 }
 
@@ -93,6 +101,19 @@ export default function OrderDetailPage() {
   const totalOrdered = po.lineItems.reduce((s, li) => s + li.orderedBoxes, 0);
   const totalLoaded = po.lineItems.reduce((s, li) => s + li.loadedBoxes, 0);
   const loadPercent = totalOrdered > 0 ? Math.round((totalLoaded / totalOrdered) * 100) : 0;
+
+  const completionSlices = useMemo<DonutSlice[]>(() => {
+    const lineCount = po.lineItems.length;
+    if (lineCount === 0) return [];
+
+    const completed = po.lineItems.filter((li) => li.orderedBoxes > 0 && li.loadedBoxes >= li.orderedBoxes).length;
+    const incomplete = Math.max(0, lineCount - completed);
+
+    return [
+      { label: 'Completed', value: completed, color: '#059669' },
+      { label: 'Incomplete', value: incomplete, color: '#DC2626' },
+    ];
+  }, [po.lineItems]);
 
   return (
     <div className="space-y-6">
@@ -174,6 +195,15 @@ export default function OrderDetailPage() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Line item completion</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <DonutChart data={completionSlices} height={180} showLegend />
+            </CardContent>
+          </Card>
+
           {po.sessions.length > 0 && (
             <Card>
               <CardHeader><CardTitle>Dispatch Sessions</CardTitle></CardHeader>
@@ -182,15 +212,20 @@ export default function OrderDetailPage() {
                   <div
                     key={s.id}
                     className="flex items-center justify-between p-2 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/app/dispatch/${s.id}`)}
+                    onClick={() => navigate(`/app/sessions/${s.id}`)}
                   >
                     <div>
                       <p className="text-sm font-medium font-mono text-gray-900">{s.sessionCode}</p>
                       <p className="text-xs text-gray-500">{new Date(s.openedAt).toLocaleDateString('en-IN')}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end gap-1">
                       <StatusBadge status={s.status} />
-                      <p className="text-xs text-gray-500 mt-1">{s.totalBoxesScanned}/{s.totalBoxesExpected} boxes</p>
+                      {s.pod ? (
+                        <StatusBadge status={s.pod.status} />
+                      ) : (
+                        <span className="text-[10px] text-gray-400 uppercase">No POD</span>
+                      )}
+                      <p className="text-xs text-gray-500 mt-0.5">{s.totalBoxesScanned}/{s.totalBoxesExpected} boxes</p>
                     </div>
                   </div>
                 ))}
@@ -204,7 +239,54 @@ export default function OrderDetailPage() {
             <CardHeader>
               <CardTitle>Line Items ({po.lineItems.length})</CardTitle>
             </CardHeader>
-            <div className="overflow-x-auto">
+            <div className="sm:hidden space-y-3 p-4">
+              {po.lineItems.map((li) => {
+                const dims = [li.variant.lengthMm, li.variant.widthMm, li.variant.thicknessMm].filter(Boolean).join('×');
+                const completed = li.loadedBoxes >= li.orderedBoxes && li.orderedBoxes > 0;
+                return (
+                  <div key={li.id} className="border border-gray-100 rounded-xl p-4 bg-white">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">{li.variant.colourName}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          <span className="font-mono text-accent">{li.variant.product.sku}</span>
+                          {dims ? <span className="ml-2">{dims}mm</span> : null}
+                        </p>
+                      </div>
+                      <p className={`text-xs font-medium ${completed ? 'text-green-700' : 'text-gray-700'} shrink-0`}>
+                        {li.loadedBoxes}/{li.orderedBoxes}
+                      </p>
+                    </div>
+
+                    <div className="mt-3">
+                      <ProgressBar value={li.loadedBoxes} max={li.orderedBoxes} size="sm" />
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <p className="text-xs text-gray-500">Rate</p>
+                      <p className="text-xs font-medium tabular-nums text-right text-gray-700">
+                        ₹{(li.ratePerBoxPaise / 100).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-3">
+                      <p className="text-xs text-gray-500">Amount</p>
+                      <p className="text-sm font-bold tabular-nums text-right text-accent">
+                        ₹{(li.totalAmountPaise / 100).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="pt-2 text-right">
+                <p className="text-sm text-gray-500">Total</p>
+                <p className="text-sm font-bold text-accent">
+                  ₹{(po.totalAmountPaise / 100).toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-left text-gray-500 font-medium">

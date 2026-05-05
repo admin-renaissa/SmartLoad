@@ -1,20 +1,72 @@
 import type { PrismaClient } from '@prisma/client';
 import { PODStatus } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { addHours } from '@smartload/shared';
+import { Queue } from 'bullmq';
+import { addHours, QUEUES } from '@smartload/shared';
 
 export type ProcessorLogger = (message: string) => Promise<void>;
 
-export type NotificationRedis = {
-  lpush: (key: string, value: string) => Promise<number>;
-};
+const connection = () => ({
+  host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+  port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379', 10),
+});
+
+interface PodDispatchVariables {
+  companyName: string;
+  poNumber: string;
+  vehicleReg: string;
+  driverName: string;
+  driverPhone: string;
+  podUrl: string;
+  clientName: string;
+  itemCount: string;
+  totalBoxes: string;
+}
 
 /**
- * Creates proof-of-delivery rows and enqueues client notification (real Redis list).
+ * Enqueues SMS, WhatsApp, and optional email for POD link (BullMQ notifications queue).
+ */
+export async function enqueuePodDispatchNotifications(
+  clientPhone: string | null | undefined,
+  clientEmail: string | null | undefined,
+  variables: PodDispatchVariables,
+): Promise<void> {
+  const queue = new Queue(QUEUES.NOTIFICATIONS, { connection: connection() });
+  try {
+    const phone = clientPhone?.trim();
+    const email = clientEmail?.trim();
+    if (phone) {
+      await queue.add('pod-dispatch-sms', {
+        channel: 'SMS' as const,
+        recipientPhone: phone,
+        type: 'POD_DISPATCH',
+        variables: variables as unknown as Record<string, string>,
+      });
+      await queue.add('pod-dispatch-wa', {
+        channel: 'WHATSAPP' as const,
+        recipientPhone: phone,
+        type: 'POD_DISPATCH',
+        variables: variables as unknown as Record<string, string>,
+      });
+    }
+    if (email) {
+      await queue.add('pod-dispatch-email', {
+        channel: 'EMAIL' as const,
+        recipientEmail: email,
+        type: 'POD_DISPATCH',
+        variables: variables as unknown as Record<string, string>,
+      });
+    }
+  } finally {
+    await queue.close();
+  }
+}
+
+/**
+ * Creates proof-of-delivery rows and enqueues client notifications via BullMQ.
  */
 export async function runPodCreationForSession(
   prisma: PrismaClient,
-  redis: NotificationRedis,
   sessionId: string,
   log: ProcessorLogger,
 ): Promise<{ skipped?: boolean; podId?: string; podUrl?: string }> {
@@ -75,25 +127,23 @@ export async function runPodCreationForSession(
 
   const podUrl = `${process.env.APP_BASE_URL || 'http://localhost:3000'}/pod/${linkToken}`;
   const client = session.purchaseOrder.client;
+  const vehicle = session.vehicle;
 
-  await redis.lpush(
-    'notification-queue',
-    JSON.stringify({
-      type: 'POD_DISPATCH',
-      channel: ['SMS', 'WHATSAPP'],
-      phone: client.phone,
-      email: client.email,
-      variables: {
-        companyName: process.env.COMPANY_NAME ?? 'SmartLoad',
-        poNumber: session.purchaseOrder.poNumber,
-        vehicleReg: session.vehicle.registrationNumber,
-        podUrl,
-        clientName: client.name,
-        itemCount: session.purchaseOrder.lineItems.filter((li) => li.loadedBoxes > 0).length,
-        totalBoxes: session.totalBoxesScanned,
-      },
-    }),
-  );
+  const cfgCompany = process.env.COMPANY_NAME ?? 'SmartLoad';
+
+  const variables: PodDispatchVariables = {
+    companyName: cfgCompany,
+    poNumber: session.purchaseOrder.poNumber,
+    vehicleReg: vehicle.registrationNumber,
+    driverName: vehicle.driverName ?? '',
+    driverPhone: vehicle.driverPhone ?? '',
+    podUrl,
+    clientName: client.name,
+    itemCount: String(session.purchaseOrder.lineItems.filter((li) => li.loadedBoxes > 0).length),
+    totalBoxes: String(session.totalBoxesScanned),
+  };
+
+  await enqueuePodDispatchNotifications(client.phone, client.email, variables);
 
   await log(`POD created: ${pod.id}, link: ${podUrl}`);
   return { podId: pod.id, podUrl };

@@ -1,3 +1,6 @@
-export { inventoryDeductionWorker } from './inventory-deduction.worker.js';
-export { podCreationWorker } from './pod-creation.worker.js';
-export { tallySyncWorker } from './tally-sync.worker.js';
+import './inventory-deduction.worker.js';
+import './pod-creation.worker.js';
+import './tally-sync.worker.js';
+import { startNotificationWorker } from './notification.worker.js';
+
+startNotificationWorker();

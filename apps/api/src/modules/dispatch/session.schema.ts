@@ -30,8 +30,17 @@ export const listSessionsQuerySchema = z.object({
   status: z.enum(['OPEN', 'CLOSED', 'CANCELLED', 'PAUSED']).optional(),
   vehicleId: z.string().optional(),
   poId: z.string().optional(),
+  /** When status is not CLOSED, filters `openedAt`. When status is CLOSED, filters `closedAt` (calendar day if value is YYYY-MM-DD, server local). */
   dateFrom: z.string().optional(),
+  /** See dateFrom — inclusive end of day for YYYY-MM-DD. */
   dateTo: z.string().optional(),
+  /** When true with status=CLOSED, filter sessions closed on the server's local calendar day (start 00:00, end exclusive next day). */
+  completedToday: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === 'true')),
+  /** Filter sessions whose linked POD has this status (e.g. DISPUTED). */
+  podStatus: z.enum(['PENDING', 'LINK_SENT', 'OTP_VERIFIED', 'ACKNOWLEDGED', 'DISPUTED', 'EXPIRED']).optional(),
 });
 
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;

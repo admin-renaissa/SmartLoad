@@ -89,6 +89,7 @@ const FLAGS = {
   follow: ARGS.includes('--follow'),
   forceLock: ARGS.includes('--force-lock'),
   skipTallyBridge: ARGS.includes('--skip-tally-bridge'),
+  skipWorker: ARGS.includes('--skip-worker'),
   frontendPort: Number(ARGS.find(a => a.startsWith('--frontend-port='))?.split('=')[1]) || DEFAULT_PORTS.frontend,
   backendPort: Number(ARGS.find(a => a.startsWith('--backend-port='))?.split('=')[1]) || DEFAULT_PORTS.backend,
   service: ARGS.find(a => a.startsWith('--service='))?.split('=')[1] || 'all',
@@ -762,6 +763,21 @@ async function cmdStart() {
       log.warn('Backend may not be fully ready. Check logs: .app-manager/logs/backend.log');
     }
 
+    // ── Start API worker (BullMQ: inventory, POD, Tally, notifications) ──
+    if (!FLAGS.skipWorker) {
+      log.section('Starting API worker (BullMQ)');
+      const workerLogFile = join(LOGS_DIR, 'api-worker.log');
+      if (!FLAGS.dryRun) appendFileSync(workerLogFile, `\n\n── Start at ${new Date().toISOString()} ──\n`);
+      const workerChild = spawnService('api-worker', pnpmBin(), ['--filter', '@smartload/api', 'run', 'worker:dev'], {
+        cwd: PROJECT_ROOT,
+      });
+      if (workerChild) {
+        updateState({
+          worker: { pid: workerChild.pid, logFile: workerLogFile, startedAt: Date.now() },
+        });
+      }
+    }
+
     // ── Start Tally Bridge ──
     if (!FLAGS.skipTallyBridge) {
       log.section('Starting Tally Bridge');
@@ -813,6 +829,9 @@ function printStartSummary(state) {
   const fePort = state.frontend?.port || FLAGS.frontendPort;
   const bePort = state.backend?.port || FLAGS.backendPort;
 
+  const tbPid = state.tallyBridge?.pid || '?';
+  const wPid = state.worker?.pid || '?';
+
   log.raw(`
 ${C.bold}${C.green}╔══════════════════════════════════════════════════════════════╗
 ║  ✅  SmartLoad is Running                                    ║
@@ -820,8 +839,9 @@ ${C.bold}${C.green}╔═══════════════════�
 
   ${C.bold}Frontend:${C.reset}     http://localhost:${fePort}   ${C.gray}(PID ${fePid})${C.reset}
   ${C.bold}Backend API:${C.reset}  http://localhost:${bePort}   ${C.gray}(PID ${bePid})${C.reset}
+  ${C.bold}API Worker:${C.reset}    BullMQ consumer            ${C.gray}(PID ${wPid})${C.reset}
   ${C.bold}Health:${C.reset}       http://localhost:${bePort}/health
-  ${C.bold}Tally Bridge:${C.reset} http://localhost:${DEFAULT_PORTS.tallyBridge}
+  ${C.bold}Tally Bridge:${C.reset} http://localhost:${DEFAULT_PORTS.tallyBridge}   ${C.gray}(PID ${tbPid})${C.reset}
   ${C.bold}Postgres:${C.reset}     localhost:${DEFAULT_PORTS.postgres}  ${C.gray}(docker: smartload_postgres)${C.reset}
   ${C.bold}Redis:${C.reset}        localhost:${DEFAULT_PORTS.redis}  ${C.gray}(docker: smartload_redis)${C.reset}
   ${C.bold}MinIO:${C.reset}        http://localhost:${DEFAULT_PORTS.minio}  ${C.gray}(console: http://localhost:${DEFAULT_PORTS.minioConsole})${C.reset}
@@ -829,6 +849,7 @@ ${C.bold}${C.green}╔═══════════════════�
 ${C.bold}Logs:${C.reset}
   .app-manager/logs/frontend.log
   .app-manager/logs/backend.log
+  .app-manager/logs/api-worker.log
   .app-manager/logs/tally-bridge.log
 
 ${C.bold}Next:${C.reset}
@@ -862,7 +883,7 @@ async function cmdStop() {
   log.section('Stopping SmartLoad');
 
   const state = readState();
-  const services = ['backend', 'frontend', 'tallyBridge'];
+  const services = ['backend', 'worker', 'frontend', 'tallyBridge'];
 
   for (const svc of services) {
     const info = state[svc];
@@ -971,6 +992,7 @@ async function cmdStatus() {
 
   await checkService('Frontend', state.frontend);
   await checkService('Backend', state.backend);
+  await checkService('Worker', state.worker);
   await checkService('TallyBridge', state.tallyBridge);
 
   // Docker
@@ -996,7 +1018,7 @@ async function cmdStatus() {
 async function cmdLogs() {
   const serviceMap = {
     frontend: join(LOGS_DIR, 'frontend.log'),
-    backend: join(LOGS_DIR, 'backend.log'),
+    'api-worker': join(LOGS_DIR, 'api-worker.log'),
     db: join(LOGS_DIR, 'db.log'),
     redis: join(LOGS_DIR, 'redis.log'),
     'tally-bridge': join(LOGS_DIR, 'tally-bridge.log'),
@@ -1184,6 +1206,7 @@ ${C.bold}Service flags:${C.reset}
   --skip-db              Skip DB start + migrations
   --skip-redis           Skip Redis check
   --skip-tally-bridge    Skip Tally Bridge start
+  --skip-worker          Skip BullMQ API worker (inventory / POD / notifications)
   --down-db              Stop Docker DB on stop/clean
   --down-redis           Stop Docker Redis on stop/clean
   --remove-volumes       Remove Docker volumes (with confirmation)

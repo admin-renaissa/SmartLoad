@@ -76,6 +76,28 @@ export const tallyRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send(successResponse({ message: 'Tally push job queued' }));
   });
 
+  // POST /api/v1/tally/sync/retry/:jobId — re-queue from stored requestPayload
+  fastify.post('/sync/retry/:jobId', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (request, reply) => {
+    const { jobId } = request.params as { jobId: string };
+    const row = await fastify.prisma.tallySyncJob.findUnique({ where: { id: jobId } });
+    if (!row) return reply.code(404).send(errorResponse('Sync job not found'));
+
+    const payload = row.requestPayload as { sessionId?: string; grnId?: string; type?: string } | null;
+    const type = payload?.type ?? row.dataType;
+
+    const queue = await getTallyQueue();
+    try {
+      await queue.add('retry', {
+        sessionId: payload?.sessionId,
+        grnId: payload?.grnId,
+        type,
+      });
+    } finally {
+      await queue.close();
+    }
+    return reply.send(successResponse({ message: 'Tally job re-queued' }));
+  });
+
   // GET /api/v1/tally/sync-log
   fastify.get('/sync-log', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) }, async (request, reply) => {
     const query = request.query as { page?: string; limit?: string; status?: string; direction?: string };

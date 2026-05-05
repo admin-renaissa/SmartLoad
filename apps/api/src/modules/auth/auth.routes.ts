@@ -1,7 +1,13 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { loginSchema, refreshSchema, changePasswordSchema, logoutSchema } from './auth.schema.js';
+import { loginSchema, refreshSchema, changePasswordSchema, logoutSchema, twoFactorCompleteSchema, twoFactorEnableSchema, twoFactorDisableSchema } from './auth.schema.js';
 import { AuthService } from './auth.service.js';
 import { successResponse } from '@smartload/shared';
+
+/**
+ * Compliance backlog (PRD §13): application-level field encryption (e.g. AES-256 for PII at rest)
+ * and device binding / posture for mobile clients are intentionally out of scope here — use KMS,
+ * database/platform encryption, MDM, and attestation policies. Track as infra/security work.
+ */
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
   const getService = () => new AuthService(fastify.prisma, fastify.redis, fastify);
@@ -13,6 +19,38 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     const dto = loginSchema.parse(request.body);
     const service = getService();
     const result = await service.login(dto.email, dto.password);
+    return reply.send(successResponse(result));
+  });
+
+  fastify.post('/login/2fa', {
+    config: { rateLimit: { max: 15, timeWindow: '1 minute' } },
+  }, async (request, reply) => {
+    const dto = twoFactorCompleteSchema.parse(request.body);
+    const service = getService();
+    const result = await service.completeTwoFactorLogin(dto.twoFactorToken, dto.code);
+    return reply.send(successResponse(result));
+  });
+
+  // POST /api/v1/auth/2fa/setup
+  fastify.post('/2fa/setup', { preHandler: fastify.requireAuth }, async (request, reply) => {
+    const service = getService();
+    const result = await service.setupTwoFactor(request.user.userId);
+    return reply.send(successResponse(result));
+  });
+
+  // POST /api/v1/auth/2fa/enable
+  fastify.post('/2fa/enable', { preHandler: fastify.requireAuth }, async (request, reply) => {
+    const dto = twoFactorEnableSchema.parse(request.body);
+    const service = getService();
+    const result = await service.enableTwoFactor(request.user.userId, dto.secret, dto.code);
+    return reply.send(successResponse(result));
+  });
+
+  // POST /api/v1/auth/2fa/disable
+  fastify.post('/2fa/disable', { preHandler: fastify.requireAuth }, async (request, reply) => {
+    const dto = twoFactorDisableSchema.parse(request.body);
+    const service = getService();
+    const result = await service.disableTwoFactor(request.user.userId, dto.password);
     return reply.send(successResponse(result));
   });
 

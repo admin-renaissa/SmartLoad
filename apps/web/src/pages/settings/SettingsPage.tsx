@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { UserCog, Eye, EyeOff } from 'lucide-react';
+import { UserCog, Eye, EyeOff, ScanLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { UserRole } from '@smartload/shared';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
@@ -12,7 +12,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button.tsx';
 import api from '../../lib/axios.ts';
 import { useAuthStore } from '../../store/authStore.ts';
+import { getUiLang, type UiLang } from '../../i18n/messages.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -42,7 +44,63 @@ export default function SettingsPage() {
     queryKey: ['users', 'me'],
     queryFn: async () => {
       const r = await api.get('/users/me');
-      return r.data.data as { id: string; email: string; name: string; role: string; phone: string | null; isActive: boolean };
+      return r.data.data as {
+        id: string;
+        email: string;
+        name: string;
+        role: string;
+        phone: string | null;
+        isActive: boolean;
+        twoFactorEnabled?: boolean;
+      };
+    },
+  });
+
+  const isAdmin = profile?.role === UserRole.ADMIN;
+
+  const { data: adminSettings } = useQuery({
+    queryKey: ['settings', 'admin'],
+    queryFn: async () => {
+      const r = await api.get('/settings');
+      return r.data.data as Record<string, string>;
+    },
+    enabled: isAdmin === true,
+  });
+
+  const [tallyMapJson, setTallyMapJson] = useState('{}');
+
+  useEffect(() => {
+    if (!adminSettings || !isAdmin) return;
+    const v = adminSettings.TALLY_VARIANT_MAP;
+    if (v == null || String(v).trim() === '') {
+      setTallyMapJson('{}');
+      return;
+    }
+    try {
+      setTallyMapJson(JSON.stringify(JSON.parse(v), null, 2));
+    } catch {
+      setTallyMapJson(v);
+    }
+  }, [adminSettings, isAdmin]);
+
+  const saveTallyMapMut = useMutation({
+    mutationFn: async () => {
+      const parsed: unknown = JSON.parse(tallyMapJson);
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('Map must be a JSON object');
+      }
+      await api.patch('/settings', { TALLY_VARIANT_MAP: JSON.stringify(parsed) });
+    },
+    onSuccess: () => {
+      toast.success('Tally variant map saved.');
+      void queryClient.invalidateQueries({ queryKey: ['settings', 'admin'] });
+    },
+    onError: (e: unknown) => {
+      const msg =
+        e instanceof Error
+          ? e.message
+          : (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(msg || 'Invalid JSON or save failed');
     },
   });
 
@@ -87,6 +145,58 @@ export default function SettingsPage() {
     },
   });
 
+  const [uiLang, setUiLang] = useState<UiLang>(() => getUiLang());
+  const [twoFaBundle, setTwoFaBundle] = useState<{ secret: string; otpauthUrl: string } | null>(null);
+  const [enrollOtp, setEnrollOtp] = useState('');
+  const [disablePw, setDisablePw] = useState('');
+
+  const show2fa = profile?.role === UserRole.ADMIN || profile?.role === UserRole.ACCOUNTS;
+
+  const setup2faMut = useMutation({
+    mutationFn: async () => {
+      const r = await api.post('/auth/2fa/setup');
+      return r.data.data as { secret: string; otpauthUrl: string };
+    },
+    onSuccess: (d) => {
+      setTwoFaBundle(d);
+      toast.success('Add the account in your authenticator app, then enter the code below.');
+    },
+    onError: (e: unknown) => {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(msg || 'Could not start 2FA setup');
+    },
+  });
+
+  const enable2faMut = useMutation({
+    mutationFn: async () => {
+      if (!twoFaBundle) throw new Error('Run setup first');
+      await api.post('/auth/2fa/enable', { secret: twoFaBundle.secret, code: enrollOtp.replace(/\s/g, '') });
+    },
+    onSuccess: () => {
+      toast.success('Two-factor authentication is now on for this account.');
+      setTwoFaBundle(null);
+      setEnrollOtp('');
+      void queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
+    },
+    onError: (e: unknown) => {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(msg || 'Invalid code');
+    },
+  });
+
+  const disable2faMut = useMutation({
+    mutationFn: async () => api.post('/auth/2fa/disable', { password: disablePw }),
+    onSuccess: () => {
+      toast.success('Two-factor authentication disabled.');
+      setDisablePw('');
+      void queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
+    },
+    onError: (e: unknown) => {
+      const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(msg || 'Could not disable 2FA');
+    },
+  });
+
   const passwordMutation = useMutation({
     mutationFn: (data: PasswordForm) =>
       api.post('/auth/change-password', {
@@ -109,9 +219,30 @@ export default function SettingsPage() {
     return <div className="text-gray-500">Loading…</div>;
   }
 
+  const twoFaEnabled = Boolean(profile?.twoFactorEnabled);
+
   return (
     <div className="space-y-6 max-w-2xl">
       <PageHeader title="Account" subtitle="Your profile and security" />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Security health</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-gray-500 mb-3">
+            Two-factor authentication status for this account
+          </div>
+          <DonutChart
+            data={[
+              { label: '2FA enabled', value: twoFaEnabled ? 1 : 0, color: '#16A34A' },
+              { label: '2FA disabled', value: twoFaEnabled ? 0 : 1, color: '#DC2626' },
+            ]}
+            height={220}
+            showLegend
+          />
+        </CardContent>
+      </Card>
 
       {canManageUsers && (
         <Link
@@ -124,6 +255,21 @@ export default function SettingsPage() {
           <div>
             <p className="font-medium text-gray-900">User management</p>
             <p className="text-sm text-gray-500">Create users, assign roles, and deactivate accounts</p>
+          </div>
+        </Link>
+      )}
+
+      {isAdmin && (
+        <Link
+          to="/app/devices"
+          className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-accent/40 hover:bg-accent/5 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+            <ScanLine className="h-5 w-5 text-accent" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">Scanner devices</p>
+            <p className="text-sm text-gray-500">Register and manage barcode scanning hardware</p>
           </div>
         </Link>
       )}
@@ -159,6 +305,123 @@ export default function SettingsPage() {
           </form>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Language (scan app)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Affects offline banner and other scan strings. Stored in this browser only.
+          </p>
+          <select
+            className="w-full max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-lg"
+            value={uiLang}
+            onChange={(e) => {
+              const v = e.target.value as UiLang;
+              localStorage.setItem('smartload-ui-lang', v);
+              setUiLang(v);
+              toast.success(v === 'hi' ? 'हिंदी' : 'English');
+            }}
+          >
+            <option value="en">English</option>
+            <option value="hi">हिंदी (limited)</option>
+          </select>
+        </CardContent>
+      </Card>
+
+      {isAdmin ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Tally → variant map</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p className="text-gray-600">
+              JSON object mapping a Tally item name (string key) to a SmartLoad product variant id. Used when
+              pulling sales orders from Tally.
+            </p>
+            <textarea
+              className="w-full font-mono text-xs border border-gray-200 rounded-lg p-2 min-h-[160px] focus:outline-none focus:ring-2 focus:ring-accent/30"
+              value={tallyMapJson}
+              onChange={(e) => setTallyMapJson(e.target.value)}
+              spellCheck={false}
+            />
+            <Button
+              type="button"
+              size="sm"
+              loading={saveTallyMapMut.isPending}
+              onClick={() => saveTallyMapMut.mutate()}
+            >
+              Save map
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {show2fa && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Two-factor authentication (TOTP)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p className="text-gray-600">
+              Status:{' '}
+              <span className="font-medium text-gray-900">
+                {profile?.twoFactorEnabled ? 'Enabled' : 'Not enabled'}
+              </span>
+            </p>
+            {!profile?.twoFactorEnabled ? (
+              <>
+                <Button type="button" variant="outline" size="sm" onClick={() => setup2faMut.mutate()} loading={setup2faMut.isPending}>
+                  Set up authenticator
+                </Button>
+                {twoFaBundle && (
+                  <div className="space-y-2 rounded-lg bg-gray-50 p-3 border border-gray-100">
+                    <p className="text-xs text-gray-500 break-all font-mono">{twoFaBundle.otpauthUrl}</p>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="6-digit code"
+                      className="w-full px-3 py-2 border rounded-lg font-mono"
+                      value={enrollOtp}
+                      onChange={(e) => setEnrollOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={enrollOtp.length < 6}
+                      loading={enable2faMut.isPending}
+                      onClick={() => enable2faMut.mutate()}
+                    >
+                      Confirm & enable
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="space-y-2 max-w-md">
+                <input
+                  type="password"
+                  placeholder="Current password"
+                  className="w-full px-3 py-2 border rounded-lg"
+                  value={disablePw}
+                  onChange={(e) => setDisablePw(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  loading={disable2faMut.isPending}
+                  disabled={!disablePw}
+                  onClick={() => disable2faMut.mutate()}
+                >
+                  Turn off 2FA
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

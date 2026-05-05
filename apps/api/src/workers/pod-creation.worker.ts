@@ -1,11 +1,9 @@
 import { Worker, type Job } from 'bullmq';
 import { PrismaClient } from '@prisma/client';
-import Redis from 'ioredis';
 import { QUEUES } from '@smartload/shared';
 import { runPodCreationForSession } from './pod-creation.processor.js';
 
 const prisma = new PrismaClient();
-const redisConnection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 const connection = {
   host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
@@ -19,7 +17,7 @@ interface JobData {
 export const podCreationWorker = new Worker<JobData>(
   QUEUES.POD_CREATION,
   async (job: Job<JobData>) => {
-    await runPodCreationForSession(prisma, redisConnection, job.data.sessionId, async (msg) => {
+    await runPodCreationForSession(prisma, job.data.sessionId, async (msg) => {
       await job.log(msg);
     });
   },

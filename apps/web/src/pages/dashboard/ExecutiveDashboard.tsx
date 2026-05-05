@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import {
   Truck,
   Package,
@@ -50,8 +52,10 @@ export type ExecutiveDashboardData = {
     totalScansToday: number;
     errorScansToday: number;
     pendingPODs: number;
+    disputedPODs: number;
   };
   dispatchVolume30d: { date: string; label: string; boxes: number }[];
+  sessionsCount30d: { date: string; label: string; sessions: number }[];
   ordersByStatus: { status: string; count: number }[];
   topClientsMonth: { clientId: string; clientName: string; boxes: number }[];
   topProductsMonth: { productId: string; productName: string; boxes: number }[];
@@ -74,12 +78,29 @@ export type ExecutiveDashboardData = {
     lastSyncAt: string | null;
     failedJobsCount: number;
   };
+  podDisputeTrend?: { date: string; label: string; acknowledged: number; disputed: number }[];
+  scanErrorRateTrend7d?: { date: string; label: string; errorRate: number; errors: number; total: number }[];
+  inventoryValuePaise?: number;
 };
 
 type Props = { data: ExecutiveDashboardData };
 
 export default function ExecutiveDashboard({ data }: Props) {
-  const { kpis, dispatchVolume30d, ordersByStatus, topClientsMonth, topProductsMonth, recentSessions, lowStockAlerts, tallySync } = data;
+  const { t } = useTranslation();
+  const {
+    kpis,
+    dispatchVolume30d,
+    sessionsCount30d = [],
+    ordersByStatus,
+    topClientsMonth,
+    topProductsMonth,
+    recentSessions,
+    lowStockAlerts,
+    tallySync,
+    scanErrorRateTrend7d = [],
+    podDisputeTrend = [],
+    inventoryValuePaise = 0,
+  } = data;
   const orderPie = ordersByStatus.map((o) => ({
     name: o.status.replace(/_/g, ' '),
     value: o.count,
@@ -89,9 +110,10 @@ export default function ExecutiveDashboard({ data }: Props) {
   const spark = kpis.boxesWeekSparkline;
 
   return (
-    <div className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28 }}>
+      <div className="space-y-6">
       <PageHeader
-        title="Executive dashboard"
+        title={t('executive.pageTitle')}
         subtitle={new Date().toLocaleDateString('en-IN', {
           weekday: 'long',
           year: 'numeric',
@@ -101,18 +123,18 @@ export default function ExecutiveDashboard({ data }: Props) {
       />
 
       {/* Row 1 — KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         <StatsCard
-          title="Dispatches today"
+          title={t('executive.dispatchesToday')}
           value={kpis.dispatchesToday}
           icon={<Truck className="h-5 w-5" />}
-          trend={{ value: kpis.dispatchesTodayDelta, label: 'vs yesterday' }}
+          trend={{ value: kpis.dispatchesTodayDelta, label: t('executive.vsYesterday') }}
           colorScheme="accent"
         />
         <div className="bg-white rounded-card shadow-card border-l-4 border-l-green-500 p-6 flex flex-col">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Boxes dispatched (this week)</p>
+              <p className="text-sm text-gray-500 font-medium">{t('executive.boxesWeek')}</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{kpis.boxesThisWeek}</p>
             </div>
             <div className="p-2 rounded-lg bg-gray-50 text-gray-500">
@@ -130,12 +152,12 @@ export default function ExecutiveDashboard({ data }: Props) {
         <div className="bg-white rounded-card shadow-card border-l-4 border-l-gray-300 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Scan error rate (today)</p>
+              <p className="text-sm text-gray-500 font-medium">{t('executive.scanErrorRate')}</p>
               <p className={`text-3xl font-bold mt-1 ${errHigh ? 'text-red-600' : 'text-gray-900'}`}>
                 {kpis.scanErrorRateToday}%
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {kpis.errorScansToday} errors / {kpis.totalScansToday} scans
+                {t('executive.scanErrorsMeta', { errors: kpis.errorScansToday, total: kpis.totalScansToday })}
               </p>
             </div>
             <div className={`p-2 rounded-lg ${errHigh ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-500'}`}>
@@ -146,7 +168,7 @@ export default function ExecutiveDashboard({ data }: Props) {
         <div className="bg-white rounded-card shadow-card border-l-4 border-l-amber-500 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">POD pending acknowledgement</p>
+              <p className="text-sm text-gray-500 font-medium">{t('executive.podPending')}</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{kpis.pendingPODs}</p>
             </div>
             <div className="p-2 rounded-lg bg-gray-50 text-amber-600">
@@ -161,10 +183,139 @@ export default function ExecutiveDashboard({ data }: Props) {
                 'bg-primary text-white hover:bg-primary/90',
               )}
             >
-              Review
+              {t('executive.review')}
             </Link>
           </div>
         </div>
+        <div className="bg-white rounded-card shadow-card border-l-4 border-l-red-500 p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">{t('executive.podDisputed')}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{kpis.disputedPODs}</p>
+            </div>
+            <div className="p-2 rounded-lg bg-red-50 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <Link
+              to="/app/reports"
+              className={cn(
+                'inline-flex items-center justify-center rounded-button font-medium h-8 px-3 text-sm',
+                'bg-primary text-white hover:bg-primary/90',
+              )}
+            >
+              {t('executive.podReport')}
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('executive.inventoryValue')}</CardTitle>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.inventoryNote')}</p>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-gray-900">
+              ₹{(inventoryValuePaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('executive.podTrendTitle')}</CardTitle>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.podTrendSubtitle')}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={podDisputeTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} interval={6} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="acknowledged" name={t('executive.legendAck')} stroke="#16A34A" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="disputed" name={t('executive.legendDisputed')} stroke="#DC2626" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Row 2.5 — Sessions throughput + Scan error rate */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.25 }}>
+          <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-accent" />
+              <CardTitle>{t('executive.sessionsCount30dTitle')}</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.sessionsCount30dSubtitle')}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={sessionsCount30d} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10 }}
+                    interval={3}
+                    tickFormatter={(v: string) => (v ? v.slice(5).replace('-', '/') : '')}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip formatter={(v: number) => [v, 'Sessions']} labelFormatter={(v) => String(v)} />
+                  <Line type="monotone" dataKey="sessions" stroke="#0D9488" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+          </Card>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.25, delay: 0.04 }}>
+          <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-accent" />
+              <CardTitle>{t('executive.scanErrorRateTrend7dTitle')}</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.scanErrorRateTrend7dSubtitle')}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={scanErrorRateTrend7d}
+                  margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorErrRate" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#DC2626" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#DC2626" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10 }}
+                    interval={2}
+                    tickFormatter={(v: string) => (v ? v.slice(5).replace('-', '/') : '')}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip formatter={(v: number) => [`${v}%`, 'Error rate']} labelFormatter={(v) => String(v)} />
+                  <Area type="monotone" dataKey="errorRate" stroke="#DC2626" fill="url(#colorErrRate)" fillOpacity={1} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Row 2 — 60% area + 40% donut */}
@@ -173,9 +324,9 @@ export default function ExecutiveDashboard({ data }: Props) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-accent" />
-              <CardTitle>Dispatch volume (30 days)</CardTitle>
+              <CardTitle>{t('executive.dispatchVolume')}</CardTitle>
             </div>
-            <p className="text-sm text-gray-500 font-normal">Daily boxes from closed sessions</p>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.dispatchVolumeHint')}</p>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -209,7 +360,7 @@ export default function ExecutiveDashboard({ data }: Props) {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Orders by status</CardTitle>
+            <CardTitle>{t('executive.ordersByStatus')}</CardTitle>
           </CardHeader>
           <CardContent>
             {orderPie.length > 0 ? (
@@ -236,7 +387,7 @@ export default function ExecutiveDashboard({ data }: Props) {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No orders in tracked statuses</div>
+              <div className="h-64 flex items-center justify-center text-gray-400 text-sm">{t('executive.noOrdersTracked')}</div>
             )}
           </CardContent>
         </Card>
@@ -246,7 +397,7 @@ export default function ExecutiveDashboard({ data }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Top 5 clients (dispatch volume, this month)</CardTitle>
+            <CardTitle>{t('executive.topClients')}</CardTitle>
           </CardHeader>
           <CardContent>
             {topClientsMonth.length > 0 ? (
@@ -271,13 +422,13 @@ export default function ExecutiveDashboard({ data }: Props) {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 py-8 text-center">No closed dispatches this month yet</p>
+              <p className="text-sm text-gray-500 py-8 text-center">{t('executive.noDispatchesMonth')}</p>
             )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Top 5 products (boxes scanned, this month)</CardTitle>
+            <CardTitle>{t('executive.topProducts')}</CardTitle>
           </CardHeader>
           <CardContent>
             {topProductsMonth.length > 0 ? (
@@ -297,7 +448,7 @@ export default function ExecutiveDashboard({ data }: Props) {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <p className="text-sm text-gray-500 py-8 text-center">No successful scans this month yet</p>
+              <p className="text-sm text-gray-500 py-8 text-center">{t('executive.noScansMonth')}</p>
             )}
           </CardContent>
         </Card>
@@ -307,8 +458,8 @@ export default function ExecutiveDashboard({ data }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Recent dispatches</CardTitle>
-            <p className="text-sm text-gray-500 font-normal">Last 10 sessions</p>
+            <CardTitle>{t('executive.recentDispatches')}</CardTitle>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.recentDispatchesHint')}</p>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -326,7 +477,7 @@ export default function ExecutiveDashboard({ data }: Props) {
                   {recentSessions.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
-                        No sessions yet
+                        {t('executive.noSessions')}
                       </td>
                     </tr>
                   ) : (
@@ -354,12 +505,12 @@ export default function ExecutiveDashboard({ data }: Props) {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Low stock alerts</CardTitle>
-            <p className="text-sm text-gray-500 font-normal">On-hand boxes at or below minimum</p>
+            <CardTitle>{t('executive.lowStock')}</CardTitle>
+            <p className="text-sm text-gray-500 font-normal">{t('executive.lowStockHint')}</p>
           </CardHeader>
           <CardContent>
             {lowStockAlerts.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4">All variants above threshold</p>
+              <p className="text-sm text-gray-500 py-4">{t('executive.allAboveThreshold')}</p>
             ) : (
               <ul className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
                 {lowStockAlerts.map((row) => (
@@ -367,14 +518,14 @@ export default function ExecutiveDashboard({ data }: Props) {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{row.label}</p>
                       <p className="text-xs text-gray-500">
-                        Available {row.availableBoxes} · min {row.minThreshold}
+                        {t('executive.availableMin', { available: row.availableBoxes, min: row.minThreshold })}
                       </p>
                     </div>
                     <Link
                       to={`/app/products/${row.productId}`}
                       className="shrink-0 text-sm font-medium text-accent hover:underline"
                     >
-                      View
+                      {t('executive.view')}
                     </Link>
                   </li>
                 ))}
@@ -388,13 +539,13 @@ export default function ExecutiveDashboard({ data }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50/80 px-4 py-3">
         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
           <span>
-            <span className="text-gray-500">Last Tally sync: </span>
+            <span className="text-gray-500">{t('executive.lastTallySync')} </span>
             {tallySync.lastSyncAt
               ? new Date(tallySync.lastSyncAt).toLocaleString('en-IN')
               : '—'}
           </span>
           <span>
-            <span className="text-gray-500">Failed jobs: </span>
+            <span className="text-gray-500">{t('executive.failedJobs')} </span>
             <span className={tallySync.failedJobsCount > 0 ? 'text-red-600 font-medium' : ''}>
               {tallySync.failedJobsCount}
             </span>
@@ -407,10 +558,11 @@ export default function ExecutiveDashboard({ data }: Props) {
             'bg-primary text-white hover:bg-primary/90',
           )}
         >
-          Go to Tally
+          {t('executive.goTally')}
           <ExternalLink className="h-3.5 w-3.5" />
         </Link>
       </div>
-    </div>
+      </div>
+    </motion.div>
   );
 }

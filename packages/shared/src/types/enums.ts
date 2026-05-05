@@ -4,6 +4,7 @@ export enum UserRole {
   OPERATOR = 'OPERATOR',
   ACCOUNTS = 'ACCOUNTS',
   DRIVER = 'DRIVER',
+  CLIENT = 'CLIENT',
 }
 
 export enum POStatus {

@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { CheckCircle, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircle, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../lib/axios.ts';
 import { Button } from '../../components/ui/Button.tsx';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 export default function SessionCompletePage() {
   const { sessionId = '' } = useParams<{ sessionId: string }>();
@@ -47,6 +48,17 @@ export default function SessionCompletePage() {
     (li) => (li.loadedBoxes as number) < (li.orderedBoxes as number),
   );
 
+  const completion = useMemo(() => {
+    let ordered = 0;
+    let loaded = 0;
+    for (const li of lineItems) {
+      ordered += (li.orderedBoxes as number) ?? 0;
+      loaded += (li.loadedBoxes as number) ?? 0;
+    }
+    const remaining = Math.max(0, ordered - loaded);
+    return { ordered, loaded, remaining };
+  }, [lineItems]);
+
   const handleClose = () => {
     if (incompleteItems.length > 0) {
       setShowPartialConfirm(true);
@@ -56,8 +68,20 @@ export default function SessionCompletePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F2044] flex flex-col items-center justify-center px-6 text-white">
+    <div className="min-h-screen bg-[#0F2044] flex flex-col text-white">
+      <div className="shrink-0 px-4 pt-4 pb-2">
+        <button
+          type="button"
+          onClick={() => navigate('/app/dashboard')}
+          className="inline-flex items-center gap-0.5 rounded-lg py-2 pl-2 pr-3 text-sm text-white/70 hover:bg-white/10 hover:text-white"
+          aria-label="Back to dashboard"
+        >
+          <ChevronLeft className="h-6 w-6" />
+          <span className="font-medium">Dashboard</span>
+        </button>
+      </div>
 
+      <div className="flex flex-1 flex-col items-center justify-center px-6 pb-12">
       {incompleteItems.length === 0 ? (
         <>
           <CheckCircle className="w-24 h-24 text-green-400 mb-6" />
@@ -83,6 +107,25 @@ export default function SessionCompletePage() {
           </div>
         </>
       )}
+
+      <div className="w-full max-w-sm bg-white/10 rounded-xl p-4 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-white/60 text-sm">Session completion</span>
+          <span className="text-white font-mono text-xs">
+            {completion.loaded}/{completion.ordered}
+          </span>
+        </div>
+        <div className="h-[160px]">
+          <DonutChart
+            data={[
+              { label: 'LOADED', value: completion.loaded, color: '#16A34A' },
+              { label: 'REMAINING', value: completion.remaining, color: '#2563EB' },
+            ]}
+            height={160}
+            showLegend={true}
+          />
+        </div>
+      </div>
 
       <div className="w-full max-w-sm bg-white/10 rounded-xl p-4 mb-6 text-sm">
         <div className="flex justify-between py-1">
@@ -160,6 +203,7 @@ export default function SessionCompletePage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

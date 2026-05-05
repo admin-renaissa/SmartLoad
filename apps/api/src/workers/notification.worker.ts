@@ -28,10 +28,11 @@ interface NotificationJob {
 
 function buildMessage(type: string, variables: Record<string, string>): string {
   const templates: Record<string, string> = {
-    POD_DISPATCH: `Your order {poNumber} has been dispatched. Vehicle: {vehicleReg}. Acknowledge delivery: {podUrl} (valid 72hrs)`,
+    POD_DISPATCH:
+      `{companyName}: Order {poNumber} dispatched. Vehicle {vehicleReg}, driver {driverName} ({driverPhone}). Acknowledge: {podUrl} (72h).`,
     POD_OTP: `Your SmartLoad delivery OTP is {otp}. Valid for {expiryMinutes} minutes. Do not share.`,
     LOW_STOCK: `⚠ Low stock alert: {productName} {colourName} — {availableBoxes} boxes remaining.`,
-    WELCOME: `Hi {name}, your SmartLoad account is ready. Sign in at {appUrl}{loginPath} using the password your admin set. You can change it after login.`,
+    POD_ACK_ACCOUNTS: `POD {podId} acknowledged. PDF: {podPdfUrl}`,
   };
 
   let message = templates[type] || type;
@@ -74,13 +75,20 @@ async function sendWhatsApp(phone: string, templateName: string, variables: Reco
     throw new Error('WATI misconfiguration: set WATI_API_ENDPOINT');
   }
 
+  /** WATI templates: use variable keys as parameter names. Set WATI_WHATSAPP_INDEXED_PARAMS=true if the template uses {{1}}, {{2}}, … in order of Object.entries (stable only if job payloads keep key order). */
+  const useIndexed = process.env.WATI_WHATSAPP_INDEXED_PARAMS === 'true';
+  const entries = Object.entries(variables).map(([k, v]) => [k, String(v ?? '')] as const);
+  const parameters = useIndexed
+    ? entries.map(([, value], i) => ({ name: String(i + 1), value }))
+    : entries.map(([name, value]) => ({ name, value }));
+
   const response = await axios.post(
     `${process.env.WATI_API_ENDPOINT}/api/v1/sendTemplateMessage`,
     {
       whatsappNumber: phone.replace('+91', ''),
       template_name: templateName,
       broadcast_name: templateName,
-      parameters: Object.entries(variables).map(([, value]) => ({ name: 'value', value })),
+      parameters,
     },
     {
       headers: { Authorization: `Bearer ${process.env.WATI_API_TOKEN}` },
@@ -138,7 +146,11 @@ export function startNotificationWorker() {
           const result = await sendSMS(recipientPhone, message);
           externalId = (result as { messageId?: string }).messageId;
         } else if (channel === 'WHATSAPP' && recipientPhone) {
-          const result = await sendWhatsApp(recipientPhone, type.toLowerCase().replace(/_/g, '-'), variables);
+          const templateName =
+            type === 'POD_DISPATCH' && process.env.WATI_TEMPLATE_POD_DISPATCH?.trim()
+              ? process.env.WATI_TEMPLATE_POD_DISPATCH.trim()
+              : type.toLowerCase().replace(/_/g, '-');
+          const result = await sendWhatsApp(recipientPhone, templateName, variables);
           externalId = (result as { id?: string }).id;
         } else if (channel === 'EMAIL' && recipientEmail) {
           await sendEmail(recipientEmail, `SmartLoad: ${type}`, `<p>${message}</p>`);

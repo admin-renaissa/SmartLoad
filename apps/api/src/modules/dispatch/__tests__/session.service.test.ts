@@ -17,7 +17,14 @@ function flushImmediate(): Promise<void> {
 function buildMockApp(overrides: Partial<Record<string, unknown>> = {}): FastifyInstance {
   const prisma = {
     purchaseOrder: { findUnique: vi.fn() },
-    dispatchSession: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+    dispatchSession: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      count: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
     vehicle: { findUnique: vi.fn() },
     user: { findUnique: vi.fn() },
     productVariant: { findUnique: vi.fn() },
@@ -286,9 +293,10 @@ describe('SessionService.processScan', () => {
     vi.clearAllMocks();
   });
 
-  function variantFixture(id: string, barcode: string) {
+  function variantFixture(id: string, barcode: string, productId = 'p1') {
     return {
       id,
+      productId,
       barcodeValue: barcode,
       colourName: 'Red',
       product: { name: 'Prod', sku: 'SKU', piecesPerBox: 2 },
@@ -310,6 +318,7 @@ describe('SessionService.processScan', () => {
         {
           lineItemId: 'li1',
           variantId: 'v1',
+          productId: 'p1',
           orderedBoxes,
           loadedBoxes,
           productName: 'Prod',
@@ -400,7 +409,7 @@ describe('SessionService.processScan', () => {
       return null;
     });
     (app.prisma.productVariant.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(
-      variantFixture('v999', 'BAR'),
+      variantFixture('v999', 'BAR', 'p-other'),
     );
 
     const result = await svc.processScan({ sessionId: 'sess1', rawBarcode: 'BAR' }, 'op');
@@ -629,6 +638,68 @@ describe('SessionService.closeSession', () => {
         data: { status: POStatus.FULLY_LOADED },
       }),
     );
+  });
+});
+
+describe('SessionService.listSessions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('filters closedAt (local calendar day) when status is CLOSED and dateFrom/dateTo are YYYY-MM-DD', async () => {
+    const app = buildMockApp();
+    const svc = new SessionService(app);
+    let captured: unknown;
+    (app.prisma.dispatchSession.findMany as ReturnType<typeof vi.fn>).mockImplementation((args: { where: unknown }) => {
+      captured = args.where;
+      return Promise.resolve([]);
+    });
+    (app.prisma.dispatchSession.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
+
+    await svc.listSessions({
+      page: 1,
+      limit: 10,
+      status: 'CLOSED',
+      dateFrom: '2026-05-01',
+      dateTo: '2026-05-01',
+    });
+
+    expect(captured).toMatchObject({
+      status: 'CLOSED',
+      closedAt: expect.objectContaining({
+        not: null,
+        gte: expect.any(Date),
+        lte: expect.any(Date),
+      }),
+    });
+    const w = captured as { closedAt: { gte: Date; lte: Date } };
+    expect(w.closedAt.gte.getHours()).toBe(0);
+    expect(w.closedAt.lte.getHours()).toBe(23);
+  });
+
+  it('filters openedAt when status is OPEN and dates are provided', async () => {
+    const app = buildMockApp();
+    const svc = new SessionService(app);
+    let captured: unknown;
+    (app.prisma.dispatchSession.findMany as ReturnType<typeof vi.fn>).mockImplementation((args: { where: unknown }) => {
+      captured = args.where;
+      return Promise.resolve([]);
+    });
+    (app.prisma.dispatchSession.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
+
+    await svc.listSessions({
+      page: 1,
+      limit: 10,
+      status: 'OPEN',
+      dateFrom: '2026-05-01',
+      dateTo: '2026-05-10',
+    });
+
+    expect(captured).toMatchObject({
+      status: 'OPEN',
+      openedAt: { gte: expect.any(Date), lte: expect.any(Date) },
+    });
+    expect(captured as Record<string, unknown>).not.toHaveProperty('closedAt');
   });
 });
 

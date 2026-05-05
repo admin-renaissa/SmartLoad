@@ -9,6 +9,14 @@ function datawedgeAllowed(requestIp: string): boolean {
   return allowed.some((a) => requestIp.includes(a) || requestIp.endsWith(a));
 }
 
+/** Extract deviceId string from raw DataWedge body (JSON or plain). */
+function extractDeviceId(body: unknown): string | undefined {
+  if (!body || typeof body !== 'object') return undefined;
+  const b = body as Record<string, unknown>;
+  const id = b.deviceId;
+  return typeof id === 'string' && id.trim() ? id.trim() : undefined;
+}
+
 export const scanRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/datawedge', async (request, reply) => {
     if (!datawedgeAllowed(request.ip)) {
@@ -26,6 +34,38 @@ export const scanRoutes: FastifyPluginAsync = async (fastify) => {
     });
     if (!session) {
       return reply.code(404).send(errorResponse('Session not found'));
+    }
+
+    // ── Device registration check ──────────────────────────────────────────
+    const deviceId = extractDeviceId(request.body);
+
+    if (deviceId) {
+      const registeredDevice = await fastify.prisma.scannerDevice.findUnique({
+        where: { serialNumber: deviceId },
+        select: { id: true, isActive: true, name: true },
+      });
+
+      if (registeredDevice?.isActive) {
+        // Update last-seen timestamp (fire-and-forget; don't block scan processing)
+        fastify.prisma.scannerDevice
+          .update({ where: { id: registeredDevice.id }, data: { lastSeenAt: new Date() } })
+          .catch((err) => request.log.warn({ err }, 'Failed to update device lastSeenAt'));
+      } else {
+        // Check system config to determine whether unregistered devices are blocked
+        const config = await fastify.prisma.systemConfig.findUnique({
+          where: { key: 'DEVICE_REGISTRATION_REQUIRED' },
+          select: { value: true },
+        });
+
+        if (config?.value === 'true') {
+          const reason = registeredDevice
+            ? `Device "${deviceId}" is deactivated`
+            : `Device "${deviceId}" is not registered`;
+          return reply.code(403).send(errorResponse(reason));
+        }
+
+        request.log.info({ deviceId, registered: !!registeredDevice }, 'Unregistered device submitted scan');
+      }
     }
 
     const operatorId = session.operatorId ?? session.supervisorId;

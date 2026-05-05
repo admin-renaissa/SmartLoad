@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, UserCircle, Mail, Phone, ChevronRight } from 'lucide-react';
@@ -11,6 +11,7 @@ import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 import { CreateUserModal } from './UserFormModal.tsx';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 export interface UserRow {
   id: string;
@@ -58,6 +59,24 @@ export default function UserListPage() {
       )
     : users;
 
+  const roleSlices = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const u of filtered) {
+      const role = String(u.role ?? 'UNKNOWN');
+      counts.set(role, (counts.get(role) || 0) + 1);
+    }
+    const palette: Record<string, string> = {
+      ADMIN: '#7C3AED',
+      SUPERVISOR: '#2563EB',
+      OPERATOR: '#F59E0B',
+      ACCOUNTS: '#0D9488',
+      CLIENT: '#F97316',
+    };
+    return [...counts.entries()]
+      .map(([label, value]) => ({ label, value, color: palette[label] }))
+      .sort((a, b) => b.value - a.value);
+  }, [filtered]);
+
   if (!canManage) {
     return (
       <div>
@@ -80,6 +99,16 @@ export default function UserListPage() {
           </Button>
         }
       />
+
+      <Card>
+        <div className="p-4 border-b border-gray-100">
+          <p className="text-sm font-medium text-gray-900">Role mix</p>
+          <p className="text-xs text-gray-500 mt-0.5">Distribution in the current list</p>
+        </div>
+        <div className="p-4">
+          <DonutChart data={roleSlices} height={220} showLegend />
+        </div>
+      </Card>
 
       <Card>
         <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">

@@ -128,6 +128,14 @@ export class OrderService {
           include: {
             vehicle: true,
             supervisor: { select: { id: true, name: true } },
+            pod: {
+              select: {
+                id: true,
+                status: true,
+                acknowledgedAt: true,
+                linkExpiresAt: true,
+              },
+            },
           },
         },
         createdBy: { select: { id: true, name: true } },

@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Download, FileSpreadsheet, RefreshCw } from 'lucide-react';
+import { Download, FileSpreadsheet, RefreshCw, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { UserRole } from '@smartload/shared';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import api from '../../lib/axios.ts';
 import { downloadJsonRowsAsCsv } from '../../utils/csvDownload.ts';
+import { useAuthStore } from '../../store/authStore.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 function defaultDateFrom(): string {
   const d = new Date();
@@ -114,6 +117,21 @@ const REPORTS: ReportDef[] = [
   },
 ];
 
+const STAFF_ONLY_REPORT_IDS = new Set([
+  'dispatch-register',
+  'vehicle-loading-history',
+  'inventory-ledger',
+  'error-alert-log',
+  'tally-sync-log',
+]);
+
+function filterReportsForRole(role: string | undefined): ReportDef[] {
+  if (role === UserRole.CLIENT) {
+    return REPORTS.filter((r) => !STAFF_ONLY_REPORT_IDS.has(r.id));
+  }
+  return REPORTS;
+}
+
 function normalizeRows(data: unknown): Record<string, unknown>[] {
   if (Array.isArray(data)) {
     return data.map((row) => (row && typeof row === 'object' ? (row as Record<string, unknown>) : { value: row }));
@@ -167,6 +185,25 @@ function ReportCard({
     toast.success('Download started');
   };
 
+  const downloadServer = async (format: 'excel' | 'pdf') => {
+    const sep = url.includes('?') ? '&' : '?';
+    try {
+      const res = await api.get(`${url}${sep}format=${format}`, { responseType: 'blob' });
+      const blob = new Blob([res.data]);
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = `${def.id}-${dateFrom}-to-${dateTo}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+      toast.success(format === 'excel' ? 'Excel downloaded' : 'PDF downloaded');
+    } catch {
+      toast.error('Server export failed');
+    }
+  };
+
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -194,6 +231,14 @@ function ReportCard({
             <Download className="h-4 w-4" />
             Download CSV
           </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => void downloadServer('excel')}>
+            <FileSpreadsheet className="h-4 w-4" />
+            Excel
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => void downloadServer('pdf')}>
+            <FileText className="h-4 w-4" />
+            PDF
+          </Button>
         </div>
         {rows && (
           <p className="text-xs text-gray-500">
@@ -218,6 +263,9 @@ function ReportCard({
 }
 
 export default function ReportsPage() {
+  const { user } = useAuthStore();
+  const visibleReports = useMemo(() => filterReportsForRole(user?.role), [user?.role]);
+  const hiddenReportsCount = Math.max(0, REPORTS.length - visibleReports.length);
   const [dateFrom, setDateFrom] = useState(defaultDateFrom);
   const [dateTo, setDateTo] = useState(defaultDateTo);
   const [clientId, setClientId] = useState('');
@@ -226,8 +274,27 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Reports & export"
-        subtitle="Run standard PRD reports against live data. Load preview, then download CSV for Excel."
+        subtitle="Load data for preview, then download CSV from the browser or Excel/PDF from the server (full filtered extract, 50k row cap)."
       />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Reports available</CardTitle>
+          <p className="text-sm text-gray-500 font-normal">
+            Based on your current role permissions
+          </p>
+        </CardHeader>
+        <CardContent>
+          <DonutChart
+            data={[
+              { label: 'VISIBLE', value: visibleReports.length, color: '#2563EB' },
+              { label: 'HIDDEN', value: hiddenReportsCount, color: '#94A3B8' },
+            ]}
+            height={210}
+            showLegend
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -277,14 +344,13 @@ export default function ReportsPage() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {REPORTS.map((def) => (
+        {visibleReports.map((def) => (
           <ReportCard key={def.id} def={def} dateFrom={dateFrom} dateTo={dateTo} clientId={clientId} />
         ))}
       </div>
 
       <p className="text-xs text-gray-500">
-        PDF exports and server-side Excel are backlog items. CSV is compatible with Microsoft Excel and Google Sheets.
-        See <code className="bg-gray-100 px-1 rounded">IMPLEMENTATION_STATUS.md</code> for full PRD tracking.
+        Client role sees POD and order-related reports only. Server exports use the same filters as preview.
       </p>
     </div>
   );

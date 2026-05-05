@@ -1,12 +1,20 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, XCircle, AlertTriangle, Scan } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Scan, LayoutDashboard } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useScanSession } from '../../hooks/useScanSession.ts';
 import { useBarcodeCapture } from '../../hooks/useBarcodeCapture.ts';
+import {
+  countQueuedForSession,
+  enqueueOfflineScan,
+  flushQueuedScansForSession,
+} from '../../hooks/useOfflineScanQueue.ts';
+import { offlineBannerText } from '../../i18n/messages.ts';
 import { CameraModal } from './CameraModal.tsx';
 import api from '../../lib/axios.ts';
 import type { ScanProcessResult } from '@smartload/shared';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 export default function ActiveScanPage() {
   const { sessionId = '' } = useParams<{ sessionId: string }>();
@@ -15,6 +23,37 @@ export default function ActiveScanPage() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [manualBarcode, setManualBarcode] = useState('');
   const [recentScans, setRecentScans] = useState<Array<{ barcode: string; result: string; time: Date }>>([]);
+  const [offlineQueueCount, setOfflineQueueCount] = useState(0);
+
+  const refreshQueueCount = useCallback(async () => {
+    const n = await countQueuedForSession(sessionId);
+    setOfflineQueueCount(n);
+  }, [sessionId]);
+
+  const postScan = useCallback(
+    async (raw: string, deviceId?: string) => {
+      const r = await api.post(`/sessions/${sessionId}/scan`, {
+        rawBarcode: raw,
+        deviceId,
+      });
+      return r.data.data as ScanProcessResult;
+    },
+    [sessionId],
+  );
+
+  useEffect(() => {
+    void refreshQueueCount();
+  }, [refreshQueueCount]);
+
+  useEffect(() => {
+    const onOnline = async () => {
+      const flushed = await flushQueuedScansForSession(sessionId, postScan);
+      if (flushed > 0) toast.success(`Replayed ${flushed} offline scan(s)`);
+      await refreshQueueCount();
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [sessionId, postScan, refreshQueueCount]);
 
   const { scanState, submitScan, isConnected } = useScanSession({
     sessionId,
@@ -34,19 +73,34 @@ export default function ActiveScanPage() {
   const vehicle = sessionMeta?.vehicle as Record<string, unknown> | undefined;
 
   const submitRestFallback = async (raw: string, deviceId?: string) => {
-    try {
-      const r = await api.post(`/sessions/${sessionId}/scan`, {
-        rawBarcode: raw,
-        deviceId,
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      await enqueueOfflineScan({ sessionId, rawBarcode: raw, deviceId, ts: Date.now() });
+      await refreshQueueCount();
+      const n = await countQueuedForSession(sessionId);
+      setRecentScans((prev) => {
+        const [first, ...rest] = prev;
+        if (!first) return prev;
+        return [{ ...first, result: 'OFFLINE_QUEUED' }, ...rest];
       });
-      const payload = r.data.data as ScanProcessResult;
+      toast(offlineBannerText(n));
+      return;
+    }
+    try {
+      const payload = await postScan(raw, deviceId);
       setRecentScans((prev) => {
         const [first, ...rest] = prev;
         if (!first) return prev;
         return [{ ...first, result: payload.result }, ...rest];
       });
-    } catch (e) {
-      console.error(e);
+    } catch {
+      await enqueueOfflineScan({ sessionId, rawBarcode: raw, deviceId, ts: Date.now() });
+      await refreshQueueCount();
+      setRecentScans((prev) => {
+        const [first, ...rest] = prev;
+        if (!first) return prev;
+        return [{ ...first, result: 'OFFLINE_QUEUED' }, ...rest];
+      });
+      toast.error('Network issue — scan saved to retry when you are online.');
     }
   };
 
@@ -204,6 +258,29 @@ export default function ActiveScanPage() {
           }
         : null;
 
+  const recentScanSlices = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of recentScans) {
+      const key = String(s.result ?? 'UNKNOWN');
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const palette: Record<string, string> = {
+      SUCCESS: '#16A34A',
+      processing: '#ffffff',
+      OFFLINE_QUEUED: '#F59E0B',
+      EXCESS_QUANTITY: '#F59E0B',
+      error: '#DC2626',
+      warning: '#F59E0B',
+      UNKNOWN: '#6B7280',
+    };
+    const entries = [...counts.entries()].map(([label, value]): { label: string; value: number; color: string } => ({
+      label,
+      value,
+      color: palette[label] ?? '#2563EB',
+    }));
+    return entries.sort((a, b) => b.value - a.value);
+  }, [recentScans]);
+
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden select-none">
 
@@ -216,6 +293,15 @@ export default function ActiveScanPage() {
 
       <div className="flex items-center justify-between px-4 bg-[#0F2044] border-b border-white/10 h-14 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate('/app/dashboard')}
+            className="shrink-0 text-white/50 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-colors -ml-1"
+            aria-label="Back to dashboard"
+            title="Dashboard"
+          >
+            <LayoutDashboard className="w-5 h-5" />
+          </button>
           <span className="text-white/50 text-xs uppercase tracking-widest shrink-0">Session</span>
           <span className="text-white font-mono font-bold text-sm truncate">
             {(sessionMeta?.sessionCode as string) ?? '—'}
@@ -226,6 +312,11 @@ export default function ActiveScanPage() {
           </span>
           {!isConnected && (
             <span className="text-amber-400 text-xs ml-2 shrink-0">REST fallback</span>
+          )}
+          {offlineQueueCount > 0 && (
+            <span className="text-amber-300 text-xs ml-2 shrink-0 max-w-[200px] truncate" title={offlineBannerText(offlineQueueCount)}>
+              {offlineBannerText(offlineQueueCount)}
+            </span>
           )}
         </div>
         <button
@@ -258,6 +349,20 @@ export default function ActiveScanPage() {
             </p>
           </div>
         )}
+      </div>
+
+      <div className="flex-[2] bg-[#0F2044] border-t border-white/10 px-4 py-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-white/50 text-xs uppercase tracking-widest">Scan result mix</span>
+          <span className="text-white/60 text-xs font-mono">{recentScans.length}</span>
+        </div>
+        <div className="h-[150px]">
+          <DonutChart
+            data={recentScanSlices.map((s) => ({ label: s.label, value: s.value, color: s.color }))}
+            height={150}
+            showLegend={false}
+          />
+        </div>
       </div>
 
       <div className="flex-[2.5] bg-[#0F2044] border-t border-white/10 px-4 py-3 overflow-hidden">
@@ -306,8 +411,10 @@ export default function ActiveScanPage() {
               className={`text-xs px-2 py-1 rounded font-mono truncate max-w-[120px] ${
                 s.result === 'SUCCESS'
                   ? 'bg-green-500/20 text-green-300'
-                  : s.result === 'processing'
-                    ? 'bg-white/10 text-white/40'
+                  :                 s.result === 'processing'
+                  ? 'bg-white/10 text-white/40'
+                  : s.result === 'OFFLINE_QUEUED'
+                    ? 'bg-amber-600/30 text-amber-100'
                     : s.result === 'EXCESS_QUANTITY'
                       ? 'bg-amber-500/20 text-amber-300'
                       : 'bg-red-500/20 text-red-300'

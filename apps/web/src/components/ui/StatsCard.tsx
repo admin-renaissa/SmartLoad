@@ -19,7 +19,13 @@ export function StatsCard({ title, value, icon, trend, className, colorScheme = 
   };
 
   return (
-    <div className={cn('bg-white rounded-card shadow-card p-6', colors[colorScheme], className)}>
+    <div
+      className={cn(
+        'bg-white rounded-card shadow-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(15,23,42,0.08)]',
+        colors[colorScheme],
+        className,
+      )}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm text-gray-500 font-medium">{title}</p>

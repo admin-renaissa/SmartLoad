@@ -1,0 +1,41 @@
+Summary,Issue Type,Description,Priority,Labels
+Epic 1 - Workers and notifications,Epic,"Foundation: BullMQ workers always running; notification worker; POD_TO_BullMQ; run-smartload spawns worker. Ref: apps/api/src/worker-process.ts pod-creation.processor.ts run-smartload.mjs",High,track1
+Start notification worker in worker process,Task,"Import and invoke startNotificationWorker in worker-process.ts; ensure graceful shutdown.",High,track1
+Replace Redis notification-queue with BullMQ POD jobs,Task,"runPodCreationForSession enqueues QUEUES.NOTIFICATIONS jobs; align payload with notification.worker SMS/WhatsApp.",High,track1
+POD_DISPATCH multi-channel templates,Task,"Variables: companyName poNumber vehicleReg driverName driverPhone podUrl; WATI template compatibility.",Medium,track1
+Spawn API worker from run-smartload,Task,"cmdStart spawns pnpm --filter @smartload/api run worker; cmdStop kills worker; state.json tracks PID.",High,track1
+Update worker integration tests,Task,"Remove notification-queue assertions; assert BullMQ job counts.",Medium,track1
+Epic 2 - Offline scan queue,Epic,"FR03-9: IndexedDB queue replay REST scans banner Workbox network-first for API.",Medium,track2
+Offline scan persistence hook,Task,"idb-keyval in ActiveScanPage scan:submit failures offline.",Medium,track2
+Replay queue on online,Task,"POST sessions scan with ordering idempotency note.",Medium,track2
+Workbox API caching audit,Task,"vite-plugin-pwa runtimeCaching excludes mutating POST.",Low,track2
+Epic 3 - Tally execution,Epic,"FR06: tally-sync.processor calls tally-bridge HTTP updates job status dispatch+GRN+pull.",High,track3
+Tally bridge HTTP client module,Task,"axios client TALLY_BRIDGE_URL secret timeouts.",High,track3
+DISPATCH_OUTWARD processor path,Task,"Load session POST push-stock-journal store voucher update TallySyncJob.",High,track3
+GRN_INWARD processor path,Task,"POST push-grn match grn.service enqueue.",High,track3
+PULL handlers persist results,Task,"pull stock/parties/orders write SystemConfig or DB tally mapping.",High,track3
+ENABLE_TALLY_SYNC gate,Task,"Real HTTP only when true; document .env.example.",Medium,track3
+Tally UI failed job retry,Task,"TallySyncPage retry COMPLETED or FAILED jobs.",Medium,track3
+Epic 4 - POD completion,Epic,"FR07 signature S3 PDF acknowledge fix PODPage useEffect.",High,track4
+Upload signature to object storage,Task,"MinIO S3 SDK acknowledge route buffer PNG signatureImageUrl.",High,track4
+Generate and store signed POD PDF,Task,"Puppeteer after acknowledge upload URL on POD.",High,track4
+GET authenticated POD PDF download,Task,"Route stream PDF private.",Medium,track4
+Fix PODPage React state anti-pattern,Task,"useEffect for step transitions; full wizard parity PRD.",High,track4
+Supervisor disputed POD list,Task,"Dashboard or session list filter DISPUTED.",Medium,track4
+Epic 5 - Report exports,Epic,"FR08 eight reports server excel pdf.",Medium,track5
+Report export query convention,Task,"format=excel|pdf on report.routes all eight.",Medium,track5
+Exceljs report builders,Task,"Shared styling frozen headers per report.",Medium,track5
+Puppeteer PDF report templates,Task,"One template per report or generic table.",Medium,track5
+ReportsPage download buttons,Task,"Blob download from API exports.",Medium,track5
+Export row limits and safety,Task,"Cap 50k log warning.",Low,track5
+Epic 6 - PO import Tally,Epic,"FR02 pull-orders upsert Client PO POLineItem idempotent tallyVoucherId.",High,track6
+Define Tally order response schema,Task,"Stable JSON between bridge and api.",High,track6
+Upsert clients from parties pull,Task,"Link pull-parties to Client table.",High,track6
+Upsert PO lines variant mapping,Task,"SystemConfig TALLY_VARIANT_MAP optional admin UI later.",High,track6
+Idempotent PO by tally voucher,Task,"Unique index or constraint tallyVoucherId on PO.",High,track6
+Epic 7 - Polish WRONG_COLOUR RBAC i18n 2FA,Epic,"FR03 NFR SEC small features.",Medium,track7
+WRONG_COLOUR scan branch,Task,"session.service product match variant mismatch.",Medium,track7
+Duplicate scan policy,Task,"DUPLICATE_SCAN or idempotent success documented.",Low,track7
+CLIENT read-only role guards,Task,"permissions backend routes AppLayout.",Medium,track7
+Hindi i18n scan POD,Task,"react-i18next or dictionary critical strings.",Medium,track7
+ADMIN ACCOUNTS TOTP 2FA,Task,"User fields enroll verify login gate.",Low,track7

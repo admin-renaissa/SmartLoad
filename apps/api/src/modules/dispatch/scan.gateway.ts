@@ -77,6 +77,16 @@ export function registerScanGateway(app: FastifyInstance): void {
 
           const result = await svc.processScan(input, socket.data.userId as string);
 
+          // Bump lastSeenAt for registered devices submitting via socket
+          if (data.deviceId) {
+            app.prisma.scannerDevice
+              .updateMany({
+                where: { serialNumber: data.deviceId, isActive: true },
+                data: { lastSeenAt: new Date() },
+              })
+              .catch((err: unknown) => app.log.warn({ err }, 'Failed to update device lastSeenAt'));
+          }
+
           const roomName = `session:${data.sessionId}`;
           io.to(roomName).emit('scan:result', result);
 

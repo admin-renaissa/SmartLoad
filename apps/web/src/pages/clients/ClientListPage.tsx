@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Building2, Phone, Mail, MapPin, X } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,6 +9,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { DonutChart } from '../../components/charts/DonutChart.tsx';
 
 interface Client {
   id: string;
@@ -171,6 +172,15 @@ export default function ClientListPage() {
   const clients = data?.items ?? [];
   const meta = data?.meta;
 
+  const activeStatusSlices = useMemo(() => {
+    const active = clients.filter((c) => c.isActive).length;
+    const inactive = Math.max(0, clients.length - active);
+    return [
+      { label: 'ACTIVE', value: active, color: '#16A34A' },
+      { label: 'INACTIVE', value: inactive, color: '#6B7280' },
+    ];
+  }, [clients]);
+
   return (
     <div className="space-y-6">
       {(showCreate || editClient) && (
@@ -191,6 +201,16 @@ export default function ClientListPage() {
           )
         }
       />
+
+      <Card>
+        <div className="p-4 border-b border-gray-100">
+          <p className="text-sm font-medium text-gray-900">Client status</p>
+          <p className="text-xs text-gray-500 mt-0.5">Active vs inactive clients on this page</p>
+        </div>
+        <div className="p-4">
+          <DonutChart data={activeStatusSlices} height={210} showLegend={false} />
+        </div>
+      </Card>
 
       <Card>
         <div className="p-4 border-b border-gray-100">

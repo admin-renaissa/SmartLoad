@@ -7,6 +7,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "preserveSymlinks": false,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -15,7 +16,9 @@
     "paths": {
       "@/*": ["src/*"],
       "@smartload/shared": ["../../packages/shared/src/index.ts"],
-      "@smartload/db": ["../../packages/db/src/index.ts"]
+      "@smartload/db": ["../../packages/db/src/index.ts"],
+      "@smartload/prisma-client": ["../../node_modules/.prisma/client"],
+      "@prisma/client": ["../../node_modules/.prisma/client"]
     }
   },
   "include": [
@@ -23,5 +26,5 @@
     "../../packages/shared/src",
     "../../packages/db/src"
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "src/**/__tests__/**"]
 }

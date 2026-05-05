@@ -1,366 +1,653 @@
-import { type Prisma, type PrismaClient, MovementType } from '@prisma/client';
-import { randomBytes } from 'node:crypto';
-import { parsePagination } from '@smartload/shared';
+import type { FastifyInstance } from 'fastify';
+import { MovementType as PrismaMovementType } from '@prisma/client';
+import {
+  AppError,
+  MovementType,
+  parsePagination,
+  buildPaginationMeta,
+} from '@smartload/shared';
+import type {
+  AdjustStockInput,
+  TransferStockInput,
+  ListStockQuery,
+  LedgerQuery,
+} from './inventory.schema.js';
 
-const stockInclude = {
+type EnrichedStock = {
+  variantId: string;
   variant: {
-    include: {
-      product: { include: { category: true } },
-    },
-  },
-} as const;
-
-export type StockSummaryFilters = {
-  variantId?: string;
-  categoryId?: string;
-  lowStockOnly?: boolean;
-  search?: string;
-};
-
-export type StockSummaryRow = {
-  variant: Prisma.ProductVariantGetPayload<{
-    include: { product: { include: { category: true } } };
-  }>;
-  product: Prisma.ProductGetPayload<{
-    include: { category: true };
-  }>;
+    id: string;
+    colourCode: string;
+    colourName: string;
+    lengthMm: number | null;
+    widthMm: number | null;
+    thicknessMm: number | null;
+    mrpPaise: number | null;
+    product: {
+      sku: string;
+      name: string;
+      piecesPerBox: number;
+      minStockAlert: number;
+      category: { name: string; id: string };
+    };
+  };
   totalBoxes: number;
   reservedBoxes: number;
   availableBoxes: number;
   totalPieces: number;
   isLowStock: boolean;
+  isOutOfStock: boolean;
+  updatedAt: Date;
 };
 
-function netBoxDelta(type: MovementType, boxes: number): number {
-  switch (type) {
-    case MovementType.INWARD:
-    case MovementType.TRANSFER_IN:
-      return Math.abs(boxes);
-    case MovementType.OUTWARD:
-    case MovementType.TRANSFER_OUT:
-      return -Math.abs(boxes);
-    case MovementType.ADJUSTMENT_ADD:
-      return Math.abs(boxes);
-    case MovementType.ADJUSTMENT_SUB:
-      return -Math.abs(boxes);
-    default:
-      return 0;
-  }
+function urgencyRank(s: EnrichedStock): number {
+  if (s.isOutOfStock) return 0;
+  if (s.isLowStock) return 1;
+  return 2;
 }
 
 export class InventoryService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private readonly app: FastifyInstance) {}
 
-  private mapStockToSummaryRow(
-    stock: Prisma.InventoryStockGetPayload<{
-      include: typeof stockInclude;
-    }>,
-  ): StockSummaryRow {
-    const { variant, totalBoxes, reservedBoxes } = stock;
-    const { product } = variant;
-    const availableBoxes = totalBoxes - reservedBoxes;
-    const totalPieces = availableBoxes * product.piecesPerBox;
-    const isLowStock = totalBoxes <= product.minStockAlert;
-    return {
-      variant,
-      product,
-      totalBoxes,
-      reservedBoxes,
-      availableBoxes,
-      totalPieces,
-      isLowStock,
-    };
-  }
-
-  /**
-   * Stock summary: joined InventoryStock → ProductVariant → Product → ProductCategory.
-   * Sort: low stock first, then product name. Pagination applied after sort/filter.
-   */
-  async getStockSummary(options: { filters?: StockSummaryFilters; page: number; limit: number }) {
-    const { filters = {} } = options;
-    const { page, limit, skip } = parsePagination({ page: options.page, limit: options.limit });
-    const search = filters.search?.trim();
-
-    const where: Prisma.InventoryStockWhereInput = {
-      variant: {
-        isActive: true,
-        ...(filters.variantId ? { id: filters.variantId } : {}),
-        ...(filters.categoryId ? { product: { categoryId: filters.categoryId } } : {}),
-        ...(search
-          ? {
-              OR: [
-                { product: { name: { contains: search, mode: 'insensitive' } } },
-                { product: { sku: { contains: search, mode: 'insensitive' } } },
-                { colourName: { contains: search, mode: 'insensitive' } },
-              ],
-            }
-          : {}),
+  /** Full stock rows for Excel export — not limited by API pagination caps. */
+  private async fetchAllStockRowsForExport() {
+    const stocks = await this.app.prisma.inventoryStock.findMany({
+      where: { variant: { isActive: true } },
+      include: {
+        variant: { include: { product: { include: { category: true } } } },
       },
-    };
-
-    const stocks = await this.prisma.inventoryStock.findMany({ where, include: stockInclude });
-
-    let rows = stocks.map((s) => this.mapStockToSummaryRow(s));
-    if (filters.lowStockOnly) {
-      rows = rows.filter((r) => r.isLowStock);
-    }
-
-    rows.sort((a, b) => {
-      if (a.isLowStock !== b.isLowStock) {
-        return a.isLowStock ? -1 : 1;
-      }
-      return a.product.name.localeCompare(b.product.name, undefined, { sensitivity: 'base' });
     });
-
-    const total = rows.length;
-    const paged = rows.slice(skip, skip + limit);
-    return { items: paged, total, page, limit };
-  }
-
-  /**
-   * Ledger entries, newest first. Each entry includes running balance in boxes after the movement
-   * (as if entries were applied oldest → newest).
-   */
-  async getVariantLedger(
-    variantId: string,
-    options: { page: number; limit: number; dateFrom?: string; dateTo?: string },
-  ) {
-    const { page, limit, skip } = parsePagination({ page: options.page, limit: options.limit });
-    const from = options.dateFrom ? new Date(options.dateFrom) : undefined;
-    const to = options.dateTo ? new Date(options.dateTo) : undefined;
-
-    const all = await this.prisma.inventoryLedger.findMany({
-      where: { variantId },
-      orderBy: { createdAt: 'asc' },
-      include: { createdBy: { select: { name: true } } },
-    });
-
-    const beforeCount = (() => {
-      if (from == null) return 0;
-      return all
-        .filter((e) => e.createdAt < from)
-        .reduce((s, e) => s + netBoxDelta(e.movementType, e.boxes), 0);
-    })();
-
-    const inRange = all.filter((e) => {
-      if (from && e.createdAt < from) return false;
-      if (to && e.createdAt > to) return false;
-      return true;
-    });
-
-    let run = beforeCount;
-    const ascWithBalance: Array<
-      (typeof inRange)[number] & { runningBalance: number; createdBy: { name: string } }
-    > = [];
-
-    for (const e of inRange) {
-      run += netBoxDelta(e.movementType, e.boxes);
-      ascWithBalance.push({
-        ...e,
-        runningBalance: run,
-        createdBy: e.createdBy,
-      });
-    }
-
-    const display = [...ascWithBalance].reverse();
-    const total = display.length;
-    const items = display.slice(skip, skip + limit);
-
-    return { items, total, page, limit };
-  }
-
-  /**
-   * Manual stock adjustment. ADMIN only (enforced on route). Resulting total boxes must be ≥ 0.
-   */
-  async adjustStock(args: { variantId: string; boxes: number; reason: string; userId: string }) {
-    const { variantId, boxes, reason, userId } = args;
-    if (!reason?.trim()) {
-      throw Object.assign(new Error('Reason is required'), { statusCode: 400 });
-    }
-    if (boxes === 0) {
-      throw Object.assign(new Error('boxes cannot be zero'), { statusCode: 400 });
-    }
-
-    const variant = await this.prisma.productVariant.findUnique({
-      where: { id: variantId },
-      include: { product: true, inventoryStock: true },
-    });
-    if (!variant) {
-      throw Object.assign(new Error('Variant not found'), { statusCode: 404 });
-    }
-
-    const currentBoxes = variant.inventoryStock?.totalBoxes ?? 0;
-    const newTotal = currentBoxes + boxes;
-    if (newTotal < 0) {
-      throw Object.assign(new Error('Insufficient stock for this adjustment'), { statusCode: 400 });
-    }
-
-    const pieces = boxes * variant.product.piecesPerBox;
-    const ref = `ADJ-${Date.now()}-${randomBytes(4).toString('hex')}`;
-
-    return this.prisma.$transaction(async (tx) => {
-      const isAdd = boxes > 0;
-      const ledger = await tx.inventoryLedger.create({
-        data: {
-          variantId,
-          movementType: isAdd ? MovementType.ADJUSTMENT_ADD : MovementType.ADJUSTMENT_SUB,
-          boxes: Math.abs(boxes),
-          pieces: Math.abs(pieces),
-          referenceType: 'MANUAL_ADJUSTMENT',
-          referenceId: ref,
-          notes: reason.trim(),
-          createdById: userId,
-        },
-        include: { createdBy: { select: { id: true, name: true } } },
-      });
-
-      await tx.inventoryStock.upsert({
-        where: { variantId },
-        update: { totalBoxes: { increment: boxes } },
-        create: { variantId, totalBoxes: Math.max(0, boxes), reservedBoxes: 0 },
-      });
-
-      return ledger;
-    });
-  }
-
-  /**
-   * Sum(available boxes × MRP) per variant, grouped by product category, plus grand total.
-   */
-  async getInventoryValuation() {
-    const stocks = await this.prisma.inventoryStock.findMany({
-      include: { variant: { include: { product: { include: { category: true } } } } },
-    });
-
-    const byCategoryMap = new Map<
-      string,
-      { categoryId: string; categoryName: string; totalValue: number; availableBoxes: number }
-    >();
-    let grandTotal = 0;
-
-    for (const s of stocks) {
-      const available = s.totalBoxes - s.reservedBoxes;
-      const mrp = s.variant.mrpPaise ?? 0;
-      const value = available * mrp;
-      grandTotal += value;
-      const cat = s.variant.product.category;
-      if (!byCategoryMap.has(cat.id)) {
-        byCategoryMap.set(cat.id, {
-          categoryId: cat.id,
-          categoryName: cat.name,
-          totalValue: 0,
-          availableBoxes: 0,
-        });
-      }
-      const row = byCategoryMap.get(cat.id)!;
-      row.totalValue += value;
-      row.availableBoxes += available;
-    }
-
-    const byCategory = Array.from(byCategoryMap.values()).map((c) => ({
-      categoryId: c.categoryId,
-      categoryName: c.categoryName,
-      totalValue: c.totalValue,
-      totalBoxes: c.availableBoxes,
+    return stocks.map((s) => ({
+      variantId: s.variantId,
+      variant: s.variant,
+      totalBoxes: s.totalBoxes,
+      reservedBoxes: s.reservedBoxes,
+      availableBoxes: s.totalBoxes - s.reservedBoxes,
+      totalPieces: (s.totalBoxes - s.reservedBoxes) * s.variant.product.piecesPerBox,
+      isLowStock:
+        s.totalBoxes - s.reservedBoxes <= s.variant.product.minStockAlert &&
+        s.totalBoxes - s.reservedBoxes >= 0,
+      isOutOfStock: s.totalBoxes - s.reservedBoxes <= 0,
+      updatedAt: s.updatedAt,
     }));
-
-    return { grandTotal, byCategory };
   }
 
-  /**
-   * Repack / transfer: OUTWARD on source, INWARD on target in one transaction, shared reference.
-   */
-  async stockTransfer(args: {
-    fromVariantId: string;
-    toVariantId: string;
-    boxes: number;
-    reason: string;
-    userId: string;
-  }) {
-    const { fromVariantId, toVariantId, boxes, reason, userId } = args;
-    if (!reason?.trim()) {
-      throw Object.assign(new Error('Reason is required'), { statusCode: 400 });
+  async getStockSummary(query: ListStockQuery) {
+    const { skip, take, page } = parsePagination(query);
+
+    const variantWhere: Record<string, unknown> = { isActive: true };
+    if (query.categoryId) {
+      variantWhere.product = { categoryId: query.categoryId };
     }
-    if (fromVariantId === toVariantId) {
-      throw Object.assign(new Error('fromVariantId and toVariantId must differ'), { statusCode: 400 });
+    if (query.variantId) {
+      variantWhere.id = query.variantId;
     }
-    if (boxes <= 0) {
-      throw Object.assign(new Error('boxes must be positive'), { statusCode: 400 });
+    if (query.search) {
+      variantWhere.OR = [
+        { product: { name: { contains: query.search, mode: 'insensitive' } } },
+        { product: { sku: { contains: query.search, mode: 'insensitive' } } },
+        { colourName: { contains: query.search, mode: 'insensitive' } },
+      ];
     }
 
-    const [fromV, toV] = await Promise.all([
-      this.prisma.productVariant.findUnique({
-        where: { id: fromVariantId },
-        include: { product: true, inventoryStock: true },
+    const stocks = await this.app.prisma.inventoryStock.findMany({
+      where: { variant: variantWhere },
+      include: {
+        variant: {
+          include: {
+            product: { include: { category: true } },
+          },
+        },
+      },
+    });
+
+    let enriched: EnrichedStock[] = stocks.map((s) => {
+      const availableBoxes = s.totalBoxes - s.reservedBoxes;
+      const isLowStock =
+        availableBoxes <= s.variant.product.minStockAlert && availableBoxes >= 0;
+      const isOutOfStock = availableBoxes <= 0;
+
+      return {
+        variantId: s.variantId,
+        variant: s.variant,
+        totalBoxes: s.totalBoxes,
+        reservedBoxes: s.reservedBoxes,
+        availableBoxes,
+        totalPieces: availableBoxes * s.variant.product.piecesPerBox,
+        isLowStock,
+        isOutOfStock,
+        updatedAt: s.updatedAt,
+      };
+    });
+
+    if (query.lowStockOnly) {
+      enriched = enriched.filter((s) => s.isLowStock && !s.isOutOfStock);
+    }
+    if (query.outOfStock) {
+      enriched = enriched.filter((s) => s.isOutOfStock);
+    }
+
+    enriched.sort((a, b) => {
+      const ra = urgencyRank(a);
+      const rb = urgencyRank(b);
+      if (ra !== rb) return ra - rb;
+
+      if (query.sortBy === 'productName') {
+        return query.sortDir === 'asc'
+          ? a.variant.product.name.localeCompare(b.variant.product.name, undefined, {
+              sensitivity: 'base',
+            })
+          : b.variant.product.name.localeCompare(a.variant.product.name, undefined, {
+              sensitivity: 'base',
+            });
+      }
+      if (query.sortBy === 'sku') {
+        return query.sortDir === 'asc'
+          ? a.variant.product.sku.localeCompare(b.variant.product.sku)
+          : b.variant.product.sku.localeCompare(a.variant.product.sku);
+      }
+      const key = query.sortBy === 'availableBoxes' ? 'availableBoxes' : 'totalBoxes';
+      return query.sortDir === 'asc' ? a[key] - b[key] : b[key] - a[key];
+    });
+
+    const total = enriched.length;
+    const paged = enriched.slice(skip, skip + take);
+
+    return { stocks: paged, meta: buildPaginationMeta(total, page, take) };
+  }
+
+  async getVariantStockDetail(variantId: string) {
+    const stock = await this.app.prisma.inventoryStock.findUnique({
+      where: { variantId },
+      include: {
+        variant: {
+          include: { product: { include: { category: true } } },
+        },
+      },
+    });
+    if (!stock) throw new AppError('Variant stock record not found', 404);
+
+    const availableBoxes = stock.totalBoxes - stock.reservedBoxes;
+    return {
+      ...stock,
+      availableBoxes,
+      totalPieces: availableBoxes * stock.variant.product.piecesPerBox,
+      isLowStock: availableBoxes <= stock.variant.product.minStockAlert && availableBoxes >= 0,
+      isOutOfStock: availableBoxes <= 0,
+    };
+  }
+
+  async getVariantLedger(variantId: string, query: LedgerQuery) {
+    const { skip, take, page } = parsePagination(query);
+
+    const variant = await this.app.prisma.productVariant.findUnique({
+      where: { id: variantId },
+      include: { product: true },
+    });
+    if (!variant) throw new AppError('Variant not found', 404);
+
+    const where: Record<string, unknown> = { variantId };
+    if (query.type) where.movementType = query.type;
+    if (query.dateFrom || query.dateTo) {
+      where.createdAt = {
+        ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
+        ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
+      };
+    }
+
+    const [entries, total] = await Promise.all([
+      this.app.prisma.inventoryLedger.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          createdBy: { select: { id: true, name: true, role: true } },
+        },
       }),
-      this.prisma.productVariant.findUnique({
-        where: { id: toVariantId },
-        include: { product: true, inventoryStock: true },
-      }),
+      this.app.prisma.inventoryLedger.count({ where }),
     ]);
 
-    if (!fromV || !toV) {
-      throw Object.assign(new Error('One or both variants not found'), { statusCode: 404 });
-    }
+    const currentStock = await this.app.prisma.inventoryStock.findUnique({
+      where: { variantId },
+    });
+    let runningBalance = currentStock?.totalBoxes ?? 0;
 
-    const fromTotal = fromV.inventoryStock?.totalBoxes ?? 0;
-    const fromReserved = fromV.inventoryStock?.reservedBoxes ?? 0;
-    const fromAvailable = fromTotal - fromReserved;
-    if (fromAvailable < boxes) {
-      throw Object.assign(
-        new Error('Insufficient available stock in source variant'),
-        { statusCode: 400 },
+    const entriesWithBalance = entries.map((entry) => {
+      const isInward = [
+        MovementType.INWARD,
+        MovementType.ADJUSTMENT_ADD,
+        MovementType.TRANSFER_IN,
+        MovementType.RETURN_INWARD,
+      ].includes(entry.movementType as MovementType);
+
+      const balanceAfter = runningBalance;
+      runningBalance = isInward
+        ? runningBalance - entry.boxes
+        : runningBalance + entry.boxes;
+
+      return {
+        ...entry,
+        balanceAfter,
+        isInward,
+        signedBoxes: isInward ? `+${entry.boxes}` : `-${entry.boxes}`,
+      };
+    });
+
+    return {
+      variant,
+      currentStock: {
+        totalBoxes: currentStock?.totalBoxes ?? 0,
+        reservedBoxes: currentStock?.reservedBoxes ?? 0,
+        availableBoxes:
+          (currentStock?.totalBoxes ?? 0) - (currentStock?.reservedBoxes ?? 0),
+      },
+      entries: entriesWithBalance,
+      meta: buildPaginationMeta(total, page, take),
+    };
+  }
+
+  async adjustStock(variantId: string, input: AdjustStockInput, userId: string) {
+    const stock = await this.app.prisma.inventoryStock.findUnique({
+      where: { variantId },
+      include: { variant: { include: { product: true } } },
+    });
+    if (!stock) throw new AppError('Variant stock not found', 404);
+
+    const newTotal = stock.totalBoxes + input.boxes;
+    if (newTotal < 0) {
+      throw new AppError(
+        `Cannot remove ${Math.abs(input.boxes)} boxes — only ${stock.totalBoxes} in stock.`,
+        400,
+        'STOCK_INSUFFICIENT',
+      );
+    }
+    if (newTotal < stock.reservedBoxes) {
+      throw new AppError(
+        `Cannot reduce total below reserved quantity (${stock.reservedBoxes} boxes reserved for confirmed orders).`,
+        400,
+        'STOCK_BELOW_RESERVED',
       );
     }
 
-    if (!fromV.inventoryStock) {
-      throw Object.assign(new Error('Source variant has no stock record'), { statusCode: 400 });
+    const movementType =
+      input.boxes > 0 ? PrismaMovementType.ADJUSTMENT_ADD : PrismaMovementType.ADJUSTMENT_SUB;
+
+    await this.app.prisma.$transaction([
+      this.app.prisma.inventoryStock.update({
+        where: { variantId },
+        data: { totalBoxes: { increment: input.boxes } },
+      }),
+      this.app.prisma.inventoryLedger.create({
+        data: {
+          variantId,
+          movementType,
+          boxes: Math.abs(input.boxes),
+          pieces: Math.abs(input.boxes) * stock.variant.product.piecesPerBox,
+          referenceType: 'MANUAL_ADJUSTMENT',
+          referenceId: userId,
+          notes: `${input.reason}${input.notes ? ' — ' + input.notes : ''}`,
+          createdById: userId,
+        },
+      }),
+    ]);
+
+    await this.app.redis.del(`stock:variant:${variantId}`);
+
+    return this.getVariantStockDetail(variantId);
+  }
+
+  async transferStock(input: TransferStockInput, userId: string) {
+    if (input.fromVariantId === input.toVariantId) {
+      throw new AppError('Source and destination variants must be different', 400);
     }
 
-    const ref = `TRF-${Date.now()}-${randomBytes(4).toString('hex')}`;
-    const piecesOut = boxes * fromV.product.piecesPerBox;
-    const piecesIn = boxes * toV.product.piecesPerBox;
-    const reasonNote = reason.trim();
+    const [fromStock, toVariantData] = await Promise.all([
+      this.app.prisma.inventoryStock.findUnique({
+        where: { variantId: input.fromVariantId },
+        include: { variant: { include: { product: true } } },
+      }),
+      this.app.prisma.productVariant.findUnique({
+        where: { id: input.toVariantId },
+        include: { product: true },
+      }),
+    ]);
 
-    return this.prisma.$transaction(async (tx) => {
-      await tx.inventoryStock.update({
-        where: { variantId: fromVariantId },
-        data: { totalBoxes: { decrement: boxes } },
-      });
+    if (!fromStock) throw new AppError('Source variant stock not found', 404);
+    if (!toVariantData) throw new AppError('Destination variant not found', 404);
 
-      await tx.inventoryStock.upsert({
-        where: { variantId: toVariantId },
-        update: { totalBoxes: { increment: boxes } },
-        create: { variantId: toVariantId, totalBoxes: boxes, reservedBoxes: 0 },
-      });
-
-      await tx.inventoryLedger.create({
-        data: {
-          variantId: fromVariantId,
-          movementType: MovementType.OUTWARD,
-          boxes,
-          pieces: piecesOut,
-          referenceType: 'STOCK_TRANSFER',
-          referenceId: ref,
-          notes: `Transfer out → ${toVariantId}. ${reasonNote}`,
-          createdById: userId,
-        },
-      });
-
-      await tx.inventoryLedger.create({
-        data: {
-          variantId: toVariantId,
-          movementType: MovementType.INWARD,
-          boxes,
-          pieces: piecesIn,
-          referenceType: 'STOCK_TRANSFER',
-          referenceId: ref,
-          notes: `Transfer in ← ${fromVariantId}. ${reasonNote}`,
-          createdById: userId,
-        },
-      });
-
-      return { referenceId: ref, fromVariantId, toVariantId, boxes };
+    const toExisting = await this.app.prisma.inventoryStock.findUnique({
+      where: { variantId: input.toVariantId },
     });
+
+    const fromAvailable = fromStock.totalBoxes - fromStock.reservedBoxes;
+    if (input.boxes > fromAvailable) {
+      throw new AppError(
+        `Only ${fromAvailable} available boxes in source (${fromStock.reservedBoxes} reserved).`,
+        400,
+        'STOCK_INSUFFICIENT',
+      );
+    }
+
+    const transferRef = `TRANSFER-${Date.now()}`;
+
+    await this.app.prisma.$transaction([
+      this.app.prisma.inventoryStock.update({
+        where: { variantId: input.fromVariantId },
+        data: { totalBoxes: { decrement: input.boxes } },
+      }),
+      this.app.prisma.inventoryStock.upsert({
+        where: { variantId: input.toVariantId },
+        update: { totalBoxes: { increment: input.boxes } },
+        create: {
+          variantId: input.toVariantId,
+          totalBoxes: input.boxes,
+          reservedBoxes: 0,
+        },
+      }),
+      this.app.prisma.inventoryLedger.create({
+        data: {
+          variantId: input.fromVariantId,
+          movementType: PrismaMovementType.TRANSFER_OUT,
+          boxes: input.boxes,
+          pieces: input.boxes * fromStock.variant.product.piecesPerBox,
+          referenceType: 'TRANSFER',
+          referenceId: transferRef,
+          notes: `Transfer to ${toVariantData.product.sku}-${toVariantData.colourCode}: ${input.reason}`,
+          createdById: userId,
+        },
+      }),
+      this.app.prisma.inventoryLedger.create({
+        data: {
+          variantId: input.toVariantId,
+          movementType: PrismaMovementType.TRANSFER_IN,
+          boxes: input.boxes,
+          pieces: input.boxes * toVariantData.product.piecesPerBox,
+          referenceType: 'TRANSFER',
+          referenceId: transferRef,
+          notes: `Transfer from ${fromStock.variant.product.sku}-${fromStock.variant.colourCode}: ${input.reason}`,
+          createdById: userId,
+        },
+      }),
+    ]);
+
+    await this.app.redis.del(`stock:variant:${input.fromVariantId}`);
+    await this.app.redis.del(`stock:variant:${input.toVariantId}`);
+
+    return {
+      message: `${input.boxes} boxes transferred successfully`,
+      transferRef,
+      from: { variantId: input.fromVariantId, newTotal: fromStock.totalBoxes - input.boxes },
+      to: {
+        variantId: input.toVariantId,
+        newTotal: (toExisting?.totalBoxes ?? 0) + input.boxes,
+      },
+    };
+  }
+
+  async getInventoryValuation() {
+    const stocks = await this.app.prisma.inventoryStock.findMany({
+      include: {
+        variant: {
+          include: { product: { include: { category: true } } },
+        },
+      },
+      where: { variant: { isActive: true } },
+    });
+
+    const categoryMap = new Map<
+      string,
+      {
+        categoryId: string;
+        categoryName: string;
+        totalBoxes: number;
+        valuePaise: number;
+        variantCount: number;
+      }
+    >();
+
+    let grandTotalPaise = 0;
+    let grandTotalBoxes = 0;
+    let unvaluedVariants = 0;
+
+    for (const s of stocks) {
+      const available = s.totalBoxes - s.reservedBoxes;
+      const catId = s.variant.product.categoryId;
+      const catName = s.variant.product.category.name;
+      const mrp = s.variant.mrpPaise;
+
+      if (!categoryMap.has(catId)) {
+        categoryMap.set(catId, {
+          categoryId: catId,
+          categoryName: catName,
+          totalBoxes: 0,
+          valuePaise: 0,
+          variantCount: 0,
+        });
+      }
+
+      const cat = categoryMap.get(catId)!;
+      cat.totalBoxes += available;
+      cat.variantCount += 1;
+      grandTotalBoxes += available;
+
+      if (mrp && mrp > 0) {
+        const lineValue = available * mrp;
+        cat.valuePaise += lineValue;
+        grandTotalPaise += lineValue;
+      } else {
+        unvaluedVariants++;
+      }
+    }
+
+    return {
+      categories: [...categoryMap.values()],
+      grandTotalPaise,
+      grandTotalBoxes,
+      unvaluedVariants,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  async getLowStockVariants() {
+    const stocks = await this.app.prisma.inventoryStock.findMany({
+      include: {
+        variant: { include: { product: { include: { category: true } } } },
+      },
+      where: { variant: { isActive: true } },
+    });
+
+    return stocks
+      .map((s) => ({
+        variantId: s.variantId,
+        variant: s.variant,
+        totalBoxes: s.totalBoxes,
+        reservedBoxes: s.reservedBoxes,
+        availableBoxes: s.totalBoxes - s.reservedBoxes,
+        minStockAlert: s.variant.product.minStockAlert,
+        isOutOfStock: s.totalBoxes - s.reservedBoxes <= 0,
+        urgencyLevel:
+          s.totalBoxes - s.reservedBoxes <= 0
+            ? ('CRITICAL' as const)
+            : s.totalBoxes - s.reservedBoxes <=
+                Math.floor(s.variant.product.minStockAlert * 0.5)
+              ? ('HIGH' as const)
+              : ('MEDIUM' as const),
+      }))
+      .filter((s) => s.availableBoxes <= s.minStockAlert)
+      .sort((a, b) => a.availableBoxes - b.availableBoxes);
+  }
+
+  async exportToExcel(): Promise<Buffer> {
+    const ExcelJS = (await import('exceljs')).default;
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Stock Report');
+
+    workbook.creator = 'SmartLoad';
+    workbook.created = new Date();
+
+    sheet.columns = [
+      { header: 'SKU', key: 'sku', width: 20 },
+      { header: 'Product Name', key: 'productName', width: 30 },
+      { header: 'Category', key: 'category', width: 20 },
+      { header: 'Colour Code', key: 'colourCode', width: 12 },
+      { header: 'Colour Name', key: 'colourName', width: 15 },
+      { header: 'Length (mm)', key: 'length', width: 12 },
+      { header: 'Width (mm)', key: 'width', width: 12 },
+      { header: 'Thickness (mm)', key: 'thickness', width: 14 },
+      { header: 'Pieces/Box', key: 'piecesPerBox', width: 12 },
+      { header: 'Total Boxes', key: 'totalBoxes', width: 12 },
+      { header: 'Reserved Boxes', key: 'reservedBoxes', width: 14 },
+      { header: 'Available Boxes', key: 'availableBoxes', width: 14 },
+      { header: 'Available Pieces', key: 'totalPieces', width: 15 },
+      { header: 'Min Stock Alert', key: 'minAlert', width: 14 },
+      { header: 'Status', key: 'status', width: 12 },
+      { header: 'MRP/Box (₹)', key: 'mrp', width: 12 },
+    ];
+
+    const headerRow = sheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF0F2044' },
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.height = 20;
+
+    const stocks = await this.fetchAllStockRowsForExport();
+
+    stocks.forEach((s, idx) => {
+      const row = sheet.addRow({
+        sku: s.variant.product.sku,
+        productName: s.variant.product.name,
+        category: s.variant.product.category.name,
+        colourCode: s.variant.colourCode,
+        colourName: s.variant.colourName,
+        length: s.variant.lengthMm ?? '',
+        width: s.variant.widthMm ?? '',
+        thickness: s.variant.thicknessMm ?? '',
+        piecesPerBox: s.variant.product.piecesPerBox,
+        totalBoxes: s.totalBoxes,
+        reservedBoxes: s.reservedBoxes,
+        availableBoxes: s.availableBoxes,
+        totalPieces: s.totalPieces,
+        minAlert: s.variant.product.minStockAlert,
+        status: s.isOutOfStock ? 'OUT OF STOCK' : s.isLowStock ? 'LOW STOCK' : 'OK',
+        mrp: s.variant.mrpPaise ? (s.variant.mrpPaise / 100).toFixed(2) : '',
+      });
+
+      const bgColor = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF3F4F6';
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: bgColor },
+        };
+        cell.alignment = { vertical: 'middle' };
+      });
+
+      const statusCell = row.getCell('status');
+      if (s.isOutOfStock) {
+        statusCell.font = { bold: true, color: { argb: 'FFB91C1C' } };
+      } else if (s.isLowStock) {
+        statusCell.font = { bold: true, color: { argb: 'FFB45309' } };
+      } else {
+        statusCell.font = { color: { argb: 'FF15803D' } };
+      }
+    });
+
+    const totalsRow = sheet.addRow({
+      sku: 'TOTAL',
+      totalBoxes: stocks.reduce((acc, r) => acc + r.totalBoxes, 0),
+      reservedBoxes: stocks.reduce((acc, r) => acc + r.reservedBoxes, 0),
+      availableBoxes: stocks.reduce((acc, r) => acc + r.availableBoxes, 0),
+      totalPieces: stocks.reduce((acc, r) => acc + r.totalPieces, 0),
+    });
+    totalsRow.font = { bold: true };
+
+    totalsRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE5E7EB' },
+    };
+
+    sheet.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  async importOpeningStock(buffer: Buffer, userId: string) {
+    const { parse } = await import('csv-parse/sync');
+    const { stockImportRowSchema } = await import('./inventory.schema.js');
+
+    const rows = parse(buffer, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    }) as Record<string, string>[];
+
+    const results = {
+      processed: 0,
+      updated: 0,
+      errors: [] as { row: number; message: string }[],
+    };
+
+    for (let i = 0; i < rows.length; i++) {
+      const rowNum = i + 2;
+      try {
+        const row = stockImportRowSchema.parse(rows[i]);
+
+        const variant = await this.app.prisma.productVariant.findFirst({
+          where: {
+            colourCode: row.colourCode,
+            product: { sku: row.sku },
+          },
+          include: { product: true },
+        });
+
+        if (!variant) {
+          results.errors.push({
+            row: rowNum,
+            message: `No variant found for SKU=${row.sku} Colour=${row.colourCode}`,
+          });
+          continue;
+        }
+
+        await this.app.prisma.inventoryStock.upsert({
+          where: { variantId: variant.id },
+          update: { totalBoxes: row.totalBoxes },
+          create: {
+            variantId: variant.id,
+            totalBoxes: row.totalBoxes,
+            reservedBoxes: 0,
+          },
+        });
+
+        await this.app.prisma.inventoryLedger.create({
+          data: {
+            variantId: variant.id,
+            movementType: PrismaMovementType.INWARD,
+            boxes: row.totalBoxes,
+            pieces: row.totalBoxes * variant.product.piecesPerBox,
+            referenceType: 'OPENING_STOCK',
+            referenceId: `IMPORT-${Date.now()}-${rowNum}`,
+            notes: row.notes ?? 'Opening stock import',
+            createdById: userId,
+          },
+        });
+
+        results.updated++;
+      } catch (err) {
+        results.errors.push({
+          row: rowNum,
+          message: err instanceof Error ? err.message : 'Unknown error',
+        });
+      }
+      results.processed++;
+    }
+
+    return results;
   }
 }

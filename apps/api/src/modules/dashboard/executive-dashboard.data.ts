@@ -1,5 +1,10 @@
 import type { PrismaClient } from '@prisma/client';
-import { POStatus } from '@prisma/client';
+import { POStatus, PODStatus } from '@prisma/client';
+
+/**
+ * inventoryValuePaise: proxy only — current on-hand boxes × latest PO line rate per variant (max createdAt).
+ * Excludes variants with no PO lines; not a substitute for multi-warehouse valuation (FR-05 deferred).
+ */
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -27,8 +32,11 @@ export type ExecutiveDashboardPayload = {
     totalScansToday: number;
     errorScansToday: number;
     pendingPODs: number;
+    disputedPODs: number;
   };
   dispatchVolume30d: { date: string; label: string; boxes: number }[];
+  /** Daily closed sessions for last 30 days (server local day). */
+  sessionsCount30d: { date: string; label: string; sessions: number }[];
   ordersByStatus: { status: string; count: number }[];
   topClientsMonth: { clientId: string; clientName: string; boxes: number }[];
   topProductsMonth: { productId: string; productName: string; boxes: number }[];
@@ -51,6 +59,12 @@ export type ExecutiveDashboardPayload = {
     lastSyncAt: string | null;
     failedJobsCount: number;
   };
+  /** Daily counts for last 30 days: acknowledged vs disputed POD (acknowledgedAt day bucket, server TZ). */
+  podDisputeTrend: { date: string; label: string; acknowledged: number; disputed: number }[];
+  /** Daily scan error rate trend for last 7 days (SUCCESS excluded, computed from scanEvent.result). */
+  scanErrorRateTrend7d: { date: string; label: string; errorRate: number; errors: number; total: number }[];
+  /** Stock valuation proxy in paise (see module comment). */
+  inventoryValuePaise: number;
 };
 
 
@@ -69,6 +83,7 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     totalScansToday,
     errorScansToday,
     pendingPODs,
+    disputedPODs,
     ordersByStatusRaw,
     sessions30d,
     sessionsThisMonth,
@@ -76,6 +91,8 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     stockRows,
     lastTallySync,
     failedTallyJobs,
+    podTrendRows,
+    inventoryValueRow,
   ] = await Promise.all([
     prisma.dispatchSession.count({ where: { status: 'CLOSED', closedAt: { gte: today } } }),
     prisma.dispatchSession.count({
@@ -89,6 +106,9 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     prisma.scanEvent.count({ where: { scannedAt: { gte: today }, result: { not: 'SUCCESS' } } }),
     prisma.proofOfDelivery.count({
       where: { status: { in: ['PENDING', 'LINK_SENT', 'OTP_VERIFIED'] } },
+    }),
+    prisma.proofOfDelivery.count({
+      where: { status: 'DISPUTED' },
     }),
     prisma.purchaseOrder.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.dispatchSession.findMany({
@@ -121,6 +141,24 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     prisma.tallySyncJob.count({
       where: { status: { in: ['FAILED', 'PERMANENTLY_FAILED'] } } },
     ),
+    prisma.proofOfDelivery.findMany({
+      where: {
+        status: { in: [PODStatus.ACKNOWLEDGED, PODStatus.DISPUTED] },
+        acknowledgedAt: { gte: thirtyAgo },
+      },
+      select: { acknowledgedAt: true, status: true },
+    }),
+    prisma.$queryRaw<{ valuePaise: bigint }[]>`
+      SELECT COALESCE(SUM(inv."totalBoxes" * COALESCE(sub."ratePerBoxPaise", 0)), 0)::bigint AS "valuePaise"
+      FROM "inventory_stock" inv
+      LEFT JOIN LATERAL (
+        SELECT li."ratePerBoxPaise"
+        FROM "po_line_items" li
+        WHERE li."variantId" = inv."variantId"
+        ORDER BY li."createdAt" DESC
+        LIMIT 1
+      ) sub ON true
+    `,
   ]);
 
   const boxesThisWeek = sessionsWeek.reduce((s, x) => s + x.totalBoxesScanned, 0);
@@ -154,6 +192,24 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
       date: key,
       label: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`,
       boxes: byDay.get(key) || 0,
+    });
+  }
+
+  const sessionsByDayCount = new Map<string, number>();
+  for (const s of sessions30d) {
+    if (!s.closedAt) continue;
+    const key = toYmd(s.closedAt);
+    sessionsByDayCount.set(key, (sessionsByDayCount.get(key) || 0) + 1);
+  }
+
+  const sessionsCount30d: ExecutiveDashboardPayload['sessionsCount30d'] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = addDays(today, -i);
+    const key = toYmd(d);
+    sessionsCount30d.push({
+      date: key,
+      label: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`,
+      sessions: sessionsByDayCount.get(key) || 0,
     });
   }
 
@@ -209,6 +265,53 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
     vehicleReg: s.vehicle.registrationNumber,
   }));
 
+  const podByDay = new Map<string, { acknowledged: number; disputed: number }>();
+  for (let i = 29; i >= 0; i--) {
+    const d = addDays(today, -i);
+    podByDay.set(toYmd(d), { acknowledged: 0, disputed: 0 });
+  }
+  for (const row of podTrendRows) {
+    if (!row.acknowledgedAt) continue;
+    const key = toYmd(row.acknowledgedAt);
+    const bucket = podByDay.get(key);
+    if (!bucket) continue;
+    if (row.status === PODStatus.DISPUTED) bucket.disputed += 1;
+    else if (row.status === PODStatus.ACKNOWLEDGED) bucket.acknowledged += 1;
+  }
+  const podDisputeTrend: ExecutiveDashboardPayload['podDisputeTrend'] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = addDays(today, -i);
+    const key = toYmd(d);
+    const b = podByDay.get(key)!;
+    podDisputeTrend.push({
+      date: key,
+      label: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`,
+      acknowledged: b.acknowledged,
+      disputed: b.disputed,
+    });
+  }
+
+  const inventoryValuePaise = Number(inventoryValueRow[0]?.valuePaise ?? 0n);
+
+  // Scan error rate trend (last 7 days), computed as errors / total scans per day.
+  const scanErrorRateTrend7d: ExecutiveDashboardPayload['scanErrorRateTrend7d'] = [];
+  for (let i = 0; i <= 6; i++) {
+    const dayStart = addDays(weekAgo, i);
+    const dayEnd = addDays(dayStart, 1);
+    const key = toYmd(dayStart);
+
+    const [total, errors] = await Promise.all([
+      prisma.scanEvent.count({ where: { scannedAt: { gte: dayStart, lt: dayEnd } } }),
+      prisma.scanEvent.count({
+        where: { scannedAt: { gte: dayStart, lt: dayEnd }, result: { not: 'SUCCESS' } },
+      }),
+    ]);
+
+    const errorRate = total > 0 ? Math.round((errors / total) * 1000) / 10 : 0;
+    const label = dayStart.toLocaleDateString('en-IN', { weekday: 'short' });
+    scanErrorRateTrend7d.push({ date: key, label, errorRate, errors, total });
+  }
+
   const lowStockAlerts = stockRows
     .filter((s) => s.totalBoxes <= s.variant.product.minStockAlert)
     .map((s) => {
@@ -234,8 +337,10 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
       totalScansToday,
       errorScansToday,
       pendingPODs,
+      disputedPODs,
     },
     dispatchVolume30d,
+    sessionsCount30d,
     ordersByStatus,
     topClientsMonth,
     topProductsMonth,
@@ -245,5 +350,8 @@ export async function buildExecutiveDashboardData(prisma: PrismaClient): Promise
       lastSyncAt: lastTallySync?.processedAt?.toISOString() ?? null,
       failedJobsCount: failedTallyJobs,
     },
+    podDisputeTrend,
+    scanErrorRateTrend7d,
+    inventoryValuePaise,
   };
 }

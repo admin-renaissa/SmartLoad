@@ -1,133 +1,139 @@
 import type { FastifyPluginAsync, FastifyReply } from 'fastify';
-import { z } from 'zod';
-import { successResponse, errorResponse, UserRole } from '@smartload/shared';
-import { buildPaginationMeta } from '@smartload/shared';
-import { parsePagination } from '@smartload/shared';
+import { successResponse, UserRole } from '@smartload/shared';
 import { InventoryService } from './inventory.service.js';
+import {
+  listStockQuerySchema,
+  ledgerQuerySchema,
+  adjustStockSchema,
+  transferStockSchema,
+} from './inventory.schema.js';
+import { AppError } from '@smartload/shared';
 
-function sendServiceErrorIfApplicable(err: unknown, reply: FastifyReply): boolean {
-  if (err && typeof err === 'object' && 'statusCode' in err) {
-    const o = err as { statusCode?: number; message?: string };
-    if (typeof o.statusCode === 'number' && typeof o.message === 'string') {
-      reply.code(o.statusCode).send(errorResponse(o.message));
-      return true;
-    }
+function replyAppError(reply: FastifyReply, err: unknown) {
+  if (err instanceof AppError) {
+    const body: Record<string, unknown> = {
+      success: false,
+      data: null,
+      error: err.message,
+    };
+    if (err.code) body.code = err.code;
+    return reply.code(err.statusCode).send(body);
   }
   return false;
 }
 
 export const inventoryRoutes: FastifyPluginAsync = async (fastify) => {
-  const getService = () => new InventoryService(fastify.prisma);
+  const svc = () => new InventoryService(fastify);
 
-  // Static paths MUST be registered before /:variantId/… so names like "valuation" are not captured.
+  fastify.get(
+    '/export',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS, UserRole.SUPERVISOR) },
+    async (_request, reply) => {
+      const buf = await svc().exportToExcel();
+      const d = new Date().toISOString().slice(0, 10);
+      reply.header(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      reply.header(
+        'Content-Disposition',
+        `attachment; filename="stock-report-${d}.xlsx"`,
+      );
+      return reply.send(buf);
+    },
+  );
 
-  // GET /api/v1/inventory/valuation
-  fastify.get('/valuation', { preHandler: fastify.requireAuth }, async (_request, reply) => {
-    const data = await getService().getInventoryValuation();
+  fastify.get(
+    '/valuation',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.ACCOUNTS) },
+    async (_request, reply) => {
+      const data = await svc().getInventoryValuation();
+      return reply.send(successResponse(data));
+    },
+  );
+
+  fastify.get('/low-stock', { preHandler: fastify.requireAuth }, async (_request, reply) => {
+    const data = await svc().getLowStockVariants();
     return reply.send(successResponse(data));
   });
 
-  // GET /api/v1/inventory/low-stock
-  fastify.get('/low-stock', { preHandler: fastify.requireAuth }, async (request, reply) => {
-    const query = request.query as { page?: string; limit?: string };
-    const { page, limit } = parsePagination({ page: Number(query.page), limit: Number(query.limit) });
-    const { items, total } = await getService().getStockSummary({
-      filters: { lowStockOnly: true },
-      page,
-      limit,
-    });
-    return reply.send(successResponse(items, buildPaginationMeta(total, page, limit)));
-  });
-
-  // GET /api/v1/inventory — stock summary (paginated, filters)
-  fastify.get('/', { preHandler: fastify.requireAuth }, async (request, reply) => {
-    const query = request.query as {
-      page?: string;
-      limit?: string;
-      categoryId?: string;
-      lowStockOnly?: string;
-      search?: string;
-      variantId?: string;
-    };
-    const { page, limit } = parsePagination({ page: Number(query.page), limit: Number(query.limit) });
-    const { items, total } = await getService().getStockSummary({
-      filters: {
-        variantId: query.variantId,
-        categoryId: query.categoryId,
-        lowStockOnly: query.lowStockOnly === 'true' || query.lowStockOnly === '1',
-        search: query.search,
-      },
-      page,
-      limit,
-    });
-    return reply.send(successResponse(items, buildPaginationMeta(total, page, limit)));
-  });
-
-  // GET /api/v1/inventory/:variantId/ledger
-  fastify.get('/:variantId/ledger', { preHandler: fastify.requireAuth }, async (request, reply) => {
-    const { variantId } = request.params as { variantId: string };
-    const query = request.query as { page?: string; limit?: string; dateFrom?: string; dateTo?: string };
-    const { page, limit } = parsePagination({ page: Number(query.page), limit: Number(query.limit) });
-    const { items, total } = await getService().getVariantLedger(variantId, {
-      page,
-      limit,
-      dateFrom: query.dateFrom,
-      dateTo: query.dateTo,
-    });
-    return reply.send(successResponse(items, buildPaginationMeta(total, page, limit)));
-  });
-
-  // POST /api/v1/inventory/transfer (ADMIN) — before /:variantId/adjust
   fastify.post(
-    '/transfer',
+    '/import-opening-stock',
     { preHandler: fastify.requireRole(UserRole.ADMIN) },
     async (request, reply) => {
-      const body = z
-        .object({
-          fromVariantId: z.string().cuid(),
-          toVariantId: z.string().cuid(),
-          boxes: z.number().int().positive(),
-          reason: z.string().min(1),
-        })
-        .parse(request.body);
+      const data = await request.file();
+      if (!data)
+        throw new AppError('No file uploaded', 400);
+      const buffer = await data.toBuffer();
       try {
-        const data = await getService().stockTransfer({
-          fromVariantId: body.fromVariantId,
-          toVariantId: body.toVariantId,
-          boxes: body.boxes,
-          reason: body.reason,
-          userId: request.user.userId,
-        });
-        return reply.send(successResponse(data));
+        const result = await svc().importOpeningStock(buffer, request.user.userId);
+        return reply.send(successResponse(result));
       } catch (err) {
-        if (sendServiceErrorIfApplicable(err, reply)) return;
+        if (replyAppError(reply, err)) return;
         throw err;
       }
     },
   );
 
-  // POST /api/v1/inventory/:variantId/adjust (ADMIN)
+  fastify.post(
+    '/transfer',
+    { preHandler: fastify.requireRole(UserRole.ADMIN) },
+    async (request, reply) => {
+      const body = transferStockSchema.parse(request.body);
+      try {
+        const out = await svc().transferStock(body, request.user.userId);
+        return reply.send(successResponse(out));
+      } catch (err) {
+        if (replyAppError(reply, err)) return;
+        throw err;
+      }
+    },
+  );
+
+  fastify.get('/', { preHandler: fastify.requireAuth }, async (request, reply) => {
+    const query = listStockQuerySchema.parse(request.query);
+    const { stocks, meta } = await svc().getStockSummary(query);
+    return reply.send(successResponse(stocks, meta));
+  });
+
+  fastify.get(
+    '/:variantId/ledger',
+    { preHandler: fastify.requireAuth },
+    async (request, reply) => {
+      const { variantId } = request.params as { variantId: string };
+      const query = ledgerQuerySchema.parse(request.query);
+      try {
+        const { meta, ...rest } = await svc().getVariantLedger(variantId, query);
+        return reply.send(successResponse(rest, meta));
+      } catch (err) {
+        if (replyAppError(reply, err)) return;
+        throw err;
+      }
+    },
+  );
+
+  fastify.get('/:variantId', { preHandler: fastify.requireAuth }, async (request, reply) => {
+    const { variantId } = request.params as { variantId: string };
+    try {
+      const data = await svc().getVariantStockDetail(variantId);
+      return reply.send(successResponse(data));
+    } catch (err) {
+      if (replyAppError(reply, err)) return;
+      throw err;
+    }
+  });
+
   fastify.post(
     '/:variantId/adjust',
     { preHandler: fastify.requireRole(UserRole.ADMIN) },
     async (request, reply) => {
       const { variantId } = request.params as { variantId: string };
-      const dto = z
-        .object({
-          boxes: z.number().int().refine((n) => n !== 0, { message: 'boxes cannot be zero' }),
-          reason: z.string().min(1),
-        })
-        .parse(request.body);
+      const body = adjustStockSchema.parse(request.body);
       try {
-        const ledger = await getService().adjustStock({
-          variantId,
-          boxes: dto.boxes,
-          reason: dto.reason,
-          userId: request.user.userId,
-        });
-        return reply.send(successResponse(ledger));
+        const data = await svc().adjustStock(variantId, body, request.user.userId);
+        return reply.send(successResponse(data));
       } catch (err) {
-        if (sendServiceErrorIfApplicable(err, reply)) return;
+        if (replyAppError(reply, err)) return;
         throw err;
       }
     },

@@ -30,7 +30,7 @@ import { sessionRoutes } from './modules/dispatch/session.routes.js';
 import { scanRoutes } from './modules/scan/scan.routes.js';
 import { inventoryRoutes } from './modules/inventory/inventory.routes.js';
 import { grnRoutes } from './modules/inventory/grn.routes.js';
-import { vehicleRoutes } from './modules/vehicles/vehicle.routes.js';
+import { vehiclesRoutes } from './modules/vehicles/vehicles.routes.js';
 import { podRoutes } from './modules/pod/pod.routes.js';
 import { tallyRoutes } from './modules/tally/tally.routes.js';
 import { integrationsRoutes } from './modules/integrations/integrations.routes.js';
@@ -39,6 +39,7 @@ import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js';
 import { settingsRoutes } from './modules/settings/settings.routes.js';
 import { auditLogRoutes } from './modules/audit/audit.routes.js';
 import { healthRoutes } from './modules/health/health.routes.js';
+import { deviceRoutes } from './modules/devices/device.routes.js';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -104,7 +105,7 @@ export async function buildServer() {
   await app.register(scanRoutes, { prefix: `${apiPrefix}/scan` });
   await app.register(inventoryRoutes, { prefix: `${apiPrefix}/inventory` });
   await app.register(grnRoutes, { prefix: `${apiPrefix}/grn` });
-  await app.register(vehicleRoutes, { prefix: `${apiPrefix}/vehicles` });
+  await app.register(vehiclesRoutes, { prefix: `${apiPrefix}/vehicles` });
   await app.register(podRoutes, { prefix: `${apiPrefix}/pod` });
   await app.register(tallyRoutes, { prefix: `${apiPrefix}/tally` });
   await app.register(integrationsRoutes, { prefix: `${apiPrefix}/integrations` });
@@ -112,6 +113,7 @@ export async function buildServer() {
   await app.register(dashboardRoutes, { prefix: `${apiPrefix}/dashboard` });
   await app.register(settingsRoutes, { prefix: `${apiPrefix}/settings` });
   await app.register(auditLogRoutes, { prefix: `${apiPrefix}/audit-logs` });
+  await app.register(deviceRoutes, { prefix: `${apiPrefix}/devices` });
 
   return app;
 }

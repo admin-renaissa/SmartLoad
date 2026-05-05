@@ -23,6 +23,20 @@ export const logoutSchema = z.object({
   refreshToken: z.string().min(1).optional(),
 });
 
+export const twoFactorCompleteSchema = z.object({
+  twoFactorToken: z.string().min(10),
+  code: z.string().min(6).max(8),
+});
+
+export const twoFactorEnableSchema = z.object({
+  secret: z.string().min(16),
+  code: z.string().min(6).max(8),
+});
+
+export const twoFactorDisableSchema = z.object({
+  password: z.string().min(1),
+});
+
 export type LoginDto = z.infer<typeof loginSchema>;
 export type RefreshDto = z.infer<typeof refreshSchema>;
 export type ChangePasswordDto = z.infer<typeof changePasswordSchema>;
