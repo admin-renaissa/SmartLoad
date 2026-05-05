@@ -9,6 +9,21 @@
             "date": 1777709183414,
             "name": "/Users/prashant/Documents/Workspace/Renaissa/SmartLoad/apps/tally-bridge/logs/bridge-2026-05-02.log",
             "hash": "4d3456bd182b35818330748219f342007c6ff95c207b0d82bb4f94fae02dd8bf"
+        },
+        {
+            "date": 1777746630894,
+            "name": "/Users/prashant/Documents/Workspace/Renaissa/SmartLoad/apps/tally-bridge/logs/bridge-2026-05-03.log",
+            "hash": "876bef613ccb10ce6c11924ae5bd4c77ef12a604f3da849ff3a35916c55df784"
+        },
+        {
+            "date": 1777833886869,
+            "name": "/Users/prashant/Documents/Workspace/Renaissa/SmartLoad/apps/tally-bridge/logs/bridge-2026-05-04.log",
+            "hash": "e5f371f31bfaa2d0b44fa335e653000a1194eb6ec1a9cc1d0177405c69e9d931"
+        },
+        {
+            "date": 1777920993815,
+            "name": "/Users/prashant/Documents/Workspace/Renaissa/SmartLoad/apps/tally-bridge/logs/bridge-2026-05-05.log",
+            "hash": "6999e90e1c1f879b89d03b746d30c6e69d099f6adcbb384bfa2a0cf9bebc1487"
         }
     ],
     "hashType": "sha256"
