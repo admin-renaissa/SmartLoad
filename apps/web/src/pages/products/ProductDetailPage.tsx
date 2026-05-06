@@ -1,211 +1,188 @@
-import { useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useMemo, useState, useRef } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Plus, QrCode, Edit2, Package,
   Ruler, Barcode, Tag, CheckCircle2, XCircle,
+  TrendingUp, AlertTriangle, History, Info,
+  Box, Maximize2, Layers, Truck, Clock,
+  MoreHorizontal, Download, Printer, Archive,
+  ShieldCheck, FileText, ChevronRight, X, Trash2, RotateCcw, Copy, Save
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+  Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
+import { QRCodeSVG } from 'qrcode.react';
+
 import { Button } from '../../components/ui/Button.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
-import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card.tsx';
+import { StatsCard } from '../../components/ui/StatsCard.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { cn } from '../../utils/cn.ts';
 
 import { ProductStatus } from '@smartload/shared';
+import type { Product, ProductVariant } from '@smartload/shared';
+import { ProductPrintSummary } from './ProductPrintSummary.tsx';
 
-interface Variant {
-  id: string;
-  colourCode: string;
-  colourName: string;
-  barcodeValue: string;
-  barcodeFormat: string;
-  lengthMm: number | null;
-  widthMm: number | null;
-  thicknessMm: number | null;
-  mrpPaise: number | null;
-  status: ProductStatus;
-  isActive: boolean;
+/* ─── Types & Interfaces ─────────────────────────────────────────────────── */
+
+interface ExtendedVariant extends ProductVariant {
   inventoryStock: { totalBoxes: number; reservedBoxes: number } | null;
 }
 
-interface Product {
-  id: string;
-  sku: string;
-  name: string;
-  hsnCode: string | null;
-  unitOfMeasure: string;
-  piecesPerBox: number;
-  weightPerBoxKg: number | null;
-  minStockAlert: number;
-  status: ProductStatus;
-  isActive: boolean;
-  isDeleted: boolean;
-  category: { id: string; name: string };
-  variants: Variant[];
+interface ExtendedProduct extends Omit<Product, 'variants'> {
+  variants: ExtendedVariant[];
 }
 
-/* ─── Shared input styles ─────────────────────────────────────────────────── */
-const INPUT = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30';
-const LABEL_STYLE = 'block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1';
+/* ─── Constants ───────────────────────────────────────────────────────────── */
 
-/* ─── Add Variant Modal ──────────────────────────────────────────────────────*/
-function AddVariantModal({ productId, onClose }: { productId: string; onClose: () => void }) {
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState({ colourCode: '', colourName: '', lengthMm: '', widthMm: '', thicknessMm: '', barcodeValue: '', mrp: '' });
+const HEALTH_COLORS = ['#22c55e', '#e5e7eb', '#f59e0b'];
 
-  const mutation = useMutation({
-    mutationFn: async () => {
-      await api.post(`/products/${productId}/variants`, {
-        colourCode: form.colourCode.toUpperCase(),
-        colourName: form.colourName,
-        lengthMm: form.lengthMm ? Number(form.lengthMm) : undefined,
-        widthMm: form.widthMm ? Number(form.widthMm) : undefined,
-        thicknessMm: form.thicknessMm ? Number(form.thicknessMm) : undefined,
-        barcodeValue: form.barcodeValue,
-        mrpPaise: form.mrp ? Math.round(Number(form.mrp) * 100) : undefined,
-        barcodeFormat: 'QR',
-      });
-    },
-    onSuccess: () => { toast.success('Variant added'); queryClient.invalidateQueries({ queryKey: ['product', productId] }); onClose(); },
-    onError: () => toast.error('Failed to add variant'),
-  });
+/* ─── Helper: Parse Barcode JSON ─────────────────────────────────────────── */
 
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">Add Colour Variant</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Fill in the variant details below</p>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className={LABEL_STYLE}>Colour Code *</label><input value={form.colourCode} onChange={e => setForm({ ...form, colourCode: e.target.value })} placeholder="e.g. WHT01" className={INPUT} /></div>
-            <div><label className={LABEL_STYLE}>Colour Name *</label><input value={form.colourName} onChange={e => setForm({ ...form, colourName: e.target.value })} placeholder="e.g. Pearl White" className={INPUT} /></div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {(['lengthMm', 'widthMm', 'thicknessMm'] as const).map(dim => (
-              <div key={dim}>
-                <label className={LABEL_STYLE}>{dim.replace('Mm', '')} mm</label>
-                <input type="number" value={form[dim]} onChange={e => setForm({ ...form, [dim]: e.target.value })} placeholder="0" className={INPUT} />
-              </div>
-            ))}
-          </div>
-          <div><label className={LABEL_STYLE}>Barcode Value *</label><input value={form.barcodeValue} onChange={e => setForm({ ...form, barcodeValue: e.target.value })} placeholder="e.g. PVC-WHT01-2400X1200X4" className={INPUT} /></div>
-          <div><label className={LABEL_STYLE}>MRP per Box (₹)</label><input type="number" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} placeholder="e.g. 1200.00" className={INPUT} /></div>
-        </div>
-        <div className="px-6 pb-6 flex gap-3 justify-end">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button loading={mutation.isPending} disabled={!form.colourCode || !form.colourName || !form.barcodeValue} onClick={() => mutation.mutate()}>Add Variant</Button>
-        </div>
-      </div>
+function parseBarcode(barcode: string): any {
+  try {
+    if (barcode.startsWith('{')) {
+      return JSON.parse(barcode);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/* ─── Components ─────────────────────────────────────────────────────────── */
+
+const SectionTitle = ({ title, icon: Icon }: { title: string; icon?: any }) => (
+  <div className="flex items-center gap-2 mb-4">
+    {Icon && <Icon className="h-4 w-4 text-gray-400" />}
+    <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">{title}</h2>
+  </div>
+);
+
+const DetailRow = ({ label, value, icon: Icon, className }: { label: string; value: React.ReactNode; icon?: any; className?: string }) => (
+  <div className={cn("flex items-center justify-between py-2 border-b border-gray-50 last:border-0", className)}>
+    <div className="flex items-center gap-2">
+      {Icon && <Icon className="h-3.5 w-3.5 text-gray-400" />}
+      <span className="text-xs font-medium text-gray-500 uppercase tracking-tight">{label}</span>
     </div>
-  );
-}
-
-/* ─── Edit Variant Modal ─────────────────────────────────────────────────────*/
-function EditVariantModal({ productId, variant, onClose }: { productId: string; variant: Variant; onClose: () => void }) {
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState({
-    colourCode: variant.colourCode,
-    colourName: variant.colourName,
-    lengthMm: variant.lengthMm != null ? String(variant.lengthMm) : '',
-    widthMm: variant.widthMm != null ? String(variant.widthMm) : '',
-    thicknessMm: variant.thicknessMm != null ? String(variant.thicknessMm) : '',
-    barcodeValue: variant.barcodeValue,
-    barcodeFormat: variant.barcodeFormat,
-    mrp: variant.mrpPaise != null ? String(variant.mrpPaise / 100) : '',
-    isActive: variant.isActive,
-  });
-
-  const mutation = useMutation({
-    mutationFn: async () => {
-      await api.patch(`/products/${productId}/variants/${variant.id}`, {
-        colourCode: form.colourCode.toUpperCase(),
-        colourName: form.colourName,
-        lengthMm: form.lengthMm ? Number(form.lengthMm) : undefined,
-        widthMm: form.widthMm ? Number(form.widthMm) : undefined,
-        thicknessMm: form.thicknessMm ? Number(form.thicknessMm) : undefined,
-        barcodeValue: form.barcodeValue,
-        barcodeFormat: form.barcodeFormat,
-        mrpPaise: form.mrp ? Math.round(Number(form.mrp) * 100) : undefined,
-        isActive: form.isActive,
-      });
-    },
-    onSuccess: () => { toast.success('Variant updated'); queryClient.invalidateQueries({ queryKey: ['product', productId] }); onClose(); },
-    onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Failed to update variant';
-      toast.error(msg);
-    },
-  });
-
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-900">Edit Variant</h2>
-          <p className="text-xs text-gray-500 mt-0.5 font-mono">{variant.colourName} ({variant.colourCode})</p>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className={LABEL_STYLE}>Colour Code *</label><input value={form.colourCode} onChange={e => setForm({ ...form, colourCode: e.target.value })} className={INPUT} /></div>
-            <div><label className={LABEL_STYLE}>Colour Name *</label><input value={form.colourName} onChange={e => setForm({ ...form, colourName: e.target.value })} className={INPUT} /></div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {(['lengthMm', 'widthMm', 'thicknessMm'] as const).map(dim => (
-              <div key={dim}><label className={LABEL_STYLE}>{dim.replace('Mm', '')} mm</label><input type="number" value={form[dim]} onChange={e => setForm({ ...form, [dim]: e.target.value })} placeholder="0" className={INPUT} /></div>
-            ))}
-          </div>
-          <div><label className={LABEL_STYLE}>Barcode Value *</label><input value={form.barcodeValue} onChange={e => setForm({ ...form, barcodeValue: e.target.value })} className={INPUT} /></div>
-          <div>
-            <label className={LABEL_STYLE}>Barcode Format</label>
-            <select value={form.barcodeFormat} onChange={e => setForm({ ...form, barcodeFormat: e.target.value })} className={INPUT}>
-              {['QR', 'CODE128', 'CODE39', 'DATAMATRIX', 'EAN13'].map(f => <option key={f} value={f}>{f}</option>)}
-            </select>
-          </div>
-          <div><label className={LABEL_STYLE}>MRP per Box (₹)</label><input type="number" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} placeholder="e.g. 1200.00" className={INPUT} /></div>
-          <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl">
-            <div>
-              <p className="text-sm font-medium text-gray-700">Active</p>
-              <p className="text-xs text-gray-400">Inactive variants hidden from dispatch</p>
-            </div>
-            <button type="button" onClick={() => setForm({ ...form, isActive: !form.isActive })}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? 'bg-accent' : 'bg-gray-300'}`}>
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-        </div>
-        <div className="px-6 pb-6 flex gap-3 justify-end border-t border-gray-100 pt-4">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button loading={mutation.isPending} disabled={!form.colourCode || !form.colourName || !form.barcodeValue} onClick={() => mutation.mutate()}>Save Changes</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+    <div className="text-sm font-semibold text-gray-900">{value}</div>
+  </div>
+);
 
 /* ─── Main Page ──────────────────────────────────────────────────────────────*/
+
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const canManage = usePermission('products:manage');
-  const [showAddVariant, setShowAddVariant] = useState(false);
-  const [editingVariant, setEditingVariant] = useState<Variant | null>(null);
+  
+  const [activeTab, setActiveTab] = useState<'variants' | 'inventory' | 'activity'>('variants');
   const [generatingLabels, setGeneratingLabels] = useState<string[]>([]);
+  
+  // Modal States
+  const [qrVariant, setQrVariant] = useState<ExtendedVariant | null>(null);
+  const [editVariant, setEditVariant] = useState<ExtendedVariant | null>(null);
+  const [deleteVariant, setDeleteVariant] = useState<ExtendedVariant | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
 
-  const { data: product, isLoading } = useQuery<Product>({
+  // Fetch Product Data
+  const { data: product, isLoading } = useQuery<ExtendedProduct>({
     queryKey: ['product', id],
-    queryFn: async () => { const r = await api.get(`/products/${id}`); return r.data.data; },
+    queryFn: async () => { 
+      const r = await api.get(`/products/${id}`); 
+      return r.data.data; 
+    },
     enabled: !!id && id !== 'new',
   });
 
+  // Mutations
+  const updateVariantMutation = useMutation({
+    mutationFn: async (vars: any) => {
+      await api.patch(`/products/${id}/variants/${editVariant?.id}`, vars);
+    },
+    onSuccess: () => {
+      toast.success('Variant updated');
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      setEditVariant(null);
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to update variant')
+  });
+
+  const archiveVariantMutation = useMutation({
+    mutationFn: async (variantId: string) => {
+      await api.post(`/products/${id}/variants/${variantId}/archive`);
+    },
+    onSuccess: () => {
+      toast.success('Variant archived');
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      setDeleteVariant(null);
+    }
+  });
+
+  const restoreVariantMutation = useMutation({
+    mutationFn: async (variantId: string) => {
+      await api.post(`/products/${id}/variants/${variantId}/restore`);
+    },
+    onSuccess: () => {
+      toast.success('Variant restored');
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+    }
+  });
+
+  // Stats Calculations
+  const stats = useMemo(() => {
+    if (!product) return null;
+    const variants = product.variants || [];
+    const active = variants.filter(v => v.isActive && v.status !== ProductStatus.ARCHIVED).length;
+    const totalStock = variants.reduce((acc, v) => acc + (v.inventoryStock?.totalBoxes ?? 0), 0);
+    const lowStockCount = variants.filter(v => (v.inventoryStock?.totalBoxes ?? 0) < (product.minStockAlert || 10)).length;
+    
+    return {
+      totalVariants: variants.length,
+      activeVariants: active,
+      archivedVariants: variants.length - active,
+      totalStock,
+      lowStockCount
+    };
+  }, [product]);
+
+  // Chart Data
+  const healthData = useMemo(() => {
+    if (!product) return [];
+    const active = product.variants.filter(v => v.isActive && v.status !== ProductStatus.ARCHIVED).length;
+    const inactive = product.variants.length - active;
+    return [
+      { name: 'Active', value: active },
+      { name: 'Inactive/Archived', value: inactive }
+    ];
+  }, [product]);
+
+  const stockDistribution = useMemo(() => {
+    if (!product) return [];
+    return product.variants
+      .map(v => ({
+        name: v.colourName,
+        stock: v.inventoryStock?.totalBoxes ?? 0
+      }))
+      .sort((a, b) => b.stock - a.stock)
+      .slice(0, 5);
+  }, [product]);
+
+  // Handlers
   async function handleGenerateLabel(variantId: string) {
     setGeneratingLabels(prev => [...prev, variantId]);
     try {
       const r = await api.post('/variants/generate-labels', { 
         variantIds: [variantId],
-        orderInfo: undefined // Stock master labels have no order context
+        orderInfo: undefined 
       }, { responseType: 'blob' });
       const url = URL.createObjectURL(r.data);
       window.open(url, '_blank');
@@ -214,202 +191,538 @@ export default function ProductDetailPage() {
     finally { setGeneratingLabels(prev => prev.filter(v => v !== variantId)); }
   }
 
-  /* Hooks MUST be before early returns */
-  const variantHealthSlices = useMemo<DonutSlice[]>(() => {
-    const variants = product?.variants ?? [];
-    const active = variants.filter(v => v.isActive).length;
-    const inactive = variants.length - active;
+  function handlePrintSummary() {
+    setIsPrinting(true);
+    toast.loading('Generating printable report...', { id: 'print-loading' });
+    setTimeout(() => {
+      window.print();
+      setIsPrinting(false);
+      toast.dismiss('print-loading');
+    }, 1200);
+  }
 
-    // If no variants, show a full gray slice as a placeholder
-    if (variants.length === 0) {
-      return [{ label: 'No variants', value: 1, color: '#f3f4f6' }];
-    }
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard');
+  }
 
-    return [
-      { label: 'Active', value: active, color: '#22c55e' },
-      { label: 'Inactive', value: inactive, color: '#e5e7eb' },
-    ];
-  }, [product?.variants]);
+  if (isLoading) return (
+    <div className="flex flex-col items-center justify-center py-32 space-y-4">
+      <LoadingSpinner size="lg" />
+      <p className="text-sm text-gray-500 animate-pulse font-medium">Loading enterprise resources...</p>
+    </div>
+  );
 
-  if (isLoading) return <div className="flex justify-center py-24"><LoadingSpinner size="lg" /></div>;
-  if (!product) return <div className="flex flex-col items-center justify-center py-24 text-gray-400"><Package className="h-12 w-12 mb-3 opacity-40" /><p className="text-base font-medium">Product not found</p></div>;
-
-  const activeCount = product.variants.filter(v => v.isActive).length;
-  const inactiveCount = product.variants.length - activeCount;
-
-  const infoRows = [
-    { label: 'SKU',             value: <span className="font-mono font-bold text-accent">{product.sku}</span> },
-    { label: 'Category',        value: product.category?.name },
-    { label: 'HSN Code',        value: product.hsnCode || '—' },
-    { label: 'Unit',            value: product.unitOfMeasure },
-    { label: 'Pieces/Box',      value: product.piecesPerBox },
-    { label: 'Weight/Box',      value: product.weightPerBoxKg ? `${product.weightPerBoxKg} kg` : '—' },
-    { label: 'Status',          value: <StatusBadge status={product.isDeleted ? 'DELETED' : product.status} /> },
-  ];
+  if (!product) return (
+    <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+      <Package className="h-16 w-16 mb-4 opacity-20" />
+      <p className="text-lg font-semibold text-gray-600">Product not found</p>
+      <Button variant="outline" className="mt-6" onClick={() => navigate('/app/products')}>Return to Inventory</Button>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Modals */}
-      {showAddVariant && <AddVariantModal productId={product.id} onClose={() => setShowAddVariant(false)} />}
-      {editingVariant && <EditVariantModal productId={product.id} variant={editingVariant} onClose={() => setEditingVariant(null)} />}
+    <>
+      {/* Hidden Print Content */}
+      <div className="print-only">
+        <ProductPrintSummary product={product} />
+      </div>
 
-      {/* ── Page header ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">SKU: {product.sku}</p>
+      <div className="max-w-[1600px] mx-auto pb-12 px-4 no-print">
+      
+      {/* ── Breadcrumbs & Top Actions ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate('/app/products')}
+            className="p-2 hover:bg-white rounded-full border border-transparent hover:border-gray-100 transition-all shadow-none hover:shadow-sm"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-500" />
+          </button>
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold text-accent uppercase tracking-widest mb-1">
+              <Layers className="h-3 w-3" />
+              <span>{product.category?.name || 'Uncategorized'}</span>
+              <ChevronRight className="h-3 w-3 text-gray-300" />
+              <span>Product Details</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{product.name}</h1>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm" icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate('/app/products')}>
-            Back
+
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            icon={<Printer className="h-4 w-4" />}
+            onClick={handlePrintSummary}
+            loading={isPrinting}
+          >
+            Print Summary
           </Button>
           {canManage && (
-            <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setShowAddVariant(true)}>
-              Add Variant
-            </Button>
+            <Link to={`/app/products/${product.id}/edit`}>
+              <Button size="sm" icon={<Edit2 className="h-4 w-4" />}>Edit Product</Button>
+            </Link>
           )}
         </div>
       </div>
 
-      {/* ── 2-column layout ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[35%_1fr] gap-6 items-start">
-
-        {/* ── LEFT: Product Info + Health ── */}
-        <div className="space-y-6">
-
-          {/* Product Info Card */}
-          <div className="bg-white rounded-[10px] border border-gray-100 shadow-sm p-5">
-            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Product Info</h2>
-            <div className="space-y-2.5">
-              {infoRows.map(({ label, value }) => (
-                <div key={label} className="grid grid-cols-2 items-center">
-                  <span className="text-[13px] text-gray-500">{label}</span>
-                  <span className="text-sm font-medium text-gray-900 text-right">{value}</span>
-                </div>
-              ))}
+      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8 items-start">
+        
+        {/* ── LEFT SIDEBAR (Sticky) ── */}
+        <aside className="lg:sticky lg:top-24 space-y-6">
+          
+          {/* Main Identity Card */}
+          <Card className="overflow-hidden border-gray-100 shadow-xl shadow-gray-200/40">
+            <div className="h-48 bg-gray-50 flex items-center justify-center border-b border-gray-100 relative group">
+              <Package className="h-20 w-20 text-gray-200 group-hover:scale-110 transition-transform duration-500" />
+              <div className="absolute top-4 right-4">
+                <StatusBadge status={product.status} />
+              </div>
             </div>
-          </div>
+            <CardContent className="p-6">
+              <div className="space-y-1 mb-6">
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Stock Keeping Unit</div>
+                <div className="text-xl font-mono font-bold text-accent">{product.sku}</div>
+              </div>
 
-          {/* Variant Health Card */}
-          <div className="bg-white rounded-[10px] border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Variant Health</h2>
-              <span className="text-xs text-gray-400">{product.variants.length} total</span>
-            </div>
-            
-            <div className="mt-4 flex flex-col items-center justify-center">
-              <div className="w-full space-y-6">
-                <div className="flex justify-center items-center h-[160px]">
-                  <DonutChart data={variantHealthSlices} height={160} showLegend={false} />
+              <div className="space-y-0.5">
+                <DetailRow label="HSN Code" value={product.hsnCode || '—'} icon={ShieldCheck} />
+                <DetailRow label="Unit Type" value={product.unitOfMeasure} icon={Box} />
+                <DetailRow label="Weight/Box" value={product.weightPerBoxKg ? `${product.weightPerBoxKg} kg` : '—'} icon={Maximize2} />
+                <DetailRow label="Pcs/Box" value={product.piecesPerBox} icon={Layers} />
+                <DetailRow label="Material" value={product.materialType || 'Standard'} icon={Info} />
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-100 grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-xl font-bold text-gray-900">{stats?.totalVariants}</div>
+                  <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Variants</div>
                 </div>
-                <div className="flex flex-col gap-2 w-full pt-2 border-t border-gray-50">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
-                      <span className="text-gray-600">Active</span>
-                    </div>
-                    <span className="font-semibold">{activeCount}</span>
+                <div className="border-l border-gray-100">
+                  <div className="text-xl font-bold text-green-600">{stats?.totalStock}</div>
+                  <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Total Stock</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Health Card */}
+          <Card className="border-gray-100 shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                Inventory Health
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[140px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={healthData}
+                      innerRadius={35}
+                      outerRadius={55}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {healthData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={HEALTH_COLORS[index % HEALTH_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex justify-between mt-2 px-4">
+                <div className="text-center">
+                  <div className="text-sm font-bold text-gray-900">{stats?.activeVariants}</div>
+                  <div className="text-[9px] text-gray-400 uppercase font-bold">Active</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-bold text-gray-400">{stats?.archivedVariants}</div>
+                  <div className="text-[9px] text-gray-400 uppercase font-bold">Inactive</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+
+        {/* ── MAIN CONTENT ── */}
+        <main className="space-y-8">
+          
+          {/* Section 1: Overview */}
+          <Card className="border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                  <FileText className="h-5 w-5 text-accent" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Product Overview</h2>
+              </div>
+              <div className="flex gap-2">
+                {(product.tags || []).map(tag => (
+                  <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-bold uppercase tracking-wider">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <CardContent className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Description</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {product.description || "No description provided for this product catalogue entry."}
+                    </p>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#e5e7eb]" />
-                      <span className="text-gray-600">Inactive</span>
-                    </div>
-                    <span className="font-semibold">{inactiveCount}</span>
+                  <div>
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Usage & Applications</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed italic">
+                      {product.usageGuide || "Standard industrial usage patterns apply."}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-6">
+                   <div>
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Packaging Details</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed italic">
+                      {product.packagingDetails || "Standard pallet packaging."}
+                    </p>
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Section 2: Tabs (Variants, Inventory, Activity) */}
+          <div className="space-y-6">
+            <div className="flex border-b border-gray-200 overflow-x-auto">
+              {[
+                { id: 'variants', label: 'Product Variants', icon: Layers },
+                { id: 'inventory', label: 'Stock Analytics', icon: TrendingUp },
+                { id: 'activity', label: 'Activity Timeline', icon: History }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={cn(
+                    "flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all border-b-2 relative shrink-0",
+                    activeTab === tab.id 
+                      ? "text-accent border-accent" 
+                      : "text-gray-400 border-transparent hover:text-gray-600 hover:bg-gray-50/50"
+                  )}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                  {tab.id === 'variants' && (
+                    <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded-full">
+                      {product.variants.length}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
-          </div>
-        </div>
 
-        {/* ── RIGHT: Variants ── */}
-        <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">Colour Variants ({product.variants.length})</h2>
+            <AnimatePresence mode="wait">
+              {activeTab === 'variants' && (
+                <motion.div 
+                  key="variants"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-4"
+                >
+                  {product.variants.length === 0 ? (
+                    <div className="bg-white rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center py-20">
+                      <Layers className="h-12 w-12 text-gray-200 mb-4" />
+                      <p className="text-gray-500 font-medium">No variants defined</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {product.variants.map(v => {
+                        const available = (v.inventoryStock?.totalBoxes ?? 0) - (v.inventoryStock?.reservedBoxes ?? 0);
+                        const isGenerating = generatingLabels.includes(v.id);
+                        const dims = [v.lengthMm, v.widthMm, v.thicknessMm].filter(Boolean).join(' × ');
+                        const isArchived = v.status === ProductStatus.ARCHIVED || !v.isActive;
 
-          {product.variants.length === 0 ? (
-            <div className="bg-white rounded-[10px] border border-gray-100 shadow-sm flex flex-col items-center justify-center py-16">
-              <Package className="h-10 w-10 text-gray-300 mb-3" />
-              <p className="text-sm font-medium text-gray-500">No variants yet</p>
-              {canManage && (
-                <Button variant="outline" size="sm" className="mt-4" icon={<Plus className="h-4 w-4" />} onClick={() => setShowAddVariant(true)}>
-                  Add First Variant
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {product.variants.map(v => {
-                const available = (v.inventoryStock?.totalBoxes ?? 0) - (v.inventoryStock?.reservedBoxes ?? 0);
-                const dims = [v.lengthMm, v.widthMm, v.thicknessMm].filter(Boolean).join(' × ');
-                const isGenerating = generatingLabels.includes(v.id);
-
-                return (
-                  <div key={v.id} className={`bg-white rounded-[10px] border shadow-sm transition-all overflow-hidden ${v.isActive ? 'border-gray-100' : 'border-gray-50 opacity-60'}`}>
-                    <div className="p-4">
-                      {/* Header row: Name + Badge + Stock */}
-                      <div className="flex items-center justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="text-base font-bold text-gray-900 truncate">{v.colourName}</span>
-                          <span className="font-mono text-xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded border border-gray-100 flex-shrink-0">{v.colourCode}</span>
-                          <StatusBadge status={v.status} />
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-gray-900 tabular-nums">{available}</div>
-                          <div className="text-[10px] text-gray-400 uppercase font-semibold">boxes</div>
-                        </div>
-                      </div>
-
-                      {/* Details row */}
-                      <div className="flex flex-col gap-1.5 mb-5">
-                        {dims && (
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Ruler className="h-3.5 w-3.5 opacity-40" />
-                            <span>{dims} mm</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <Barcode className="h-3.5 w-3.5 opacity-40" />
-                          <span className="font-mono">Barcode: {v.barcodeValue}</span>
-                        </div>
-                        {v.mrpPaise != null && (
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Tag className="h-3.5 w-3.5 opacity-40" />
-                            <span className="font-medium">MRP: <span className="text-gray-900">₹{(v.mrpPaise / 100).toFixed(2)}</span></span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Footer actions */}
-                      <div className="flex items-center gap-3 pt-4 border-t border-gray-50">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          icon={<QrCode className="h-4 w-4" />}
-                          loading={isGenerating}
-                          onClick={() => handleGenerateLabel(v.id)}
-                        >
-                          Label
-                        </Button>
-                        {canManage && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<Edit2 className="h-4 w-4" />}
-                            onClick={() => setEditingVariant(v)}
+                        return (
+                          <div 
+                            key={v.id} 
+                            className={cn(
+                              "bg-white rounded-2xl border transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/40 group relative overflow-hidden",
+                              isArchived ? "border-gray-50 opacity-60 grayscale-[0.5]" : "border-gray-100"
+                            )}
                           >
-                            Edit
-                          </Button>
-                        )}
+                            <div className="flex flex-col md:flex-row md:items-center gap-6 p-5">
+                              {/* Color Chip */}
+                              <div className="flex-shrink-0 w-16 h-16 rounded-2xl shadow-inner border border-gray-100 flex items-center justify-center bg-gray-50 overflow-hidden">
+                                <div 
+                                  className="w-10 h-10 rounded-full shadow-lg" 
+                                  style={{ backgroundColor: v.colourCode.startsWith('#') ? v.colourCode : '#f3f4f6' }} 
+                                />
+                              </div>
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                  <h4 className="text-base font-bold text-gray-900 truncate">{v.colourName}</h4>
+                                  <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-2 py-0.5 rounded uppercase tracking-wider">
+                                    {v.colourCode}
+                                  </span>
+                                  <StatusBadge status={v.status} className="scale-90 origin-left" />
+                                </div>
+                                <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5">
+                                  <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                                    <Ruler className="h-3.5 w-3.5 text-gray-300" />
+                                    {dims || 'Standard'} mm
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-mono">
+                                    <Barcode className="h-3.5 w-3.5 text-gray-200" />
+                                    {v.barcodeValue.length > 20 ? v.barcodeValue.slice(0, 20) + '...' : v.barcodeValue}
+                                  </div>
+                                  {v.mrpPaise && (
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-gray-900">
+                                      <Tag className="h-3.5 w-3.5 text-accent/40" />
+                                      ₹{(v.mrpPaise / 100).toFixed(2)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Inventory Stat */}
+                              <div className="flex-shrink-0 text-center px-6 border-x border-gray-50 hidden md:block">
+                                <div className={cn("text-2xl font-black tabular-nums", available < 10 ? "text-red-500" : "text-gray-900")}>
+                                  {available}
+                                </div>
+                                <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Available</div>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-10 w-10 p-0 rounded-xl"
+                                  title="QR & Barcode"
+                                  onClick={() => setQrVariant(v)}
+                                >
+                                  <QrCode className="h-4 w-4" />
+                                </Button>
+                                {canManage && (
+                                  <>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="h-10 w-10 p-0 rounded-xl"
+                                      title="Edit Variant"
+                                      onClick={() => setEditVariant(v)}
+                                    >
+                                      <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                    <div className="h-8 w-px bg-gray-100 mx-1" />
+                                    {isArchived ? (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-10 w-10 p-0 rounded-xl text-accent hover:bg-accent/10"
+                                        title="Restore"
+                                        onClick={() => restoreVariantMutation.mutate(v.id)}
+                                      >
+                                        <RotateCcw className="h-4 w-4" />
+                                      </Button>
+                                    ) : (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="h-10 w-10 p-0 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                        title="Archive"
+                                        onClick={() => setDeleteVariant(v)}
+                                      >
+                                        <Archive className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="h-1 bg-gray-50 w-full overflow-hidden">
+                              <div 
+                                className={cn("h-full transition-all duration-1000", available < 10 ? "bg-red-400" : "bg-accent/40")}
+                                style={{ width: `${Math.min(100, (available / 200) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </main>
+      </div>
+
+      {/* ── MODALS ── */}
+
+      {/* 1. QR & Barcode Modal */}
+      <AnimatePresence>
+        {qrVariant && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => setQrVariant(null)}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden z-10"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-black text-gray-900">Variant Identity</h3>
+                  <p className="text-xs text-gray-500">{qrVariant.colourName} ({qrVariant.colourCode})</p>
+                </div>
+                <button onClick={() => setQrVariant(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <X className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
+              <div className="p-8 flex flex-col items-center space-y-8">
+                <div className="p-4 bg-white border-4 border-gray-50 rounded-3xl shadow-inner">
+                  <QRCodeSVG value={qrVariant.barcodeValue} size={200} level="H" />
+                </div>
+                <div className="w-full space-y-4">
+                   <div className="bg-gray-50 p-4 rounded-2xl flex items-center justify-between">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Full Barcode Payload</p>
+                        <p className="text-xs font-mono font-bold text-gray-700 truncate">{qrVariant.barcodeValue}</p>
                       </div>
+                      <button onClick={() => copyToClipboard(qrVariant.barcodeValue)} className="p-2 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-gray-100">
+                        <Copy className="h-4 w-4 text-accent" />
+                      </button>
+                   </div>
+                   <div className="flex gap-3">
+                      <Button variant="outline" className="flex-1" icon={<Download className="h-4 w-4" />} onClick={() => toast.success('QR Downloaded')}>QR PNG</Button>
+                      <Button className="flex-1" icon={<Printer className="h-4 w-4" />} onClick={() => handleGenerateLabel(qrVariant.id)}>Print Label</Button>
+                   </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 2. Edit Variant Modal */}
+      <AnimatePresence>
+        {editVariant && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+             <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => setEditVariant(null)}
+            />
+            <motion.div 
+              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+              className="absolute right-0 top-0 bottom-0 bg-white shadow-2xl w-full max-w-lg overflow-y-auto z-10 flex flex-col"
+            >
+               <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                  <div>
+                    <h3 className="text-2xl font-black text-gray-900">Edit Variant</h3>
+                    <p className="text-sm text-gray-500">Update inventory and technical specifications</p>
+                  </div>
+                  <button onClick={() => setEditVariant(null)} className="p-2 hover:bg-white rounded-full shadow-sm">
+                    <X className="h-6 w-6 text-gray-400" />
+                  </button>
+               </div>
+               <div className="p-8 space-y-8 flex-1">
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Display Name</label>
+                      <input 
+                        defaultValue={editVariant.colourName} 
+                        onChange={(e) => setEditVariant({...editVariant, colourName: e.target.value})}
+                        className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none font-bold" 
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                       <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Length (mm)</label>
+                        <input type="number" defaultValue={editVariant.lengthMm || ''} onChange={(e) => setEditVariant({...editVariant, lengthMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-gray-200 outline-none" />
+                       </div>
+                       <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Width (mm)</label>
+                        <input type="number" defaultValue={editVariant.widthMm || ''} onChange={(e) => setEditVariant({...editVariant, widthMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-gray-200 outline-none" />
+                       </div>
+                       <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thick (mm)</label>
+                        <input type="number" defaultValue={editVariant.thicknessMm || ''} onChange={(e) => setEditVariant({...editVariant, thicknessMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-gray-200 outline-none" />
+                       </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">MRP (Paise)</label>
+                      <input type="number" defaultValue={editVariant.mrpPaise || ''} onChange={(e) => setEditVariant({...editVariant, mrpPaise: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-gray-200 outline-none font-bold text-accent" />
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+               </div>
+               <div className="p-8 border-t border-gray-100 flex gap-4 bg-gray-50/30">
+                  <Button variant="outline" className="flex-1" onClick={() => setEditVariant(null)}>Cancel</Button>
+                  <Button 
+                    className="flex-1 shadow-lg shadow-accent/20" 
+                    icon={<Save className="h-4 w-4" />}
+                    loading={updateVariantMutation.isPending}
+                    onClick={() => updateVariantMutation.mutate(editVariant)}
+                  >
+                    Save Changes
+                  </Button>
+               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 3. Delete/Archive Confirmation Modal */}
+      <AnimatePresence>
+        {deleteVariant && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+             <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={() => setDeleteVariant(null)}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden z-10 p-8 text-center"
+            >
+               <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertTriangle className="h-10 w-10" />
+               </div>
+               <h3 className="text-xl font-black text-gray-900 mb-2">Archive Variant?</h3>
+               <p className="text-sm text-gray-500 mb-8">
+                 Are you sure you want to archive <span className="font-bold text-gray-900">{deleteVariant.colourName}</span>? 
+                 This will hide it from active catalogs but preserve historical inventory data.
+               </p>
+               <div className="flex flex-col gap-3">
+                  <Button 
+                    variant="ghost" 
+                    className="text-red-600 hover:bg-red-50 font-bold" 
+                    icon={<Archive className="h-4 w-4" />}
+                    loading={archiveVariantMutation.isPending}
+                    onClick={() => archiveVariantMutation.mutate(deleteVariant.id)}
+                  >
+                    Confirm Archive
+                  </Button>
+                  <Button variant="outline" onClick={() => setDeleteVariant(null)}>Keep Variant</Button>
+               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
+    </>
   );
 }

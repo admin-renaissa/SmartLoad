@@ -1,7 +1,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
-  output          = "../../../node_modules/.prisma/client"
+  output          = "../generated/client"
 }
 
 datasource db {
@@ -175,23 +175,29 @@ model ProductCategory {
 }
 
 model Product {
-  id             String          @id @default(cuid())
-  sku            String          @unique
-  name           String
-  categoryId     String
-  category       ProductCategory @relation(fields: [categoryId], references: [id])
-  hsnCode        String?
-  unitOfMeasure  String          @default("BOX")
-  piecesPerBox   Int
-  weightPerBoxKg Float?
-  minStockAlert  Int             @default(0)
-  status         ProductStatus   @default(ACTIVE)
-  isActive       Boolean         @default(true)
-  isDeleted      Boolean         @default(false)
-  deletedAt      DateTime?
-  deletedById    String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id               String          @id @default(cuid())
+  sku              String          @unique
+  name             String
+  categoryId       String
+  category         ProductCategory @relation(fields: [categoryId], references: [id])
+  hsnCode          String?
+  unitOfMeasure    String          @default("BOX")
+  piecesPerBox     Int
+  weightPerBoxKg   Float?
+  description      String?         @db.Text
+  materialType     String?
+  specifications   Json?
+  usageGuide       String?         @db.Text
+  packagingDetails String?         @db.Text
+  tags             String[]        @default([])
+  minStockAlert    Int             @default(0)
+  status           ProductStatus   @default(ACTIVE)
+  isActive         Boolean         @default(true)
+  isDeleted        Boolean         @default(false)
+  deletedAt        DateTime?
+  deletedById      String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   variants ProductVariant[]
 
@@ -207,17 +213,24 @@ model ProductVariant {
   id            String        @id @default(cuid())
   productId     String
   product       Product       @relation(fields: [productId], references: [id])
+  variantCode   String?
+  variantName   String?
   colourCode    String
   colourName    String
   lengthMm      Float?
   widthMm       Float?
   thicknessMm   Float?
+  piecesPerBox  Int?
   barcodeValue  String        @unique
   barcodeFormat BarcodeFormat @default(QR)
+  qrCode        String?       @unique
   imageUrl      String?
   mrpPaise      Int?
   status        ProductStatus @default(ACTIVE)
   isActive      Boolean       @default(true)
+  isDeleted     Boolean       @default(false)
+  deletedAt     DateTime?
+  deletedById   String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -231,6 +244,7 @@ model ProductVariant {
   @@index([barcodeValue])
   @@index([productId])
   @@index([isActive])
+  @@index([isDeleted])
   @@index([status])
   @@map("product_variants")
 }

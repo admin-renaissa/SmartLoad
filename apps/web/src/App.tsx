@@ -17,6 +17,7 @@ const ProductListPage = lazy(() => import('./pages/products/ProductListPage.tsx'
 const ProductDetailPage = lazy(() => import('./pages/products/ProductDetailPage.tsx'));
 const CreateProductPage = lazy(() => import('./pages/products/CreateProductPage.tsx'));
 const EditProductPage = lazy(() => import('./pages/products/EditProductPage.tsx'));
+const ProductPrintPage = lazy(() => import('./pages/products/ProductPrintPage.tsx'));
 const ClientListPage = lazy(() => import('./pages/clients/ClientListPage.tsx'));
 const StockViewPage = lazy(() => import('./pages/inventory/StockViewPage.tsx'));
 const GRNCreatePage = lazy(() => import('./pages/inventory/GRNCreatePage.tsx'));
@@ -103,6 +104,9 @@ export default function App() {
             <Route path="devices/:id" element={<DeviceDetailPage />} />
             <Route path="pod" element={<PODListPage />} />
           </Route>
+
+          {/* Standalone Print Route (No Layout) */}
+          <Route path="/app/products/:id/print" element={<ProtectedRoute><ProductPrintPage /></ProtectedRoute>} />
 
           {/* Fallback */}
           <Route path="/" element={<Navigate to="/app/dashboard" replace />} />

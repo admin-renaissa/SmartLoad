@@ -17,8 +17,8 @@
       "@/*": ["src/*"],
       "@smartload/shared": ["../../packages/shared/src/index.ts"],
       "@smartload/db": ["../../packages/db/src/index.ts"],
-      "@smartload/prisma-client": ["../../node_modules/.prisma/client"],
-      "@prisma/client": ["../../node_modules/.prisma/client"]
+      "@smartload/prisma-client": ["../../packages/db/generated/client"],
+      "@prisma/client": ["../../packages/db/generated/client"]
     }
   },
   "include": [

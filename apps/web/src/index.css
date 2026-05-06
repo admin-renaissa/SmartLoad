@@ -62,3 +62,21 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: white !important;
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

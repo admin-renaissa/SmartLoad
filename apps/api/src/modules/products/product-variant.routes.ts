@@ -4,13 +4,17 @@ import { BarcodeFormat, successResponse, errorResponse, UserRole } from '@smartl
 import { generateBarcodeValue } from '@smartload/shared';
 
 const variantSchema = z.object({
+  variantCode: z.string().optional(),
+  variantName: z.string().optional(),
   colourCode: z.string().min(2).toUpperCase(),
   colourName: z.string().min(2),
   lengthMm: z.number().positive().optional(),
   widthMm: z.number().positive().optional(),
   thicknessMm: z.number().positive().optional(),
+  piecesPerBox: z.number().int().positive().optional(),
   barcodeValue: z.string().min(4),
   barcodeFormat: z.nativeEnum(BarcodeFormat).default(BarcodeFormat.QR),
+  qrCode: z.string().optional(),
   imageUrl: z.string().url().optional(),
   mrpPaise: z.number().int().positive().optional(),
 });
@@ -49,13 +53,17 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
       const v = await tx.productVariant.create({
         data: {
           productId,
+          variantCode: dto.variantCode,
+          variantName: dto.variantName,
           colourCode: dto.colourCode,
           colourName: dto.colourName,
           lengthMm: dto.lengthMm,
           widthMm: dto.widthMm,
           thicknessMm: dto.thicknessMm,
+          piecesPerBox: dto.piecesPerBox,
           barcodeValue,
           barcodeFormat: dto.barcodeFormat,
+          qrCode: dto.qrCode,
           imageUrl: dto.imageUrl,
           mrpPaise: dto.mrpPaise,
         },
@@ -81,11 +89,49 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send(successResponse(variant));
   });
 
-  // DELETE /api/v1/products/:productId/variants/:variantId
+  // DELETE /api/v1/products/:productId/variants/:variantId (Soft Delete)
   fastify.delete('/products/:productId/variants/:variantId', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
     const { variantId } = request.params as { productId: string; variantId: string };
-    await fastify.prisma.productVariant.update({ where: { id: variantId }, data: { isActive: false } });
-    return reply.send(successResponse({ message: 'Variant deactivated' }));
+    await fastify.prisma.productVariant.update({ 
+      where: { id: variantId }, 
+      data: { 
+        isActive: false, 
+        isDeleted: true, 
+        deletedAt: new Date(),
+        deletedById: (request.user as any).userId,
+        status: 'ARCHIVED'
+      } 
+    });
+    return reply.send(successResponse({ message: 'Variant deleted/archived' }));
+  });
+
+  // POST /api/v1/products/:productId/variants/:variantId/archive
+  fastify.post('/products/:productId/variants/:variantId/archive', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
+    const { variantId } = request.params as { productId: string; variantId: string };
+    await fastify.prisma.productVariant.update({ 
+      where: { id: variantId }, 
+      data: { 
+        status: 'ARCHIVED',
+        isActive: false 
+      } 
+    });
+    return reply.send(successResponse({ message: 'Variant archived' }));
+  });
+
+  // POST /api/v1/products/:productId/variants/:variantId/restore
+  fastify.post('/products/:productId/variants/:variantId/restore', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
+    const { variantId } = request.params as { productId: string; variantId: string };
+    await fastify.prisma.productVariant.update({ 
+      where: { id: variantId }, 
+      data: { 
+        status: 'ACTIVE',
+        isActive: true,
+        isDeleted: false,
+        deletedAt: null,
+        deletedById: null
+      } 
+    });
+    return reply.send(successResponse({ message: 'Variant restored' }));
   });
 
   // GET /api/v1/variants/lookup?barcode=XXX  — critical scan endpoint

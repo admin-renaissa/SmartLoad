@@ -17,6 +17,12 @@ const createProductSchema = z.object({
   unitOfMeasure: z.string().default('BOX'),
   piecesPerBox: z.number().int().positive(),
   weightPerBoxKg: z.number().positive().optional(),
+  description: z.string().optional(),
+  materialType: z.string().optional(),
+  specifications: z.record(z.any()).optional(),
+  usageGuide: z.string().optional(),
+  packagingDetails: z.string().optional(),
+  tags: z.array(z.string()).optional(),
   minStockAlert: z.number().int().min(0).default(0),
   status: z.nativeEnum(ProductStatus).optional(),
 });

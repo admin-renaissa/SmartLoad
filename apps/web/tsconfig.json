@@ -22,7 +22,7 @@
       "@/*": ["src/*"],
       "@shared/*": ["../../packages/shared/src/*"],
       "@ui/*": ["../../packages/ui/src/*"],
-      "@prisma/client": ["../../node_modules/.prisma/client"]
+      "@prisma/client": ["../../packages/db/generated/client"]
     }
   },
   "include": ["src"],
