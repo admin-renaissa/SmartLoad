@@ -14,8 +14,10 @@ import {
 import {
   applyPullOrdersToDatabase,
   syncPartiesToClients,
+  syncStockItemsToProducts,
   type PullOrdersBridgeResponse,
   type TallyPartyRow,
+  type TallyStockItem,
 } from '../modules/tally/tally-import.service.js';
 
 export type ProcessorLogger = (message: string) => Promise<void>;
@@ -214,13 +216,20 @@ export async function processTallySyncJob(
     }
 
     if (type === 'PULL_STOCK_ITEMS' || dataType === TallySyncDataType.PULL_STOCK_ITEMS) {
-      const data = (await bridgePostPullStockItems()) as { items?: unknown[]; count?: number };
+      const raw = await bridgePostPullStockItems();
+      const data = raw as { items?: TallyStockItem[]; count?: number };
       await upsertConfig(
         prisma,
         'TALLY_LAST_STOCK_PULL',
         JSON.stringify({ pulledAt: new Date().toISOString(), ...data }),
       );
-      await finish(TallySyncStatus.COMPLETED, { responsePayload: data as object });
+      
+      const admin = await prisma.user.findFirst({ where: { role: 'ADMIN', isActive: true } });
+      const sync = await syncStockItemsToProducts(prisma, data.items ?? [], admin?.id);
+
+      await finish(TallySyncStatus.COMPLETED, { 
+        responsePayload: { ...data, sync } as object 
+      });
       return { syncJobId: syncJob.id, status: 'COMPLETED' };
     }
 

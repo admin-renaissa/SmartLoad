@@ -117,4 +117,10 @@ export enum NotificationStatus {
   DELIVERED = 'DELIVERED',
 }
 
+export enum ProductStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  ARCHIVED = 'ARCHIVED',
+}
+
 export { TallySyncDirection as SyncDirection, TallySyncStatus as SyncStatus }

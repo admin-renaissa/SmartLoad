@@ -1,7 +1,13 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { successResponse, errorResponse, UserRole } from '@smartload/shared';
-import { parsePagination, buildPaginationMeta } from '@smartload/shared';
+import {
+  ProductStatus,
+  UserRole,
+  successResponse,
+  errorResponse,
+  parsePagination,
+  buildPaginationMeta
+} from '@smartload/shared';
 
 const createProductSchema = z.object({
   sku: z.string().min(2).toUpperCase(),
@@ -12,17 +18,39 @@ const createProductSchema = z.object({
   piecesPerBox: z.number().int().positive(),
   weightPerBoxKg: z.number().positive().optional(),
   minStockAlert: z.number().int().min(0).default(0),
+  status: z.nativeEnum(ProductStatus).optional(),
 });
 
 export const productRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/products
   fastify.get('/', { preHandler: fastify.requireAuth }, async (request, reply) => {
-    const query = request.query as { page?: string; limit?: string; categoryId?: string; isActive?: string; search?: string };
-    const { page, limit, skip } = parsePagination({ page: Number(query.page), limit: Number(query.limit) });
+    const query = request.query as {
+      page?: string;
+      limit?: string;
+      categoryId?: string;
+      status?: string;
+      isDeleted?: string;
+      search?: string;
+    };
+    const { page, limit, skip } = parsePagination({ 
+      page: query.page ? Number(query.page) : undefined, 
+      limit: query.limit ? Number(query.limit) : undefined 
+    });
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, any> = {};
     if (query.categoryId) where.categoryId = query.categoryId;
-    if (query.isActive !== undefined) where.isActive = query.isActive === 'true';
+
+    // Default: exclude deleted products unless explicitly requested
+    where.isDeleted = query.isDeleted === 'true';
+
+    if (query.status) {
+      where.status = query.status as ProductStatus;
+    } else if (!query.isDeleted || query.isDeleted === 'false') {
+      // By default, only show non-deleted products
+      // If status is not provided, we might want to filter by active by default in some views, 
+      // but usually the main list wants all non-deleted (Active + Inactive + Archived)
+    }
+
     if (query.search) {
       where.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
@@ -30,21 +58,50 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
       ];
     }
 
-    const [products, total] = await Promise.all([
-      fastify.prisma.product.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          category: { select: { id: true, name: true, slug: true } },
-          _count: { select: { variants: true } },
-        },
-      }),
-      fastify.prisma.product.count({ where }),
-    ]);
+    try {
+      const [products, total] = await Promise.all([
+        fastify.prisma.product.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            category: { select: { id: true, name: true, slug: true } },
+            _count: { select: { variants: true } },
+          },
+        }),
+        fastify.prisma.product.count({ where }),
+      ]);
 
-    return reply.send(successResponse(products, buildPaginationMeta(total, page, limit)));
+      return reply.send(successResponse(products, buildPaginationMeta(total, page, limit)));
+    } catch (err) {
+      fastify.log.error(err, 'Failed to fetch products');
+      return reply.code(500).send(errorResponse('Failed to fetch products'));
+    }
+  });
+
+  // GET /api/v1/products/stats
+  fastify.get('/stats', { preHandler: fastify.requireAuth }, async (request, reply) => {
+    try {
+      const [total, active, inactive, archived, deleted] = await Promise.all([
+        fastify.prisma.product.count({ where: { isDeleted: false } as any }),
+        fastify.prisma.product.count({ where: { status: ProductStatus.ACTIVE, isDeleted: false } as any }),
+        fastify.prisma.product.count({ where: { status: ProductStatus.INACTIVE, isDeleted: false } as any }),
+        fastify.prisma.product.count({ where: { status: ProductStatus.ARCHIVED, isDeleted: false } as any }),
+        fastify.prisma.product.count({ where: { isDeleted: true } as any }),
+      ]);
+
+      return reply.send(successResponse({
+        total,
+        active,
+        inactive,
+        archived,
+        deleted
+      }));
+    } catch (err) {
+      fastify.log.error(err, 'Failed to fetch product stats');
+      return reply.code(500).send(errorResponse('Failed to fetch product stats'));
+    }
   });
 
   // POST /api/v1/products
@@ -118,14 +175,120 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.patch('/:id', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const dto = createProductSchema.partial().parse(request.body);
-    const product = await fastify.prisma.product.update({ where: { id }, data: dto, include: { category: true } });
+
+    // If status is changed, update variants status as well
+    if (dto.status) {
+      await fastify.prisma.productVariant.updateMany({
+        where: { productId: id },
+        data: { status: dto.status, isActive: dto.status === ProductStatus.ACTIVE } as any
+      });
+      // Sync isActive for backward compatibility
+      (dto as any).isActive = dto.status === ProductStatus.ACTIVE;
+    }
+
+    const product = await fastify.prisma.product.update({
+      where: { id },
+      data: dto as any, 
+      include: { category: true } as any
+    });
+
     return reply.send(successResponse(product));
   });
 
-  // DELETE /api/v1/products/:id
+  // POST /api/v1/products/:id/status
+  fastify.post('/:id/status', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { status } = z.object({ status: z.nativeEnum(ProductStatus) }).parse(request.body);
+
+    const product = await fastify.prisma.product.update({
+      where: { id },
+      data: {
+        status,
+        isActive: status === ProductStatus.ACTIVE
+      } as any
+    });
+
+    // Cascade to variants
+    await fastify.prisma.productVariant.updateMany({
+      where: { productId: id },
+      data: { 
+        status,
+        isActive: status === ProductStatus.ACTIVE
+      } as any
+    });
+
+    return reply.send(successResponse(product));
+  });
+
+  // POST /api/v1/products/:id/restore
+  fastify.post('/:id/restore', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    const product = await fastify.prisma.product.update({
+      where: { id },
+      data: { 
+        isDeleted: false,
+        deletedAt: null,
+        deletedById: null,
+        status: ProductStatus.ACTIVE,
+        isActive: true
+      } as any
+    });
+
+    // Restore variants status as well
+    await fastify.prisma.productVariant.updateMany({
+      where: { productId: id },
+      data: { 
+        status: ProductStatus.ACTIVE,
+        isActive: true
+      } as any
+    });
+
+    return reply.send(successResponse(product));
+  });
+
+  // DELETE /api/v1/products/:id (Soft Delete / Move to Trash)
   fastify.delete('/:id', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    
+    const user = request.user;
+
+    const product = await fastify.prisma.product.findUnique({
+      where: { id },
+      include: {
+        variants: true
+      }
+    });
+
+    if (!product) return reply.code(404).send(errorResponse('Product not found'));
+
+    // Move to trash
+    await fastify.prisma.product.update({ 
+      where: { id }, 
+      data: { 
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedById: user.userId,
+        isActive: false,
+        status: ProductStatus.INACTIVE // Move to inactive when in trash
+      } as any
+    });
+
+    // Deactivate variants
+    await fastify.prisma.productVariant.updateMany({
+      where: { productId: id },
+      data: { 
+        isActive: false,
+        status: ProductStatus.INACTIVE
+      } as any
+    });
+
+    return reply.send(successResponse({ message: 'Product moved to trash' }));
+  });
+
+  // DELETE /api/v1/products/:id/permanent (Permanent Delete)
+  fastify.delete('/:id/permanent', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+
     const product = await fastify.prisma.product.findUnique({
       where: { id },
       include: {
@@ -135,6 +298,7 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
               select: {
                 poLineItems: true,
                 grnLineItems: true,
+                inventoryLedger: true
               }
             },
             inventoryStock: true
@@ -145,9 +309,23 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (!product) return reply.code(404).send(errorResponse('Product not found'));
 
-    // Deactivation (Soft Delete) is always safe as it preserves history
-    await fastify.prisma.product.update({ where: { id }, data: { isActive: false } });
-    return reply.send(successResponse({ message: 'Product deactivated successfully' }));
+    // Dependency check
+    const hasOrders = product.variants.some(v => v._count.poLineItems > 0);
+    const hasInventoryHistory = product.variants.some(v => v._count.inventoryLedger > 0 || (v.inventoryStock && v.inventoryStock.totalBoxes > 0));
+
+    if (hasOrders || hasInventoryHistory) {
+      return reply.code(400).send(errorResponse('Cannot permanently delete product because it has associated orders or inventory history. Please Archive it instead.'));
+    }
+
+    // Safe to delete everything related to this product
+    // Usually we would use a transaction or rely on cascade deletes if configured
+    await fastify.prisma.$transaction([
+      fastify.prisma.inventoryStock.deleteMany({ where: { variantId: { in: product.variants.map(v => v.id) } } }),
+      fastify.prisma.productVariant.deleteMany({ where: { productId: id } }),
+      fastify.prisma.product.delete({ where: { id } }),
+    ]);
+
+    return reply.send(successResponse({ message: 'Product permanently deleted' }));
   });
 
   // POST /api/v1/products/import (CSV bulk import)
@@ -157,7 +335,7 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
 
     const { parse } = await import('csv-parse/sync');
     const buffer = await data.toBuffer();
-    
+
     type CSVRow = {
       sku: string;
       name: string;

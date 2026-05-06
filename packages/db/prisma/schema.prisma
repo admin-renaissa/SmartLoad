@@ -1,6 +1,7 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
+  output          = "../../../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -120,8 +121,11 @@ enum NotificationStatus {
   DELIVERED
 }
 
-// Notification payload category (app-level; stored as string for flexibility)
-// Aligns with @smartload/shared NotificationType
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
 
 // ── Models ───────────────────────────────────────────────────────────────────
 
@@ -181,7 +185,11 @@ model Product {
   piecesPerBox   Int
   weightPerBoxKg Float?
   minStockAlert  Int             @default(0)
+  status         ProductStatus   @default(ACTIVE)
   isActive       Boolean         @default(true)
+  isDeleted      Boolean         @default(false)
+  deletedAt      DateTime?
+  deletedById    String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -190,6 +198,8 @@ model Product {
   @@index([sku])
   @@index([categoryId])
   @@index([isActive])
+  @@index([isDeleted])
+  @@index([status])
   @@map("products")
 }
 
@@ -206,6 +216,7 @@ model ProductVariant {
   barcodeFormat BarcodeFormat @default(QR)
   imageUrl      String?
   mrpPaise      Int?
+  status        ProductStatus @default(ACTIVE)
   isActive      Boolean       @default(true)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -220,6 +231,7 @@ model ProductVariant {
   @@index([barcodeValue])
   @@index([productId])
   @@index([isActive])
+  @@index([status])
   @@map("product_variants")
 }
 

@@ -121,7 +121,7 @@ export default function CreateOrderPage() {
     variantSearchRef.current = setTimeout(async () => {
       setSearchingVariants(true);
       try {
-        const r = await api.get(`/products?search=${encodeURIComponent(q)}&limit=5`);
+        const r = await api.get(`/products?search=${encodeURIComponent(q)}&limit=5&status=ACTIVE`);
         const products = r.data.data as Array<{ id: string; sku: string; name: string; piecesPerBox: number; variants: Variant[] }>;
         const variants: Variant[] = [];
         for (const p of products) {

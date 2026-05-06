@@ -36,7 +36,7 @@ export default function GRNCreatePage() {
     queryKey: ['grn-product-search', search],
     enabled: search.length >= 2,
     queryFn: async () => {
-      const r = await api.get(`/products?search=${encodeURIComponent(search)}&limit=10`);
+      const r = await api.get(`/products?search=${encodeURIComponent(search)}&limit=10&status=ACTIVE`);
       return r.data.data as { id: string; sku: string; name: string }[];
     },
   });

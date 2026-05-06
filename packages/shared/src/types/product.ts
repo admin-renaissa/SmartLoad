@@ -1,4 +1,4 @@
-import type { BarcodeFormat } from './enums.js'
+import type { BarcodeFormat, ProductStatus } from './enums.js'
 
 export interface ProductCategory {
   id: string
@@ -21,7 +21,11 @@ export interface Product {
   piecesPerBox: number
   weightPerBoxKg: number | null
   minStockAlert: number
+  status: ProductStatus
   isActive: boolean
+  isDeleted: boolean
+  deletedAt?: string | null
+  deletedById?: string | null
   variants?: ProductVariant[]
   createdAt: string
   updatedAt: string
@@ -40,6 +44,7 @@ export interface ProductVariant {
   barcodeFormat: BarcodeFormat
   imageUrl: string | null
   mrpPaise: number | null
+  status: ProductStatus
   isActive: boolean
   stock?: InventoryStockSummary
   createdAt: string

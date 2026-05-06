@@ -13,7 +13,7 @@ import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 
-/* ─── Types ──────────────────────────────────────────────────────────────────*/
+import { ProductStatus } from '@smartload/shared';
 
 interface Variant {
   id: string;
@@ -25,6 +25,7 @@ interface Variant {
   widthMm: number | null;
   thicknessMm: number | null;
   mrpPaise: number | null;
+  status: ProductStatus;
   isActive: boolean;
   inventoryStock: { totalBoxes: number; reservedBoxes: number } | null;
 }
@@ -38,7 +39,9 @@ interface Product {
   piecesPerBox: number;
   weightPerBoxKg: number | null;
   minStockAlert: number;
+  status: ProductStatus;
   isActive: boolean;
+  isDeleted: boolean;
   category: { id: string; name: string };
   variants: Variant[];
 }
@@ -241,7 +244,7 @@ export default function ProductDetailPage() {
     { label: 'Unit',            value: product.unitOfMeasure },
     { label: 'Pieces/Box',      value: product.piecesPerBox },
     { label: 'Weight/Box',      value: product.weightPerBoxKg ? `${product.weightPerBoxKg} kg` : '—' },
-    { label: 'Status',          value: <StatusBadge status={product.isActive ? 'ACTIVE' : 'INACTIVE'} /> },
+    { label: 'Status',          value: <StatusBadge status={product.isDeleted ? 'DELETED' : product.status} /> },
   ];
 
   return (
@@ -349,7 +352,7 @@ export default function ProductDetailPage() {
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="text-base font-bold text-gray-900 truncate">{v.colourName}</span>
                           <span className="font-mono text-xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded border border-gray-100 flex-shrink-0">{v.colourCode}</span>
-                          <StatusBadge status={v.isActive ? 'ACTIVE' : 'INACTIVE'} />
+                          <StatusBadge status={v.status} />
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-gray-900 tabular-nums">{available}</div>
