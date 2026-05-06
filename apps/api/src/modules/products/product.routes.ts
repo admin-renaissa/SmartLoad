@@ -6,7 +6,7 @@ import { parsePagination, buildPaginationMeta } from '@smartload/shared';
 const createProductSchema = z.object({
   sku: z.string().min(2).toUpperCase(),
   name: z.string().min(2),
-  categoryId: z.string().cuid(),
+  categoryId: z.string().min(1),
   hsnCode: z.string().optional(),
   unitOfMeasure: z.string().default('BOX'),
   piecesPerBox: z.number().int().positive(),
@@ -49,12 +49,35 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /api/v1/products
   fastify.post('/', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
-    const dto = createProductSchema.parse(request.body);
-    const product = await fastify.prisma.product.create({
-      data: dto,
-      include: { category: true },
-    });
-    return reply.code(201).send(successResponse(product));
+    try {
+      const dto = createProductSchema.parse(request.body);
+
+      // Validate category exists before creating
+      const category = await fastify.prisma.productCategory.findUnique({
+        where: { id: dto.categoryId },
+      });
+      if (!category) {
+        return reply.code(400).send(errorResponse('Category not found. Please select a valid category.'));
+      }
+
+      const product = await fastify.prisma.product.create({
+        data: dto,
+        include: { category: true },
+      });
+      return reply.code(201).send(successResponse(product));
+    } catch (err) {
+      const e = err as { code?: string; issues?: unknown[]; message?: string };
+      // Zod validation error
+      if (e.issues) {
+        return reply.code(400).send(errorResponse(`Validation error: ${(e.issues as { message: string }[])[0]?.message ?? 'Invalid input'}`));
+      }
+      // Prisma unique constraint (duplicate SKU)
+      if (e.code === 'P2002') {
+        return reply.code(409).send(errorResponse('A product with this SKU already exists.'));
+      }
+      fastify.log.error({ err }, 'Failed to create product');
+      return reply.code(500).send(errorResponse('Failed to create product'));
+    }
   });
 
   fastify.post('/labels/pdf', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
@@ -102,8 +125,29 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
   // DELETE /api/v1/products/:id
   fastify.delete('/:id', { preHandler: fastify.requireRole(UserRole.ADMIN) }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    
+    const product = await fastify.prisma.product.findUnique({
+      where: { id },
+      include: {
+        variants: {
+          include: {
+            _count: {
+              select: {
+                poLineItems: true,
+                grnLineItems: true,
+              }
+            },
+            inventoryStock: true
+          }
+        }
+      }
+    });
+
+    if (!product) return reply.code(404).send(errorResponse('Product not found'));
+
+    // Deactivation (Soft Delete) is always safe as it preserves history
     await fastify.prisma.product.update({ where: { id }, data: { isActive: false } });
-    return reply.send(successResponse({ message: 'Product deactivated' }));
+    return reply.send(successResponse({ message: 'Product deactivated successfully' }));
   });
 
   // POST /api/v1/products/import (CSV bulk import)

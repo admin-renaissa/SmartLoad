@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle, XCircle, Truck, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Truck, AlertTriangle, QrCode } from 'lucide-react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
@@ -65,6 +66,7 @@ export default function OrderDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const canManage = usePermission('orders:update');
+  const [generatingLabels, setGeneratingLabels] = useState<string[]>([]);
 
   const { data: po, isLoading } = useQuery<PurchaseOrder>({
     queryKey: ['order', id],
@@ -95,25 +97,52 @@ export default function OrderDetailPage() {
     onError: () => toast.error('Failed to cancel order'),
   });
 
-  if (isLoading) return <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>;
-  if (!po) return <div className="text-center py-20 text-gray-500">Order not found</div>;
-
-  const totalOrdered = po.lineItems.reduce((s, li) => s + li.orderedBoxes, 0);
-  const totalLoaded = po.lineItems.reduce((s, li) => s + li.loadedBoxes, 0);
-  const loadPercent = totalOrdered > 0 ? Math.round((totalLoaded / totalOrdered) * 100) : 0;
+  // ── Derived values — MUST be before any early return (Rules of Hooks) ────
+  const totalOrdered = po?.lineItems.reduce((s, li) => s + li.orderedBoxes, 0) ?? 0;
+  const totalLoaded  = po?.lineItems.reduce((s, li) => s + li.loadedBoxes, 0) ?? 0;
+  const loadPercent  = totalOrdered > 0 ? Math.round((totalLoaded / totalOrdered) * 100) : 0;
 
   const completionSlices = useMemo<DonutSlice[]>(() => {
-    const lineCount = po.lineItems.length;
+    const lineItems = po?.lineItems ?? [];
+    const lineCount = lineItems.length;
     if (lineCount === 0) return [];
-
-    const completed = po.lineItems.filter((li) => li.orderedBoxes > 0 && li.loadedBoxes >= li.orderedBoxes).length;
+    const completed = lineItems.filter((li) => li.orderedBoxes > 0 && li.loadedBoxes >= li.orderedBoxes).length;
     const incomplete = Math.max(0, lineCount - completed);
-
     return [
       { label: 'Completed', value: completed, color: '#059669' },
       { label: 'Incomplete', value: incomplete, color: '#DC2626' },
     ];
-  }, [po.lineItems]);
+  }, [po?.lineItems]);
+
+  async function handlePrintLabel(li: LineItem) {
+    setGeneratingLabels((prev) => [...prev, li.id]);
+    try {
+      const r = await api.post(
+        '/variants/generate-labels',
+        {
+          variantIds: [li.variant.id],
+          orderInfo: {
+            orderId: po?.poNumber,
+            clientName: po?.client.name,
+            date: new Date(po?.orderDate ?? '').toLocaleDateString('en-IN'),
+            totalBoxes: li.orderedBoxes,
+          },
+        },
+        { responseType: 'blob' }
+      );
+      const url = URL.createObjectURL(r.data);
+      window.open(url, '_blank');
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to generate label');
+    } finally {
+      setGeneratingLabels((prev) => prev.filter((id) => id !== li.id));
+    }
+  }
+
+  if (isLoading) return <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>;
+  if (!po) return <div className="text-center py-20 text-gray-500">Order not found</div>;
+
 
   return (
     <div className="space-y-6">
@@ -263,7 +292,17 @@ export default function OrderDetailPage() {
                     </div>
 
                     <div className="mt-3 flex items-center justify-between gap-3">
-                      <p className="text-xs text-gray-500">Rate</p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          icon={<QrCode className="h-3 w-3" />}
+                          loading={generatingLabels.includes(li.id)}
+                          onClick={() => handlePrintLabel(li)}
+                        >
+                          Print Labels
+                        </Button>
+                      </div>
                       <p className="text-xs font-medium tabular-nums text-right text-gray-700">
                         ₹{(li.ratePerBoxPaise / 100).toFixed(2)}
                       </p>
@@ -323,7 +362,19 @@ export default function OrderDetailPage() {
                           ₹{(li.ratePerBoxPaise / 100).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums font-medium">
-                          ₹{(li.totalAmountPaise / 100).toFixed(2)}
+                          <div className="flex flex-col items-end gap-1">
+                            <span>₹{(li.totalAmountPaise / 100).toFixed(2)}</span>
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              className="h-6 px-2 text-[10px]"
+                              icon={<QrCode className="h-3 w-3" />}
+                              loading={generatingLabels.includes(li.id)}
+                              onClick={() => handlePrintLabel(li)}
+                            >
+                              Labels
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );

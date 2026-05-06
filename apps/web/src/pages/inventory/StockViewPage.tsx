@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, PackagePlus, PackageMinus, RefreshCw } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { Card, CardContent } from '../../components/ui/Card.tsx';
@@ -18,8 +18,183 @@ import {
   useExportInventory,
   useImportOpeningStock,
   useTransferStock,
+  useAdjustStock,
 } from '../../hooks/useInventory.ts';
 import { VariantLedgerDrawer } from './VariantLedgerDrawer.tsx';
+
+// ─── Adjust Stock Modal ───────────────────────────────────────────────────────
+
+const INPUT_CLS = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30';
+const LABEL_CLS = 'block text-sm font-medium text-gray-700 mb-1';
+
+type AdjustDirection = 'add' | 'remove';
+
+function AdjustStockModal({
+  variantId,
+  variantLabel,
+  currentStock,
+  onClose,
+}: {
+  variantId: string;
+  variantLabel: string;
+  currentStock: { total: number; available: number };
+  onClose: () => void;
+}) {
+  const [boxes, setBoxes] = useState(1);
+  const [direction, setDirection] = useState<AdjustDirection>('add');
+  const [reason, setReason] = useState('');
+  const adjustMut = useAdjustStock(variantId);
+
+  // Backend expects positive boxes for add, negative for remove
+  const signedBoxes = direction === 'add' ? boxes : -boxes;
+
+  const reasonOptions = [
+    'Opening stock entry',
+    'Physical count correction',
+    'Damaged / write-off',
+    'Return from customer',
+    'Found in warehouse',
+    'Other',
+  ];
+
+  const canSubmit = boxes > 0 && reason.trim().length >= 3;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900">Adjust Stock</h2>
+          <p className="text-sm text-gray-500 mt-0.5 font-mono truncate">{variantLabel}</p>
+        </div>
+
+        {/* Current stock summary */}
+        <div className="px-6 pt-4 grid grid-cols-2 gap-3">
+          <div className="rounded-lg bg-gray-50 p-3 text-center">
+            <p className="text-xs text-gray-500">Current Total</p>
+            <p className="text-xl font-bold text-gray-900">{currentStock.total}</p>
+            <p className="text-xs text-gray-400">boxes</p>
+          </div>
+          <div className="rounded-lg bg-gray-50 p-3 text-center">
+            <p className="text-xs text-gray-500">Available</p>
+            <p className={`text-xl font-bold ${currentStock.available <= 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+              {currentStock.available}
+            </p>
+            <p className="text-xs text-gray-400">boxes</p>
+          </div>
+        </div>
+
+        {/* No stock CTA */}
+        {currentStock.total === 0 && (
+          <div className="mx-6 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            No stock available. Use <strong>Add Stock</strong> below to set the opening quantity.
+          </div>
+        )}
+
+        <div className="p-6 space-y-4">
+          {/* Direction selector */}
+          <div>
+            <label className={LABEL_CLS}>Action</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { id: 'add', label: 'Add Stock', icon: PackagePlus, color: 'emerald' },
+                { id: 'remove', label: 'Remove Stock', icon: PackageMinus, color: 'red' },
+              ] as const).map(({ id, label, icon: Icon, color }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setDirection(id)}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-colors',
+                    direction === id
+                      ? color === 'emerald'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                        : 'border-red-500 bg-red-50 text-red-800'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quantity */}
+          <div>
+            <label className={LABEL_CLS}>
+              Quantity (boxes) <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="adjust-boxes"
+              type="number"
+              min={1}
+              value={boxes}
+              onChange={(e) => setBoxes(Math.max(1, Number(e.target.value)))}
+              className={INPUT_CLS}
+            />
+          </div>
+
+          {/* Reason */}
+          <div>
+            <label className={LABEL_CLS}>
+              Reason <span className="text-red-500">*</span>
+            </label>
+            <select
+              className={INPUT_CLS + ' mb-2'}
+              value={reasonOptions.includes(reason) ? reason : 'Other'}
+              onChange={(e) => {
+                if (e.target.value !== 'Other') setReason(e.target.value);
+                else setReason('');
+              }}
+            >
+              {reasonOptions.map((o) => <option key={o}>{o}</option>)}
+            </select>
+            {(!reasonOptions.slice(0, -1).includes(reason)) && (
+              <input
+                id="adjust-reason"
+                placeholder="Describe the reason…"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className={INPUT_CLS}
+              />
+            )}
+          </div>
+
+          {/* Preview */}
+          <div className="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-sm">
+            <span className="text-blue-700">
+              New total after adjustment:{' '}
+              <strong className="font-semibold">
+                {Math.max(0, currentStock.total + signedBoxes)} boxes
+              </strong>
+            </span>
+          </div>
+        </div>
+
+        <div className="p-6 pt-0 flex gap-3 justify-end border-t border-gray-100">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            id="adjust-stock-submit"
+            loading={adjustMut.isPending}
+            disabled={!canSubmit}
+            icon={<RefreshCw className="h-4 w-4" />}
+            onClick={() => {
+              adjustMut.mutate(
+                { boxes: signedBoxes, reason: reason.trim() },
+                { onSuccess: () => onClose() },
+              );
+            }}
+          >
+            Apply Adjustment
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function StockViewPage() {
   const role = useAuthStore((s) => s.user?.role);
@@ -96,6 +271,9 @@ export default function StockViewPage() {
   const transferMut = useTransferStock();
 
   const [drawerVariantId, setDrawerVariantId] = useState<string | null>(null);
+  const [adjustVariantId, setAdjustVariantId] = useState<string | null>(null);
+  const [adjustVariantLabel, setAdjustVariantLabel] = useState('');
+  const [adjustCurrentStock, setAdjustCurrentStock] = useState({ total: 0, available: 0 });
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferFrom, setTransferFrom] = useState<string | null>(null);
@@ -416,7 +594,13 @@ export default function StockViewPage() {
                                     type="button"
                                     className="block w-full text-left px-3 py-2 hover:bg-gray-50"
                                     onClick={() => {
-                                      setDrawerVariantId(oid);
+                                      const label = `${(p.sku as string) ?? ''} — ${(v.colourName as string) ?? ''} (${(v.colourCode as string) ?? ''})`;
+                                      setAdjustVariantId(oid);
+                                      setAdjustVariantLabel(label);
+                                      setAdjustCurrentStock({
+                                        total: Number(r.totalBoxes),
+                                        available: Number(r.availableBoxes),
+                                      });
                                       setOpenMenu(null);
                                     }}
                                   >
@@ -532,6 +716,15 @@ export default function StockViewPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {adjustVariantId && (
+        <AdjustStockModal
+          variantId={adjustVariantId}
+          variantLabel={adjustVariantLabel}
+          currentStock={adjustCurrentStock}
+          onClose={() => setAdjustVariantId(null)}
+        />
       )}
 
       <VariantLedgerDrawer

@@ -30,6 +30,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// refreshClient also attaches the current token (needed if any middleware checks it)
+refreshClient.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().accessToken;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (value: string) => void; reject: (reason?: unknown) => void }> = [];
 
@@ -78,7 +87,9 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
+        // Fully clear auth — wipe persisted Zustand key so stale token is gone on next load
         useAuthStore.getState().logout();
+        try { localStorage.removeItem('smartload-auth'); } catch { /* ignore */ }
         window.location.assign('/login');
         return Promise.reject(refreshError);
       } finally {

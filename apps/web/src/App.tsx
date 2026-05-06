@@ -15,6 +15,8 @@ const OrderDetailPage = lazy(() => import('./pages/orders/OrderDetailPage.tsx'))
 const CreateOrderPage = lazy(() => import('./pages/orders/CreateOrderPage.tsx'));
 const ProductListPage = lazy(() => import('./pages/products/ProductListPage.tsx'));
 const ProductDetailPage = lazy(() => import('./pages/products/ProductDetailPage.tsx'));
+const CreateProductPage = lazy(() => import('./pages/products/CreateProductPage.tsx'));
+const EditProductPage = lazy(() => import('./pages/products/EditProductPage.tsx'));
 const ClientListPage = lazy(() => import('./pages/clients/ClientListPage.tsx'));
 const StockViewPage = lazy(() => import('./pages/inventory/StockViewPage.tsx'));
 const GRNCreatePage = lazy(() => import('./pages/inventory/GRNCreatePage.tsx'));
@@ -79,7 +81,9 @@ export default function App() {
             <Route path="orders/new" element={<CreateOrderPage />} />
             <Route path="orders/:id" element={<OrderDetailPage />} />
             <Route path="products" element={<ProductListPage />} />
+            <Route path="products/new" element={<CreateProductPage />} />
             <Route path="products/:id" element={<ProductDetailPage />} />
+            <Route path="products/:id/edit" element={<EditProductPage />} />
             <Route path="clients" element={<ClientListPage />} />
             <Route path="inventory" element={<StockViewPage />} />
             <Route path="inventory/grn" element={<GRNListPage />} />

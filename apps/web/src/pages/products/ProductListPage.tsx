@@ -1,14 +1,34 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus, Search, Download, Upload, Package, Tag } from 'lucide-react';
+import {
+  Plus, Search, Download, Upload, Package, Tag,
+  MoreVertical, Eye, Edit2, Trash2, AlertTriangle
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
 import { Card } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '../../components/ui/DropdownMenu.tsx';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../components/ui/AlertDialog.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
 import { DonutChart } from '../../components/charts/DonutChart.tsx';
@@ -29,9 +49,93 @@ interface Product {
   _count: { variants: number };
 }
 
+function ProductActions({ product, onDeleted }: { product: Product; onDeleted: () => void }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const canManage = usePermission('products:manage');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleDelete() {
+    setIsDeleting(true);
+    try {
+      await api.delete(`/products/${product.id}`);
+      toast.success('Product deactivated successfully');
+      onDeleted();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to deactivate product';
+      toast.error(msg);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  }
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+            <MoreVertical className="h-4 w-4 text-gray-500" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => navigate(`/app/products/${product.id}`)}>
+            <Eye className="h-4 w-4 text-blue-500" />
+            <span>{t('products.view')}</span>
+          </DropdownMenuItem>
+          {canManage && (
+            <>
+              <DropdownMenuItem onClick={() => navigate(`/app/products/${product.id}/edit`)}>
+                <Edit2 className="h-4 w-4 text-gray-500" />
+                <span>{t('common.edit', 'Edit')}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>{t('common.delete', 'Delete')}</span>
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Confirm Deactivation
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to deactivate <strong>{product.name} ({product.sku})</strong>?
+              This product will be hidden from new orders and catalog selections.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deactivating...' : 'Deactivate Product'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 export default function ProductListPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const canManage = usePermission('products:manage');
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -47,7 +151,7 @@ export default function ProductListPage() {
     },
   });
 
-  const { data, isLoading } = useQuery<{ items: Product[]; meta: { total: number; totalPages: number } }>({
+  const { data, isLoading, refetch } = useQuery<{ items: Product[]; meta: { total: number; totalPages: number } }>({
     queryKey: ['products', search, categoryId, page],
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
@@ -249,33 +353,48 @@ export default function ProductListPage() {
                     <th className="px-6 py-3 text-right">{t('products.pcsBox')}</th>
                     <th className="px-6 py-3 text-right">{t('products.variants')}</th>
                     <th className="px-6 py-3">{t('products.status')}</th>
-                    <th className="px-6 py-3"></th>
+                    <th className="px-6 py-3 text-right">{t('common.actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {products.map((p) => (
                     <tr
                       key={p.id}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/app/products/${p.id}`)}
+                      className="hover:bg-gray-50 transition-colors"
                     >
                       {canManage && (
-                        <td className="px-3 py-4" onClick={(e) => toggleRow(p.id, e)}>
+                        <td className="px-3 py-4">
                           <input
                             type="checkbox"
                             checked={selectedIds.has(p.id)}
-                            readOnly
-                            onClick={(e) => toggleRow(p.id, e)}
-                            className="rounded border-gray-300"
+                            onChange={(e) => {
+                              const next = new Set(selectedIds);
+                              if (e.target.checked) next.add(p.id);
+                              else next.delete(p.id);
+                              setSelectedIds(next);
+                            }}
+                            className="rounded border-gray-300 cursor-pointer"
                           />
                         </td>
                       )}
-                      <td className="px-6 py-4 font-mono font-semibold text-accent">{p.sku}</td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                          <span className="font-medium text-gray-900">{p.name}</span>
-                        </div>
+                        <button
+                          onClick={() => navigate(`/app/products/${p.id}`)}
+                          className="font-mono font-semibold text-accent hover:underline text-left"
+                        >
+                          {p.sku}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => navigate(`/app/products/${p.id}`)}
+                          className="flex items-center gap-2 group text-left"
+                        >
+                          <Package className="h-4 w-4 text-gray-400 flex-shrink-0 group-hover:text-accent transition-colors" />
+                          <span className="font-medium text-gray-900 group-hover:text-accent transition-colors">
+                            {p.name}
+                          </span>
+                        </button>
                       </td>
                       <td className="px-6 py-4 text-gray-500">{p.category?.name}</td>
                       <td className="px-6 py-4 text-right tabular-nums">{p.piecesPerBox}</td>
@@ -287,17 +406,8 @@ export default function ProductListPage() {
                       <td className="px-6 py-4">
                         <StatusBadge status={p.isActive ? 'ACTIVE' : 'INACTIVE'} />
                       </td>
-                      <td className="px-6 py-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/app/products/${p.id}`);
-                          }}
-                        >
-                          {t('products.view')}
-                        </Button>
+                      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <ProductActions product={p} onDeleted={() => refetch()} />
                       </td>
                     </tr>
                   ))}

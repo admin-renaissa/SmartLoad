@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { PageTransition } from '../components/animation/PageTransition.tsx';
 import {
@@ -77,16 +78,51 @@ function UserProfileMenu({ user, onLogout }: { user: AuthUser; onLogout: () => v
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPanelStyle({
-        position: 'fixed',
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-        zIndex: 9999,
-        width: 280,
-      });
+    function updatePosition() {
+      if (open && triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        const dropdownWidth = 280;
+        const spacing = 8;
+        
+        // Default position: below and right-aligned with trigger
+        let top = rect.bottom + spacing;
+        let right = window.innerWidth - rect.right;
+        
+        // Viewport safety checks
+        // 1. Right boundary
+        if (right < spacing) {
+          right = spacing;
+        }
+        // 2. Left boundary (if dropdown is wider than space from right)
+        if (window.innerWidth - right < dropdownWidth) {
+          right = window.innerWidth - dropdownWidth - spacing;
+        }
+        // 3. Bottom boundary (flip if not enough space below)
+        const dropdownHeight = panelRef.current?.offsetHeight || 250;
+        if (top + dropdownHeight > window.innerHeight && rect.top > dropdownHeight) {
+          top = rect.top - dropdownHeight - spacing;
+        }
+
+        setPanelStyle({
+          position: 'fixed',
+          top,
+          right,
+          zIndex: 9999,
+          width: dropdownWidth,
+        });
+      }
     }
+
+    if (open) {
+      updatePosition();
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true); // capture phase for all scrollable parents
+    }
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
   }, [open]);
 
   // Close only when clicking outside BOTH the trigger and the panel
@@ -140,20 +176,19 @@ function UserProfileMenu({ user, onLogout }: { user: AuthUser; onLogout: () => v
         <ChevronDown className={cn('hidden sm:block h-3.5 w-3.5 text-gray-400 flex-shrink-0 transition-transform', open && 'rotate-180')} />
       </button>
 
-      {/* Dropdown panel — fixed width so text never truncates */}
-      {open && (
+      {open && createPortal(
         <div
           ref={panelRef}
           style={panelStyle}
-          className="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden"
+          className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
         >
           {/* Profile header */}
-          <div className="px-4 py-4 flex items-start gap-3">
-            <span className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white text-base font-bold flex-shrink-0">
+          <div className="px-4 py-4 flex items-start gap-3 bg-gray-50/50">
+            <span className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-sm">
               {initials}
             </span>
             <div className="flex-1 overflow-hidden">
-              <p className="font-semibold text-gray-900 break-words">{user.name}</p>
+              <p className="font-semibold text-gray-900 break-words line-clamp-1">{user.name}</p>
               <p className="text-xs text-gray-500 break-all mt-0.5">{user.email}</p>
               <span className="inline-block mt-1.5 text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">
                 {user.role}
@@ -174,21 +209,22 @@ function UserProfileMenu({ user, onLogout }: { user: AuthUser; onLogout: () => v
             <button
               type="button"
               onClick={goSettings}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left group"
             >
-              <Settings className="h-4 w-4 text-gray-400 flex-shrink-0" />
+              <Settings className="h-4 w-4 text-gray-400 flex-shrink-0 group-hover:text-accent transition-colors" />
               Account Settings
             </button>
             <button
               type="button"
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors text-left group"
             >
-              <LogOut className="h-4 w-4 flex-shrink-0" />
+              <LogOut className="h-4 w-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
               Logout
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

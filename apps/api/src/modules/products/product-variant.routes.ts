@@ -114,9 +114,19 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send(successResponse(variant));
   });
 
-  // POST /api/v1/variants/generate-labels — generate QR label PDF
+  // POST /api/v1/variants/generate-labels — generate professional QR label PDF
   fastify.post('/variants/generate-labels', { preHandler: fastify.requireAuth }, async (request, reply) => {
-    const { variantIds } = z.object({ variantIds: z.array(z.string()).min(1) }).parse(request.body);
+    const schema = z.object({
+      variantIds: z.array(z.string()).min(1),
+      orderInfo: z.object({
+        orderId: z.string().optional(),
+        clientName: z.string().optional(),
+        date: z.string().optional(),
+        totalBoxes: z.number().optional(),
+      }).optional(),
+    });
+
+    const { variantIds, orderInfo } = schema.parse(request.body);
 
     const variants = await fastify.prisma.productVariant.findMany({
       where: { id: { in: variantIds } },
@@ -131,60 +141,112 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const monoFont = await pdfDoc.embedFont(StandardFonts.Courier);
 
-    const LABELS_PER_ROW = 2;
-    const LABELS_PER_COL = 2;
-    const LABELS_PER_PAGE = LABELS_PER_ROW * LABELS_PER_COL;
-    const PAGE_WIDTH = 595;
-    const PAGE_HEIGHT = 842;
-    const LABEL_WIDTH = PAGE_WIDTH / LABELS_PER_ROW;
-    const LABEL_HEIGHT = PAGE_HEIGHT / LABELS_PER_COL;
-    const QR_SIZE = 120;
-    const PADDING = 20;
+    // Label Size: 4x6 inches approx (288 x 432 points)
+    const WIDTH = 300;
+    const HEIGHT = 450;
+    const CENTER = WIDTH / 2;
 
-    let page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    for (const v of variants) {
+      // Determine how many labels to print for this variant
+      // If orderInfo.totalBoxes is provided, we print that many labels (one per box)
+      const count = orderInfo?.totalBoxes ?? 1;
 
-    for (let i = 0; i < variants.length; i++) {
-      if (i > 0 && i % LABELS_PER_PAGE === 0) {
-        page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+      for (let boxNum = 1; boxNum <= count; boxNum++) {
+        const page = pdfDoc.addPage([WIDTH, HEIGHT]);
+
+        // 1. QR CODE (Centerpiece)
+        const qrPayload = JSON.stringify({
+          sku: v.product.sku,
+          variantId: v.id,
+          colourCode: v.colourCode,
+          orderId: orderInfo?.orderId,
+          box: boxNum,
+          total: count,
+        });
+
+        const QR_SIZE = 140;
+        const qrDataUrl = await QRCode.default.toDataURL(qrPayload, { width: QR_SIZE * 2, margin: 1 });
+        const qrImageBytes = Buffer.from(qrDataUrl.split(',')[1], 'base64');
+        const qrImage = await pdfDoc.embedPng(qrImageBytes);
+
+        page.drawImage(qrImage, {
+          x: CENTER - QR_SIZE / 2,
+          y: HEIGHT - QR_SIZE - 40,
+          width: QR_SIZE,
+          height: QR_SIZE
+        });
+
+        // 2. PRODUCT INFO
+        let currentY = HEIGHT - QR_SIZE - 70;
+
+        const drawCenteredText = (text: string, size: number, f = font, color = rgb(0, 0, 0)) => {
+          const width = f.widthOfTextAtSize(text, size);
+          page.drawText(text, { x: CENTER - width / 2, y: currentY, size, font: f, color });
+          currentY -= (size + 8);
+        };
+
+        drawCenteredText(v.product.name.toUpperCase(), 16, boldFont);
+        drawCenteredText(`${v.colourName} (${v.colourCode})`, 13, font, rgb(0.2, 0.2, 0.2));
+
+        const dims = [v.lengthMm, v.widthMm, v.thicknessMm].filter(Boolean).join(' × ');
+        if (dims) drawCenteredText(`${dims} mm`, 12, font, rgb(0.3, 0.3, 0.3));
+        drawCenteredText(`${v.product.piecesPerBox} pcs/box`, 11, font, rgb(0.4, 0.4, 0.4));
+
+        // 3. ORDER INFO SECTION
+        currentY -= 15;
+        page.drawLine({
+          start: { x: 40, y: currentY + 10 },
+          end: { x: WIDTH - 40, y: currentY + 10 },
+          thickness: 1,
+          color: rgb(0.8, 0.8, 0.8)
+        });
+
+        const drawField = (label: string, value: string) => {
+          const labelWidth = boldFont.widthOfTextAtSize(label, 10);
+          page.drawText(label, { x: 45, y: currentY, size: 10, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
+          page.drawText(value, { x: 45 + labelWidth + 5, y: currentY, size: 10, font, color: rgb(0.1, 0.1, 0.1) });
+          currentY -= 16;
+        };
+
+        if (orderInfo?.orderId) {
+          drawField('Order ID:', orderInfo.orderId);
+          drawField('Client:', orderInfo.clientName || 'N/A');
+          drawField('Date:', orderInfo.date || new Date().toLocaleDateString('en-IN'));
+          if (count > 1) {
+            drawField('Box:', `${boxNum} of ${count}`);
+          }
+        } else {
+          // Stock label style
+          drawField('Type:', 'STOCK MASTER');
+          drawField('Printed:', new Date().toLocaleDateString('en-IN'));
+        }
+
+        // 4. BARCODE TEXT (Monospace at bottom)
+        currentY -= 10;
+        page.drawLine({
+          start: { x: 40, y: currentY + 10 },
+          end: { x: WIDTH - 40, y: currentY + 10 },
+          thickness: 1,
+          color: rgb(0.8, 0.8, 0.8)
+        });
+        
+        const barcodeText = `Barcode: ${v.barcodeValue}`;
+        const bWidth = monoFont.widthOfTextAtSize(barcodeText, 9);
+        page.drawText(barcodeText, {
+          x: CENTER - bWidth / 2,
+          y: 40,
+          size: 9,
+          font: monoFont,
+          color: rgb(0.3, 0.3, 0.3)
+        });
       }
-
-      const v = variants[i];
-      const labelIndex = i % LABELS_PER_PAGE;
-      const col = labelIndex % LABELS_PER_ROW;
-      const row = Math.floor(labelIndex / LABELS_PER_ROW);
-
-      const x = col * LABEL_WIDTH + PADDING;
-      const y = PAGE_HEIGHT - (row + 1) * LABEL_HEIGHT + PADDING;
-
-      const qrPayload = JSON.stringify({
-        sku: v.product.sku,
-        variantId: v.id,
-        colourCode: v.colourCode,
-        colourName: v.colourName,
-        lengthMm: v.lengthMm,
-        widthMm: v.widthMm,
-        thicknessMm: v.thicknessMm,
-        piecesPerBox: v.product.piecesPerBox,
-      });
-
-      const qrDataUrl = await QRCode.default.toDataURL(qrPayload, { width: QR_SIZE, margin: 1 });
-      const qrImageBytes = Buffer.from(qrDataUrl.split(',')[1], 'base64');
-      const qrImage = await pdfDoc.embedPng(qrImageBytes);
-
-      page.drawImage(qrImage, { x, y: y + 60, width: QR_SIZE, height: QR_SIZE });
-
-      page.drawText(v.product.sku, { x, y: y + 45, size: 10, font: boldFont, color: rgb(0, 0, 0) });
-      page.drawText(`${v.colourName} (${v.colourCode})`, { x, y: y + 30, size: 9, font, color: rgb(0.2, 0.2, 0.2) });
-
-      const dims = [v.lengthMm, v.widthMm, v.thicknessMm].filter(Boolean).join(' × ');
-      if (dims) page.drawText(`${dims} mm`, { x, y: y + 15, size: 8, font, color: rgb(0.4, 0.4, 0.4) });
-      page.drawText(`${v.product.piecesPerBox} pcs/box`, { x, y, size: 8, font, color: rgb(0.4, 0.4, 0.4) });
     }
 
     const pdfBytes = await pdfDoc.save();
     reply.header('Content-Type', 'application/pdf');
-    reply.header('Content-Disposition', `attachment; filename="qr-labels-${Date.now()}.pdf"`);
+    reply.header('Content-Disposition', `inline; filename="label-${Date.now()}.pdf"`);
     return reply.send(Buffer.from(pdfBytes));
   });
 };
