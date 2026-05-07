@@ -54,6 +54,7 @@ interface Product {
   minStockAlert: number;
   category: Category;
   _count: { variants: number };
+  stockHealth?: 'available' | 'low-stock' | 'out-of-stock' | 'no-stock-data';
 }
 
 function ProductActions({ product, onUpdated }: { product: Product; onUpdated: () => void }) {
@@ -105,9 +106,10 @@ function ProductActions({ product, onUpdated }: { product: Product; onUpdated: (
       ];
     }
 
-    const items = [
-      { label: t('common.edit', 'Edit'), icon: <Edit2 className="h-4 w-4 text-text-secondary" />, action: () => navigate(`/app/products/${product.id}/edit`) },
-    ];
+    const items = [];
+    if (product.status !== ProductStatus.ARCHIVED) {
+      items.push({ label: t('common.edit', 'Edit'), icon: <Edit2 className="h-4 w-4 text-text-secondary" />, action: () => navigate(`/app/products/${product.id}/edit`) });
+    }
 
     if (product.status === ProductStatus.ACTIVE) {
       items.push({ label: 'Mark Inactive', icon: <Eye className="h-4 w-4 text-amber-500" />, action: () => { setActionType('INACTIVE'); setShowLifecycleModal(true); } });
@@ -117,6 +119,8 @@ function ProductActions({ product, onUpdated }: { product: Product; onUpdated: (
 
     if (product.status !== ProductStatus.ARCHIVED) {
       items.push({ label: 'Archive Product', icon: <Download className="h-4 w-4 text-blue-500" />, action: () => { setActionType('ARCHIVED'); setShowLifecycleModal(true); } });
+    } else {
+      items.push({ label: 'Unarchive (Restore)', icon: <Plus className="h-4 w-4 text-green-500" />, action: () => { setActionType('RESTORE'); setShowLifecycleModal(true); } });
     }
 
     items.push({ label: 'Move to Trash', icon: <Trash2 className="h-4 w-4 text-red-600" />, action: () => { setActionType('TRASH'); setShowLifecycleModal(true); } });
@@ -196,6 +200,32 @@ function ProductActions({ product, onUpdated }: { product: Product; onUpdated: (
   );
 }
 
+function StockBadge({ health }: { health?: 'available' | 'low-stock' | 'out-of-stock' | 'no-stock-data' }) {
+  if (!health || health === 'no-stock-data') return null;
+  if (health === 'available') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+        Available
+      </span>
+    );
+  }
+  if (health === 'low-stock') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+        Low Stock
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
+      <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+      Out of Stock
+    </span>
+  );
+}
+
 interface StatCardProps {
   title: string;
   value: number;
@@ -233,6 +263,7 @@ export default function ProductListPage() {
   const queryClient = useQueryClient();
   const canManage = usePermission('products:manage');
   const [currentTab, setCurrentTab] = useState<'ALL' | 'INACTIVE' | 'ARCHIVED' | 'TRASH'>('ALL');
+  const [stockFilter, setStockFilter] = useState<'all' | 'available' | 'low-stock' | 'out-of-stock' | 'archived'>('all');
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [page, setPage] = useState(1);
@@ -256,11 +287,12 @@ export default function ProductListPage() {
   });
 
   const { data, isLoading, refetch } = useQuery<{ items: Product[]; meta: { total: number; totalPages: number } }>({
-    queryKey: ['products', search, categoryId, page, currentTab],
+    queryKey: ['products', search, categoryId, page, currentTab, stockFilter],
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
       if (search) params.set('search', search);
       if (categoryId) params.set('categoryId', categoryId);
+      if (stockFilter !== 'all') params.set('stockFilter', stockFilter);
       
       if (currentTab === 'TRASH') {
         params.set('isDeleted', 'true');
@@ -419,40 +451,40 @@ export default function ProductListPage() {
         </Card>
 
         <StatCard
-          title="Active Products"
-          value={stats?.active ?? 0}
-          subtitle="Products are active"
+          title="Available"
+          value={stats?.stockAvailable ?? 0}
+          subtitle="Products in stock"
           icon={Package}
           color="text-green-600"
           bgColor="bg-green-50"
           borderColor="bg-green-500"
         />
         <StatCard
-          title="Inactive Products"
-          value={stats?.inactive ?? 0}
-          subtitle="Products are inactive"
-          icon={Pause}
+          title="Low Stock"
+          value={stats?.stockLow ?? 0}
+          subtitle="Needs restock"
+          icon={AlertTriangle}
           color="text-amber-600"
           bgColor="bg-amber-50"
           borderColor="bg-amber-500"
         />
         <StatCard
-          title="Archived Products"
+          title="Out of Stock"
+          value={stats?.stockOut ?? 0}
+          subtitle="Zero inventory"
+          icon={Pause}
+          color="text-red-600"
+          bgColor="bg-red-50"
+          borderColor="bg-red-500"
+        />
+        <StatCard
+          title="Archived"
           value={stats?.archived ?? 0}
           subtitle="Products are archived"
           icon={Archive}
           color="text-blue-600"
           bgColor="bg-blue-50"
           borderColor="bg-blue-500"
-        />
-        <StatCard
-          title="Trash / Deleted"
-          value={stats?.deleted ?? 0}
-          subtitle="Products in trash"
-          icon={Trash2}
-          color="text-red-600"
-          bgColor="bg-red-50"
-          borderColor="bg-red-500"
         />
       </div>
 
@@ -492,34 +524,61 @@ export default function ProductListPage() {
       )}
 
       <Card>
-        <div className="p-4 border-b border-border">
-          <form onSubmit={handleSearch} className="flex gap-3">
-            <div className="relative flex-1">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <form onSubmit={handleSearch} className="flex flex-1 w-full gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
               <input
                 type="text"
-                placeholder={t('products.searchPlaceholder')}
+                placeholder={t('products.searchPlaceholder', 'Search by SKU or name...')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent bg-card text-text-primary"
               />
             </div>
-            <select
-              value={categoryId}
-              onChange={(e) => {
-                setCategoryId(e.target.value);
-                setPage(1);
-              }}
-              className="px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 bg-card text-text-primary"
-            >
-              <option value="">{t('products.allCategories')}</option>
-              {categories?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <Button type="submit" size="sm">
+            
+            <div className="relative min-w-[160px]">
+              <select
+                value={stockFilter}
+                onChange={(e) => {
+                  setStockFilter(e.target.value as any);
+                  setPage(1);
+                }}
+                className="w-full pl-3 pr-8 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 bg-card text-text-primary appearance-none"
+              >
+                <option value="all">All Products</option>
+                <option value="available">Available Products</option>
+                <option value="low-stock">Low Stock Products</option>
+                <option value="out-of-stock">Out of Stock Products</option>
+                <option value="archived">Archived Products</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg className="h-4 w-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+
+            <div className="relative min-w-[160px]">
+              <select
+                value={categoryId}
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-3 pr-8 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 bg-card text-text-primary appearance-none"
+              >
+                <option value="">{t('products.allCategories', 'All Categories')}</option>
+                {categories?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg className="h-4 w-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+
+            <Button type="submit" size="sm" className="hidden sm:flex">
               {t('products.search')}
             </Button>
           </form>
@@ -563,7 +622,7 @@ export default function ProductListPage() {
                   {products.map((p) => (
                     <tr
                       key={p.id}
-                      className="hover:bg-surface/50 transition-colors"
+                      className={cn("hover:bg-surface/50 transition-colors", p.status === 'ARCHIVED' && "opacity-60")}
                     >
                       {canManage && (
                         <td className="px-3 py-4">
@@ -607,11 +666,16 @@ export default function ProductListPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        {p.isDeleted ? (
-                          <StatusBadge status="DELETED" />
-                        ) : (
-                          <StatusBadge status={p.status} />
-                        )}
+                        <div className="flex flex-col gap-1.5 items-start">
+                          {p.isDeleted ? (
+                            <StatusBadge status="DELETED" />
+                          ) : (
+                            <StatusBadge status={p.status} />
+                          )}
+                          {!p.isDeleted && p.status !== 'ARCHIVED' && (
+                            <StockBadge health={p.stockHealth} />
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <ProductActions product={p} onUpdated={() => refetch()} />
@@ -622,8 +686,16 @@ export default function ProductListPage() {
                     <tr>
                       <td colSpan={canManage ? 8 : 7} className="px-6 py-16 text-center">
                         <Package className="h-10 w-10 text-text-secondary/30 mx-auto mb-3" />
-                        <p className="text-text-secondary font-medium">{t('products.empty')}</p>
-                        <p className="text-text-secondary/50 text-xs mt-1">{t('products.emptyHint')}</p>
+                        <p className="text-text-secondary font-medium">
+                          {stockFilter === 'low-stock' 
+                            ? 'No low stock products found 🎉'
+                            : stockFilter === 'out-of-stock'
+                            ? 'All products are sufficiently stocked.'
+                            : t('products.empty')}
+                        </p>
+                        {stockFilter === 'all' && (
+                          <p className="text-text-secondary/50 text-xs mt-1">{t('products.emptyHint')}</p>
+                        )}
                       </td>
                     </tr>
                   )}

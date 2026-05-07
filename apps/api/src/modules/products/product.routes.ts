@@ -27,6 +27,68 @@ const createProductSchema = z.object({
   status: z.nativeEnum(ProductStatus).optional(),
 });
 
+// ─── Inventory stock-health helpers ──────────────────────────────────────────
+
+/**
+ * Classify a product into an inventory health bucket.
+ * availableBoxes = totalBoxes - reservedBoxes across ALL its variants.
+ */
+function classifyProductStockHealth(
+  variants: Array<{ inventoryStock: { totalBoxes: number; reservedBoxes: number } | null }>,
+  minStockAlert: number,
+): 'available' | 'low-stock' | 'out-of-stock' | 'no-stock-data' {
+  if (!variants.length) return 'no-stock-data';
+
+  // Sum across all variants
+  const totalAvailable = variants.reduce((sum, v) => {
+    if (!v.inventoryStock) return sum;
+    return sum + Math.max(0, v.inventoryStock.totalBoxes - v.inventoryStock.reservedBoxes);
+  }, 0);
+
+  const hasStockData = variants.some((v) => v.inventoryStock !== null);
+  if (!hasStockData) return 'no-stock-data';
+
+  if (totalAvailable <= 0) return 'out-of-stock';
+  if (totalAvailable <= minStockAlert) return 'low-stock';
+  return 'available';
+}
+
+/**
+ * Build Prisma `where` clause additions for stock-health filters.
+ * Uses nested variant → inventoryStock filtering.
+ */
+function buildStockFilterWhere(stockFilter: string): Record<string, any> {
+  switch (stockFilter) {
+    case 'available':
+      // At least one variant whose available stock > 0 (we post-filter more precisely in application)
+      return {
+        variants: {
+          some: {
+            inventoryStock: { isNot: null },
+          },
+        },
+      };
+    case 'low-stock':
+      return {
+        variants: {
+          some: {
+            inventoryStock: { isNot: null },
+          },
+        },
+      };
+    case 'out-of-stock':
+      // Products where every variant either has no stock record or available <= 0
+      // We use a DB-friendly approach: product has no variant with available > 0
+      return {}; // refined in application code post-fetch
+    case 'archived':
+      return { status: ProductStatus.ARCHIVED };
+    default:
+      return {};
+  }
+}
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
 export const productRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/products
   fastify.get('/', { preHandler: fastify.requireAuth }, async (request, reply) => {
@@ -37,11 +99,14 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
       status?: string;
       isDeleted?: string;
       search?: string;
+      stockFilter?: string; // 'available' | 'low-stock' | 'out-of-stock' | 'archived'
     };
-    const { page, limit, skip } = parsePagination({ 
-      page: query.page ? Number(query.page) : undefined, 
-      limit: query.limit ? Number(query.limit) : undefined 
+    const { page, limit, skip } = parsePagination({
+      page: query.page ? Number(query.page) : undefined,
+      limit: query.limit ? Number(query.limit) : undefined,
     });
+
+    const stockFilter = query.stockFilter?.toLowerCase() ?? '';
 
     const where: Record<string, any> = {};
     if (query.categoryId) where.categoryId = query.categoryId;
@@ -49,12 +114,18 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
     // Default: exclude deleted products unless explicitly requested
     where.isDeleted = query.isDeleted === 'true';
 
-    if (query.status) {
+    // Stock-based lifecycle override: archived filter maps to status
+    if (stockFilter === 'archived') {
+      where.status = ProductStatus.ARCHIVED;
+      where.isDeleted = false;
+    } else if (query.status) {
       where.status = query.status as ProductStatus;
-    } else if (!query.isDeleted || query.isDeleted === 'false') {
-      // By default, only show non-deleted products
-      // If status is not provided, we might want to filter by active by default in some views, 
-      // but usually the main list wants all non-deleted (Active + Inactive + Archived)
+    }
+
+    // Add stock pre-filter hint (broad) — refined in application code below
+    if (stockFilter && stockFilter !== 'archived') {
+      const stockWhere = buildStockFilterWhere(stockFilter);
+      Object.assign(where, stockWhere);
     }
 
     if (query.search) {
@@ -65,6 +136,55 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
+      // When a stock filter is active (except archived), we need to fetch with inventory
+      // data to do precise application-level classification, then paginate in code.
+      const needsStockClassification = stockFilter && stockFilter !== 'archived';
+
+      if (needsStockClassification) {
+        // Fetch ALL matching products with inventory data for precise classification
+        const allProducts = await fastify.prisma.product.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            category: { select: { id: true, name: true, slug: true } },
+            _count: { select: { variants: true } },
+            variants: {
+              select: {
+                id: true,
+                inventoryStock: {
+                  select: { totalBoxes: true, reservedBoxes: true },
+                },
+              },
+            },
+          },
+        });
+
+        // Classify and filter precisely
+        const filtered = allProducts.filter((p) => {
+          const health = classifyProductStockHealth(p.variants, p.minStockAlert);
+          if (stockFilter === 'available') return health === 'available';
+          if (stockFilter === 'low-stock') return health === 'low-stock';
+          if (stockFilter === 'out-of-stock') return health === 'out-of-stock' || health === 'no-stock-data';
+          return true;
+        });
+
+        // Apply pagination in application code
+        const total = filtered.length;
+        const paginated = filtered.slice(skip, skip + limit);
+
+        // Strip variants from response (not needed by list UI)
+        const items = paginated.map(({ variants: _v, ...rest }) => ({
+          ...rest,
+          stockHealth: classifyProductStockHealth(
+            (paginated.find((p) => p.id === rest.id)?.variants ?? []),
+            rest.minStockAlert,
+          ),
+        }));
+
+        return reply.send(successResponse(items, buildPaginationMeta(total, page, limit)));
+      }
+
+      // Standard path: no stock classification needed
       const [products, total] = await Promise.all([
         fastify.prisma.product.findMany({
           where,
@@ -89,6 +209,7 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/products/stats
   fastify.get('/stats', { preHandler: fastify.requireAuth }, async (request, reply) => {
     try {
+      // Lifecycle counts
       const [total, active, inactive, archived, deleted] = await Promise.all([
         fastify.prisma.product.count({ where: { isDeleted: false } as any }),
         fastify.prisma.product.count({ where: { status: ProductStatus.ACTIVE, isDeleted: false } as any }),
@@ -97,12 +218,43 @@ export const productRoutes: FastifyPluginAsync = async (fastify) => {
         fastify.prisma.product.count({ where: { isDeleted: true } as any }),
       ]);
 
+      // Inventory health counts — fetch non-deleted, non-archived products with stock data
+      const productsWithStock = await fastify.prisma.product.findMany({
+        where: { isDeleted: false, status: { not: ProductStatus.ARCHIVED } } as any,
+        select: {
+          id: true,
+          minStockAlert: true,
+          variants: {
+            select: {
+              inventoryStock: {
+                select: { totalBoxes: true, reservedBoxes: true },
+              },
+            },
+          },
+        },
+      });
+
+      let stockAvailable = 0;
+      let stockLow = 0;
+      let stockOut = 0;
+
+      for (const p of productsWithStock) {
+        const health = classifyProductStockHealth(p.variants, p.minStockAlert);
+        if (health === 'available') stockAvailable++;
+        else if (health === 'low-stock') stockLow++;
+        else if (health === 'out-of-stock' || health === 'no-stock-data') stockOut++;
+      }
+
       return reply.send(successResponse({
         total,
         active,
         inactive,
         archived,
-        deleted
+        deleted,
+        // Inventory health
+        stockAvailable,
+        stockLow,
+        stockOut,
       }));
     } catch (err) {
       fastify.log.error(err, 'Failed to fetch product stats');
