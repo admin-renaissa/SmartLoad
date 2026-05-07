@@ -408,6 +408,7 @@ export class InventoryService {
 
     let grandTotalPaise = 0;
     let grandTotalBoxes = 0;
+    let grandTotalReservedBoxes = 0;
     let unvaluedVariants = 0;
 
     for (const s of stocks) {
@@ -430,6 +431,7 @@ export class InventoryService {
       cat.totalBoxes += available;
       cat.variantCount += 1;
       grandTotalBoxes += available;
+      grandTotalReservedBoxes += s.reservedBoxes;
 
       if (mrp && mrp > 0) {
         const lineValue = available * mrp;
@@ -444,6 +446,8 @@ export class InventoryService {
       categories: [...categoryMap.values()],
       grandTotalPaise,
       grandTotalBoxes,
+      grandTotalReservedBoxes,
+      totalVariants: stocks.length,
       unvaluedVariants,
       generatedAt: new Date().toISOString(),
     };
