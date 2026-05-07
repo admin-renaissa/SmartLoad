@@ -245,10 +245,10 @@ export default function CreateOrderPage() {
                 /* Selected state — show chip with clear button */
                 <div className="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{selectedClient.name}</p>
-                    <p className="text-xs text-gray-500 font-mono">{selectedClient.clientCode}</p>
+                    <p className="font-semibold text-text-primary truncate">{selectedClient.name}</p>
+                    <p className="text-xs text-text-secondary font-mono">{selectedClient.clientCode}</p>
                     {selectedClient.phone && (
-                      <p className="text-xs text-gray-500">{selectedClient.phone}</p>
+                      <p className="text-xs text-text-secondary">{selectedClient.phone}</p>
                     )}
                   </div>
                   <button
@@ -263,7 +263,7 @@ export default function CreateOrderPage() {
               ) : (
                 /* Search state */
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
                   <input
                     id="client-search"
                     type="text"
@@ -284,7 +284,7 @@ export default function CreateOrderPage() {
 
                   {/* Dropdown */}
                   {clientDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-56 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-20 max-h-56 overflow-y-auto">
                       {isSession401 ? (
                         <div className="px-3 py-3 text-sm text-center">
                           <p className="text-red-500 font-medium">Session expired.</p>
@@ -297,11 +297,11 @@ export default function CreateOrderPage() {
                           </button>
                         </div>
                       ) : clientResults.length === 0 && clientSearch.length === 0 ? (
-                        <div className="px-3 py-3 text-sm text-gray-400 text-center">
+                        <div className="px-3 py-3 text-sm text-text-secondary/50 text-center">
                           Loading clients…
                         </div>
                       ) : clientResults.length === 0 ? (
-                        <div className="px-3 py-3 text-sm text-gray-500 text-center">
+                        <div className="px-3 py-3 text-sm text-text-secondary text-center">
                           No clients found for "{clientSearch}"
                           <br />
                           <a
@@ -317,12 +317,12 @@ export default function CreateOrderPage() {
                           <button
                             key={c.id}
                             type="button"
-                            className="w-full px-3 py-2.5 text-left hover:bg-gray-50 transition-colors border-b last:border-b-0 border-gray-50"
+                            className="w-full px-3 py-2.5 text-left hover:bg-surface transition-colors border-b last:border-b-0 border-border"
                             onMouseDown={(e) => e.preventDefault()} // prevent blur before click
                             onClick={() => selectClient(c)}
                           >
-                            <p className="text-sm font-medium text-gray-900">{c.name}</p>
-                            <p className="text-xs text-gray-500 font-mono">{c.clientCode} · {c.phone}</p>
+                            <p className="text-sm font-medium text-text-primary">{c.name}</p>
+                            <p className="text-xs text-text-secondary font-mono">{c.clientCode} · {c.phone}</p>
                           </button>
                         ))
                       )}
@@ -340,10 +340,10 @@ export default function CreateOrderPage() {
 
               {/* Hint while typing */}
               {!selectedClient && !showClientError && clientSearch.length > 0 && clientSearch.length < 2 && (
-                <p className="mt-1.5 text-xs text-gray-400">Type at least 2 characters to search</p>
+                <p className="mt-1.5 text-xs text-text-secondary/50">Type at least 2 characters to search</p>
               )}
               {!selectedClient && !showClientError && clientSearch.length === 0 && (
-                <p className="mt-1.5 text-xs text-gray-400">Search and select a client to continue</p>
+                <p className="mt-1.5 text-xs text-text-secondary/50">Search and select a client to continue</p>
               )}
             </CardContent>
           </Card>
@@ -353,18 +353,18 @@ export default function CreateOrderPage() {
             <CardHeader><CardTitle>Order Details</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Order Date *</label>
+                <label className="block text-sm font-medium text-text-primary mb-1">Order Date *</label>
                 <input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Expected Dispatch</label>
+                <label className="block text-sm font-medium text-text-primary mb-1">Expected Dispatch</label>
                 <input type="date" value={expectedDispatchDate} onChange={(e) => setExpectedDispatchDate(e.target.value)}
                   min={orderDate}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-text-primary mb-1">Notes</label>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
                   rows={3} placeholder="Special instructions…"
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none" />
@@ -377,15 +377,15 @@ export default function CreateOrderPage() {
             <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
             <CardContent>
               <dl className="space-y-2 text-sm">
-                <div className="flex justify-between"><dt className="text-gray-500">Subtotal</dt><dd className="font-medium">₹{subtotal.toFixed(2)}</dd></div>
-                <div className="flex justify-between"><dt className="text-gray-500">GST</dt><dd className="font-medium">₹{gstAmount.toFixed(2)}</dd></div>
-                <div className="flex justify-between border-t border-gray-100 pt-2 mt-2">
-                  <dt className="font-semibold text-gray-900">Total</dt>
+                <div className="flex justify-between"><dt className="text-text-secondary">Subtotal</dt><dd className="font-medium text-text-primary">₹{subtotal.toFixed(2)}</dd></div>
+                <div className="flex justify-between"><dt className="text-text-secondary">GST</dt><dd className="font-medium text-text-primary">₹{gstAmount.toFixed(2)}</dd></div>
+                <div className="flex justify-between border-t border-border pt-2 mt-2">
+                  <dt className="font-semibold text-text-primary">Total</dt>
                   <dd className="font-bold text-accent">₹{totalAmount.toFixed(2)}</dd>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <div className="flex justify-between text-xs text-text-secondary mt-1">
                   <dt>Total Boxes</dt>
-                  <dd>{lineItems.reduce((s, li) => s + li.orderedBoxes, 0)}</dd>
+                  <dd className="text-text-primary">{lineItems.reduce((s, li) => s + li.orderedBoxes, 0)}</dd>
                 </div>
               </dl>
             </CardContent>
@@ -395,7 +395,7 @@ export default function CreateOrderPage() {
         {/* ── Right Column: Line Items ── */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">
+            <h2 className="text-base font-semibold text-text-primary">
               Line Items ({lineItems.length})
               {hasAttempted && !!itemsError && (
                 <span className="text-red-500 text-sm font-normal ml-2">— {itemsError}</span>
@@ -412,7 +412,7 @@ export default function CreateOrderPage() {
               <CardContent className="pt-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
                     <input
                       autoFocus
                       type="text"
@@ -437,15 +437,15 @@ export default function CreateOrderPage() {
                         <button
                           key={v.id}
                           disabled={alreadyAdded}
-                          className="w-full text-left px-3 py-2 rounded-lg border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full text-left px-3 py-2 rounded-lg border border-border hover:bg-surface hover:border-border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={() => addVariant(v)}
                         >
                           <div className="flex items-center justify-between">
                             <div>
                               <span className="font-mono text-xs text-accent">{v.product?.sku}</span>
-                              <span className="text-sm font-medium text-gray-900 ml-2">{v.colourName}</span>
-                              <span className="text-xs text-gray-500 ml-1">({v.colourCode})</span>
-                              {dims && <span className="text-xs text-gray-400 ml-2">{dims}mm</span>}
+                              <span className="text-sm font-medium text-text-primary ml-2">{v.colourName}</span>
+                              <span className="text-xs text-text-secondary ml-1">({v.colourCode})</span>
+                              {dims && <span className="text-xs text-text-secondary/50 ml-2">{dims}mm</span>}
                             </div>
                             <div className="text-right">
                               <span className={`text-xs font-medium ${avail > 0 ? 'text-green-600' : 'text-red-500'}`}>{avail} in stock</span>
@@ -466,9 +466,9 @@ export default function CreateOrderPage() {
             <Card className={hasAttempted && !!itemsError ? 'ring-2 ring-red-300' : ''}>
               <CardContent>
                 <div className="text-center py-12">
-                  <ShoppingCart className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 font-medium">No line items yet</p>
-                  <p className="text-gray-400 text-xs mt-1">Click &ldquo;Add Product&rdquo; to start building the order</p>
+                  <ShoppingCart className="h-10 w-10 text-text-secondary/30 mx-auto mb-3" />
+                  <p className="text-text-secondary font-medium">No line items yet</p>
+                  <p className="text-text-secondary/50 text-xs mt-1">Click &ldquo;Add Product&rdquo; to start building the order</p>
                   <Button variant="outline" size="sm" className="mt-4" icon={<Plus className="h-4 w-4" />} onClick={() => setShowVariantSearch(true)}>
                     Add Product
                   </Button>
@@ -489,14 +489,14 @@ export default function CreateOrderPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="font-mono text-xs text-accent">{li.variant.product?.sku}</span>
-                            <span className="font-medium text-gray-900">{li.variant.colourName}</span>
-                            <span className="text-xs text-gray-500">({li.variant.colourCode})</span>
-                            {dims && <span className="text-xs text-gray-400">{dims}mm</span>}
-                            <span className="text-xs text-gray-400 ml-auto">{avail} available</span>
+                            <span className="font-medium text-text-primary">{li.variant.colourName}</span>
+                            <span className="text-xs text-text-secondary">({li.variant.colourCode})</span>
+                            {dims && <span className="text-xs text-text-secondary/50">{dims}mm</span>}
+                            <span className="text-xs text-text-secondary/50 ml-auto">{avail} available</span>
                           </div>
                           <div className="grid grid-cols-3 gap-3">
                             <div>
-                              <label className="block text-xs text-gray-500 mb-1">Boxes Ordered *</label>
+                              <label className="block text-xs text-text-secondary mb-1">Boxes Ordered *</label>
                               <input
                                 type="number"
                                 min={1}
@@ -506,7 +506,7 @@ export default function CreateOrderPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-gray-500 mb-1">
+                              <label className="block text-xs text-text-secondary mb-1">
                                 Rate/Box (₹) *
                                 {rateInvalid && <span className="text-red-500 ml-1">Required</span>}
                               </label>
@@ -525,7 +525,7 @@ export default function CreateOrderPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-gray-500 mb-1">GST %</label>
+                              <label className="block text-xs text-text-secondary mb-1">GST %</label>
                               <select
                                 value={li.gstPercent}
                                 onChange={(e) => updateLineItem(idx, { gstPercent: Number(e.target.value) })}
@@ -537,8 +537,8 @@ export default function CreateOrderPage() {
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="font-bold text-gray-900">₹{lineTotal.toFixed(2)}</p>
-                          <p className="text-xs text-gray-500">{li.orderedBoxes} × ₹{li.ratePerBox}</p>
+                          <p className="font-bold text-text-primary">₹{lineTotal.toFixed(2)}</p>
+                          <p className="text-xs text-text-secondary">{li.orderedBoxes} × ₹{li.ratePerBox}</p>
                           <button
                             className="mt-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
                             onClick={() => removeLineItem(idx)}

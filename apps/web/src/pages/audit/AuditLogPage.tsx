@@ -60,19 +60,19 @@ const RESOURCE_TYPES = [
 ];
 
 const METHOD_COLORS: Record<string, string> = {
-  POST:   'bg-emerald-100 text-emerald-800',
-  PATCH:  'bg-blue-100 text-blue-800',
-  PUT:    'bg-blue-100 text-blue-800',
-  DELETE: 'bg-red-100 text-red-800',
+  POST:   'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20',
+  PATCH:  'bg-blue-500/10 text-blue-500 border border-blue-500/20',
+  PUT:    'bg-blue-500/10 text-blue-500 border border-blue-500/20',
+  DELETE: 'bg-red-500/10 text-red-500 border border-red-500/20',
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN:      'bg-purple-100 text-purple-800',
-  SUPERVISOR: 'bg-blue-100 text-blue-700',
-  OPERATOR:   'bg-orange-100 text-orange-700',
-  ACCOUNTS:   'bg-teal-100 text-teal-700',
-  DRIVER:     'bg-gray-100 text-gray-700',
-  CLIENT:     'bg-amber-100 text-amber-700',
+  ADMIN:      'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+  SUPERVISOR: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+  OPERATOR:   'bg-orange-500/10 text-orange-400 border border-orange-500/20',
+  ACCOUNTS:   'bg-teal-500/10 text-teal-400 border border-teal-500/20',
+  DRIVER:     'bg-surface text-text-secondary border border-border',
+  CLIENT:     'bg-amber-500/10 text-amber-400 border border-amber-500/20',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -121,26 +121,26 @@ function resourceLabel(r: string): string {
 
 function resourceChipColor(r: string): string {
   const map: Record<string, string> = {
-    sessions: 'bg-blue-100 text-blue-700',
-    products: 'bg-lime-100 text-lime-700',
-    orders:   'bg-amber-100 text-amber-700',
-    clients:  'bg-teal-100 text-teal-700',
-    vehicles: 'bg-orange-100 text-orange-700',
-    devices:  'bg-purple-100 text-purple-700',
-    users:    'bg-pink-100 text-pink-700',
-    settings: 'bg-gray-100 text-gray-600',
-    grn:      'bg-emerald-100 text-emerald-700',
-    pod:      'bg-sky-100 text-sky-700',
+    sessions: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+    products: 'bg-lime-500/10 text-lime-400 border border-lime-500/20',
+    orders:   'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+    clients:  'bg-teal-500/10 text-teal-400 border border-teal-500/20',
+    vehicles: 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
+    devices:  'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+    users:    'bg-pink-500/10 text-pink-400 border border-pink-500/20',
+    settings: 'bg-surface text-text-secondary border border-border',
+    grn:      'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+    pod:      'bg-sky-500/10 text-sky-400 border border-sky-500/20',
   };
-  return map[r] ?? 'bg-gray-100 text-gray-600';
+  return map[r] ?? 'bg-surface text-text-secondary border border-border';
 }
 
 function JsonBlock({ label, value }: { label: string; value: unknown }) {
   if (value === null || value === undefined) return null;
   return (
     <div>
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</p>
-      <pre className="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all text-gray-700">
+      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">{label}</p>
+      <pre className="text-xs bg-surface border border-border rounded-lg p-3 overflow-x-auto whitespace-pre-wrap break-all text-text-primary font-mono shadow-inner">
         {JSON.stringify(value, null, 2)}
       </pre>
     </div>
@@ -152,23 +152,23 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
 function ExpandedRow({ entry, colSpan }: { entry: AuditLogEntry; colSpan: number }) {
   const hasChanges = entry.oldValues !== null || entry.newValues !== null;
   return (
-    <tr className="bg-gray-50/80">
-      <td colSpan={colSpan} className="px-6 py-4">
+    <tr className="bg-surface/30">
+      <td colSpan={colSpan} className="px-6 py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Full action</p>
-            <p className="text-xs font-mono text-gray-700 break-all">{entry.action}</p>
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Full action</p>
+            <p className="text-xs font-mono text-text-primary break-all bg-surface px-2 py-1 rounded border border-border">{entry.action}</p>
           </div>
           {entry.ipAddress && (
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">IP Address</p>
-              <p className="text-xs font-mono text-gray-700">{entry.ipAddress}</p>
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">IP Address</p>
+              <p className="text-xs font-mono text-text-primary bg-surface px-2 py-1 rounded border border-border w-fit">{entry.ipAddress}</p>
             </div>
           )}
           {entry.userAgent && (
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">User agent</p>
-              <p className="text-xs text-gray-500 break-all">{entry.userAgent}</p>
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">User agent</p>
+              <p className="text-xs text-text-secondary break-all bg-surface px-2 py-1 rounded border border-border italic opacity-70 leading-relaxed">{entry.userAgent}</p>
             </div>
           )}
         </div>
@@ -195,23 +195,23 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
   return (
     <>
       <tr
-        className={`hover:bg-gray-50 transition-colors ${hasDetail ? 'cursor-pointer' : ''}`}
+        className={`border-t border-border hover:bg-surface transition-colors ${hasDetail ? 'cursor-pointer' : ''}`}
         onClick={hasDetail ? () => setExpanded((s) => !s) : undefined}
       >
         {/* Time */}
-        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+        <td className="px-4 py-4 text-[10px] font-bold text-text-secondary whitespace-nowrap uppercase tracking-tighter">
           {formatTs(entry.createdAt)}
         </td>
 
         {/* User */}
-        <td className="px-4 py-3">
-          <p className="text-sm font-medium text-gray-800 leading-none">
+        <td className="px-4 py-4">
+          <p className="text-sm font-bold text-text-primary leading-none">
             {entry.user?.name ?? entry.userEmail}
           </p>
-          <p className="text-xs text-gray-400 mt-0.5">{entry.userEmail}</p>
+          <p className="text-xs text-text-secondary opacity-60 mt-0.5">{entry.userEmail}</p>
           <span
-            className={`mt-1 inline-block text-xs px-1.5 py-0.5 rounded font-medium ${
-              ROLE_COLORS[entry.userRole] ?? 'bg-gray-100 text-gray-600'
+            className={`mt-2 inline-block text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+              ROLE_COLORS[entry.userRole] ?? 'bg-surface text-text-secondary border border-border'
             }`}
           >
             {entry.userRole}
@@ -219,44 +219,44 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
         </td>
 
         {/* Action */}
-        <td className="px-4 py-3">
+        <td className="px-4 py-4">
           <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`text-xs px-1.5 py-0.5 rounded font-mono font-semibold ${
-                METHOD_COLORS[method] ?? 'bg-gray-100 text-gray-700'
+              className={`text-[10px] px-2 py-0.5 rounded font-mono font-black uppercase tracking-tighter ${
+                METHOD_COLORS[method] ?? 'bg-surface text-text-secondary border border-border'
               }`}
             >
               {method}
             </span>
-            <span className="text-xs font-mono text-gray-600 break-all max-w-[200px] truncate">
+            <span className="text-xs font-mono text-text-primary break-all max-w-[200px] truncate opacity-80">
               {path}
             </span>
           </div>
         </td>
 
         {/* Resource */}
-        <td className="px-4 py-3">
+        <td className="px-4 py-4">
           <span
-            className={`text-xs px-2 py-0.5 rounded-full font-medium ${resourceChipColor(entry.resourceType)}`}
+            className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-widest ${resourceChipColor(entry.resourceType)}`}
           >
             {resourceLabel(entry.resourceType)}
           </span>
           {entry.resourceId && (
-            <p className="text-xs font-mono text-gray-400 mt-0.5 truncate max-w-[120px]">
-              {entry.resourceId}
+            <p className="text-[10px] font-mono text-text-secondary mt-1.5 truncate max-w-[120px] opacity-40">
+              ID: {entry.resourceId}
             </p>
           )}
         </td>
 
         {/* IP */}
-        <td className="px-4 py-3 text-xs font-mono text-gray-500">
+        <td className="px-4 py-4 text-[10px] font-mono text-text-secondary opacity-60">
           {entry.ipAddress ?? '—'}
         </td>
 
         {/* Expand */}
-        <td className="px-4 py-3 text-right">
+        <td className="px-4 py-4 text-right">
           {hasDetail && (
-            <span className="text-gray-400">
+            <span className="text-text-secondary opacity-30">
               {expanded ? (
                 <ChevronUp className="h-4 w-4 inline" />
               ) : (
@@ -363,7 +363,7 @@ export default function AuditLogPage() {
   }, [entries]);
 
   const inputCls =
-    'px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 bg-white';
+    'px-3 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30';
 
   return (
     <div className="space-y-6">
@@ -395,22 +395,22 @@ export default function AuditLogPage() {
           },
         ].map(({ icon, label, value, sub }) => (
           <Card key={label}>
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-accent opacity-70">{icon}</span>
-                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
+            <CardContent className="py-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-accent">{icon}</span>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">{label}</p>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+              <p className="text-2xl font-black text-text-primary tracking-tight">{value}</p>
+              <p className="text-[10px] text-text-secondary mt-1 italic opacity-60 font-medium">{sub}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Action methods</CardTitle>
-          <p className="text-sm text-gray-500 font-normal">Distribution in loaded entries</p>
+        <CardHeader className="bg-surface/30 border-b border-border">
+          <CardTitle className="text-text-primary">Action methods</CardTitle>
+          <p className="text-xs text-text-secondary font-medium italic opacity-60">Distribution in current results</p>
         </CardHeader>
         <CardContent>
           <DonutChart data={methodSlices} height={220} showLegend />
@@ -423,7 +423,7 @@ export default function AuditLogPage() {
           <div className="flex flex-wrap gap-3 items-end">
             {/* Search */}
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary opacity-40" />
               <input
                 className={`${inputCls} pl-9 w-full`}
                 placeholder="Search by action or email…"
@@ -451,8 +451,8 @@ export default function AuditLogPage() {
             </select>
 
             {/* Date from */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500 whitespace-nowrap">From</label>
+            <div className="flex items-center gap-3">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest whitespace-nowrap">From</label>
               <input
                 type="date"
                 className={inputCls}
@@ -465,8 +465,8 @@ export default function AuditLogPage() {
             </div>
 
             {/* Date to */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500 whitespace-nowrap">To</label>
+            <div className="flex items-center gap-3">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest whitespace-nowrap">To</label>
               <input
                 type="date"
                 className={inputCls}
@@ -506,38 +506,38 @@ export default function AuditLogPage() {
       ) : (
         <Card>
           {/* Mobile: stacked cards */}
-          <div className="sm:hidden divide-y divide-gray-50">
+          <div className="sm:hidden divide-y divide-border">
             {entries.length > 0 ? (
               entries.map((entry) => {
                 const { method, path } = parseAction(entry.action);
                 return (
-                  <div key={entry.id} className="px-4 py-4">
+                  <div key={entry.id} className="px-4 py-5 hover:bg-surface transition-colors">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500 whitespace-nowrap">
+                      <div className="min-w-0 space-y-1.5">
+                        <p className="text-[10px] font-bold text-text-secondary uppercase tracking-tighter">
                           {formatTs(entry.createdAt)}
                         </p>
-                        <p className="text-sm font-medium text-gray-800 truncate">
+                        <p className="text-sm font-bold text-text-primary">
                           {entry.user?.name ?? entry.userEmail}
                         </p>
-                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span
-                            className={`text-xs px-1.5 py-0.5 rounded font-mono font-semibold ${METHOD_COLORS[method] ?? 'bg-gray-100 text-gray-700'}`}
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-black uppercase tracking-tighter ${METHOD_COLORS[method] ?? 'bg-surface text-text-secondary'}`}
                           >
                             {method}
                           </span>
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${resourceChipColor(entry.resourceType)}`}
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${resourceChipColor(entry.resourceType)}`}
                           >
                             {resourceLabel(entry.resourceType)}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 break-all">
+                        <p className="text-xs text-text-secondary break-all font-mono opacity-80 leading-relaxed">
                           {path || entry.action}
                           {entry.resourceId ? ` · ${entry.resourceId}` : ''}
                         </p>
                         {entry.ipAddress ? (
-                          <p className="text-xs font-mono text-gray-500 mt-1">{entry.ipAddress}</p>
+                          <p className="text-[10px] font-mono text-text-secondary opacity-40">{entry.ipAddress}</p>
                         ) : null}
                       </div>
                     </div>
@@ -545,10 +545,10 @@ export default function AuditLogPage() {
                 );
               })
             ) : (
-              <div className="px-6 py-16 text-center text-gray-400">
-                <Shield className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p className="font-medium">No audit log entries found</p>
-                <p className="text-xs mt-1">Try adjusting the filters above.</p>
+              <div className="px-6 py-20 text-center">
+                <Shield className="h-12 w-12 mx-auto mb-4 text-border opacity-20" />
+                <p className="font-bold text-text-primary">No audit log entries found</p>
+                <p className="text-xs text-text-secondary mt-1 italic opacity-60">Try adjusting the filters above.</p>
               </div>
             )}
           </div>
@@ -557,24 +557,24 @@ export default function AuditLogPage() {
           <div className="hidden sm:block overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                  <th className="px-4 py-3 text-left">Time</th>
-                  <th className="px-4 py-3 text-left">User</th>
-                  <th className="px-4 py-3 text-left">Action</th>
-                  <th className="px-4 py-3 text-left">Resource</th>
-                  <th className="px-4 py-3 text-left">IP</th>
-                  <th className="px-4 py-3"></th>
+                <tr className="bg-surface text-[10px] text-text-secondary uppercase font-bold tracking-widest border-b border-border">
+                  <th className="px-4 py-4 text-left">Time</th>
+                  <th className="px-4 py-4 text-left">User</th>
+                  <th className="px-4 py-4 text-left">Action</th>
+                  <th className="px-4 py-4 text-left">Resource</th>
+                  <th className="px-4 py-4 text-left">IP</th>
+                  <th className="px-4 py-4"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-border">
                 {entries.length > 0 ? (
                   entries.map((entry) => <AuditRow key={entry.id} entry={entry} />)
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-16 text-center text-gray-400">
-                      <Shield className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                      <p className="font-medium">No audit log entries found</p>
-                      <p className="text-xs mt-1">Try adjusting the filters above.</p>
+                    <td colSpan={6} className="px-6 py-24 text-center">
+                      <Shield className="h-16 w-16 mx-auto mb-4 text-border opacity-20" />
+                      <p className="font-bold text-text-primary">No audit log entries found</p>
+                      <p className="text-xs text-text-secondary mt-1 italic opacity-60">Try adjusting the filters above.</p>
                     </td>
                   </tr>
                 )}
@@ -584,10 +584,10 @@ export default function AuditLogPage() {
 
           {/* Pagination */}
           {meta && meta.totalPages > 1 && (
-            <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-              <span>
-                Page {meta.page} of {meta.totalPages}{' '}
-                <span className="text-gray-400">({meta.total.toLocaleString()} total)</span>
+            <div className="px-6 py-4 border-t border-border flex items-center justify-between text-xs font-medium">
+              <span className="text-text-secondary">
+                Page <strong className="text-text-primary">{meta.page}</strong> of {meta.totalPages}{' '}
+                <span className="opacity-40 italic">({meta.total.toLocaleString()} total)</span>
               </span>
               <div className="flex gap-2">
                 <Button

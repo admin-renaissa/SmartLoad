@@ -216,7 +216,7 @@ export default function SettingsPage() {
   });
 
   if (isLoading) {
-    return <div className="text-gray-500">Loading…</div>;
+    return <div className="text-text-secondary italic">Loading settings…</div>;
   }
 
   const twoFaEnabled = Boolean(profile?.twoFactorEnabled);
@@ -230,7 +230,7 @@ export default function SettingsPage() {
           <CardTitle>Security health</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-gray-500 mb-3">
+          <div className="text-sm text-text-secondary mb-4 italic font-medium opacity-60">
             Two-factor authentication status for this account
           </div>
           <DonutChart
@@ -247,14 +247,14 @@ export default function SettingsPage() {
       {canManageUsers && (
         <Link
           to="/app/users"
-          className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-accent/40 hover:bg-accent/5 transition-colors"
+          className="flex items-center gap-4 p-5 rounded-2xl border border-border bg-card hover:bg-surface transition-all shadow-sm group"
         >
-          <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-            <UserCog className="h-5 w-5 text-accent" />
+          <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center transition-transform group-hover:scale-110">
+            <UserCog className="h-6 w-6 text-accent" />
           </div>
           <div>
-            <p className="font-medium text-gray-900">User management</p>
-            <p className="text-sm text-gray-500">Create users, assign roles, and deactivate accounts</p>
+            <p className="font-bold text-text-primary text-lg">User management</p>
+            <p className="text-sm text-text-secondary opacity-70">Create users, assign roles, and deactivate accounts</p>
           </div>
         </Link>
       )}
@@ -262,14 +262,14 @@ export default function SettingsPage() {
       {isAdmin && (
         <Link
           to="/app/devices"
-          className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-accent/40 hover:bg-accent/5 transition-colors"
+          className="flex items-center gap-4 p-5 rounded-2xl border border-border bg-card hover:bg-surface transition-all shadow-sm group"
         >
-          <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-            <ScanLine className="h-5 w-5 text-accent" />
+          <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center transition-transform group-hover:scale-110">
+            <ScanLine className="h-6 w-6 text-accent" />
           </div>
           <div>
-            <p className="font-medium text-gray-900">Scanner devices</p>
-            <p className="text-sm text-gray-500">Register and manage barcode scanning hardware</p>
+            <p className="font-bold text-text-primary text-lg">Scanner devices</p>
+            <p className="text-sm text-text-secondary opacity-70">Register and manage barcode scanning hardware</p>
           </div>
         </Link>
       )}
@@ -280,25 +280,25 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           {profile && (
-            <p className="text-sm text-gray-500 mb-4">
-              Signed in as <span className="font-mono text-gray-700">{profile.email}</span>
-              <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{profile.role}</span>
+            <p className="text-sm text-text-secondary mb-6 p-3 bg-surface rounded-lg border border-border">
+              Signed in as <span className="font-mono text-text-primary font-bold">{profile.email}</span>
+              <span className="ml-3 text-[10px] bg-accent/10 text-accent border border-accent/20 px-2 py-0.5 rounded font-black uppercase tracking-widest">{profile.role}</span>
             </p>
           )}
           <form onSubmit={submitProfile((d) => profileMutation.mutate(d))} className="space-y-4 max-w-md">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Name</label>
               <input
                 {...regProfile('name')}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
               />
-              {errProfile.name && <p className="mt-1 text-xs text-red-600">{errProfile.name.message}</p>}
+              {errProfile.name && <p className="mt-1 text-xs text-red-500 font-medium">{errProfile.name.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Phone</label>
               <input
                 {...regProfile('phone')}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
+                className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
               />
             </div>
             <Button type="submit" loading={profileMutation.isPending}>Save profile</Button>
@@ -311,11 +311,11 @@ export default function SettingsPage() {
           <CardTitle>Language (scan app)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-text-secondary italic">
             Affects offline banner and other scan strings. Stored in this browser only.
           </p>
           <select
-            className="w-full max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-lg"
+            className="w-full max-w-xs px-3 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
             value={uiLang}
             onChange={(e) => {
               const v = e.target.value as UiLang;
@@ -336,12 +336,12 @@ export default function SettingsPage() {
             <CardTitle>Tally → variant map</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <p className="text-gray-600">
+            <p className="text-text-secondary italic">
               JSON object mapping a Tally item name (string key) to a SmartLoad product variant id. Used when
               pulling sales orders from Tally.
             </p>
             <textarea
-              className="w-full font-mono text-xs border border-gray-200 rounded-lg p-2 min-h-[160px] focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="w-full font-mono text-xs border border-border rounded-lg p-3 min-h-[160px] bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30 shadow-inner"
               value={tallyMapJson}
               onChange={(e) => setTallyMapJson(e.target.value)}
               spellCheck={false}
@@ -364,9 +364,9 @@ export default function SettingsPage() {
             <CardTitle>Two-factor authentication (TOTP)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <p className="text-gray-600">
+            <p className="text-text-secondary font-medium">
               Status:{' '}
-              <span className="font-medium text-gray-900">
+              <span className="font-black text-text-primary uppercase tracking-wider ml-1">
                 {profile?.twoFactorEnabled ? 'Enabled' : 'Not enabled'}
               </span>
             </p>
@@ -376,19 +376,19 @@ export default function SettingsPage() {
                   Set up authenticator
                 </Button>
                 {twoFaBundle && (
-                  <div className="space-y-2 rounded-lg bg-gray-50 p-3 border border-gray-100">
-                    <p className="text-xs text-gray-500 break-all font-mono">{twoFaBundle.otpauthUrl}</p>
+                  <div className="space-y-3 rounded-xl bg-surface p-4 border border-border shadow-inner">
+                    <p className="text-[10px] text-text-secondary break-all font-mono opacity-60 leading-relaxed">{twoFaBundle.otpauthUrl}</p>
                     <input
                       type="text"
                       inputMode="numeric"
                       placeholder="6-digit code"
-                      className="w-full px-3 py-2 border rounded-lg font-mono"
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-card text-text-primary font-black text-center tracking-[0.5em] outline-none focus:ring-2 focus:ring-accent/30"
                       value={enrollOtp}
                       onChange={(e) => setEnrollOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
                     />
                     <Button
                       type="button"
-                      size="sm"
+                      className="w-full"
                       disabled={enrollOtp.length < 6}
                       loading={enable2faMut.isPending}
                       onClick={() => enable2faMut.mutate()}
@@ -403,7 +403,7 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   placeholder="Current password"
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                   value={disablePw}
                   onChange={(e) => setDisablePw(e.target.value)}
                 />
@@ -430,44 +430,44 @@ export default function SettingsPage() {
         <CardContent>
           <form onSubmit={submitPw((d) => passwordMutation.mutate(d))} className="space-y-4 max-w-md">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Current password</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Current password</label>
               <div className="relative">
                 <input
                   {...regPw('currentPassword')}
                   type={showPw.cur ? 'text' : 'password'}
                   autoComplete="current-password"
-                  className="w-full px-3 py-2 pr-10 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  className="w-full px-3 py-2 pr-10 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                 />
                 <button
                   type="button"
                   onClick={() => setShowShowPw((s) => ({ ...s, cur: !s.cur }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary opacity-40 hover:opacity-100 transition-opacity"
                 >
                   {showPw.cur ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errPw.currentPassword && <p className="mt-1 text-xs text-red-600">{errPw.currentPassword.message}</p>}
+              {errPw.currentPassword && <p className="mt-1 text-xs text-red-500 font-medium">{errPw.currentPassword.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">New password</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">New password</label>
               <div className="relative">
                 <input
                   {...regPw('newPassword')}
                   type={showPw.next ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className="w-full px-3 py-2 pr-10 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  className="w-full px-3 py-2 pr-10 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                 />
                 <button
                   type="button"
                   onClick={() => setShowShowPw((s) => ({ ...s, next: !s.next }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary opacity-40 hover:opacity-100 transition-opacity"
                 >
                   {showPw.next ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errPw.newPassword && <p className="mt-1 text-xs text-red-600">{errPw.newPassword.message}</p>}
+              {errPw.newPassword && <p className="mt-1 text-xs text-red-500 font-medium">{errPw.newPassword.message}</p>}
             </div>
-            <p className="text-xs text-gray-500">After a successful change, you will be signed out on all devices.</p>
+            <p className="text-xs text-text-secondary italic opacity-60">After a successful change, you will be signed out on all devices.</p>
             <Button type="submit" loading={passwordMutation.isPending} variant="secondary">Update password</Button>
           </form>
         </CardContent>

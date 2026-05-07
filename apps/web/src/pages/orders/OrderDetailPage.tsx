@@ -141,7 +141,7 @@ export default function OrderDetailPage() {
   }
 
   if (isLoading) return <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>;
-  if (!po) return <div className="text-center py-20 text-gray-500">Order not found</div>;
+  if (!po) return <div className="text-center py-20 text-text-secondary">Order not found</div>;
 
 
   return (
@@ -199,8 +199,8 @@ export default function OrderDetailPage() {
                   { label: 'Total Amount', value: <span className="font-bold text-accent">₹{(po.totalAmountPaise / 100).toFixed(2)}</span> },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex items-start justify-between gap-4">
-                    <dt className="text-gray-500 flex-shrink-0">{label}</dt>
-                    <dd className="font-medium text-gray-900 text-right">{value}</dd>
+                    <dt className="text-text-secondary flex-shrink-0">{label}</dt>
+                    <dd className="font-medium text-text-primary text-right">{value}</dd>
                   </div>
                 ))}
               </dl>
@@ -211,8 +211,8 @@ export default function OrderDetailPage() {
             <CardHeader><CardTitle>Loading Progress</CardTitle></CardHeader>
             <CardContent>
               <div className="text-center mb-3">
-                <span className="text-3xl font-bold text-gray-900">{loadPercent}%</span>
-                <p className="text-sm text-gray-500 mt-1">{totalLoaded} / {totalOrdered} boxes loaded</p>
+                <span className="text-3xl font-bold text-text-primary">{loadPercent}%</span>
+                <p className="text-sm text-text-secondary mt-1">{totalLoaded} / {totalOrdered} boxes loaded</p>
               </div>
               <ProgressBar value={totalLoaded} max={totalOrdered} />
               {po.status === 'CONFIRMED' && totalOrdered > 0 && totalLoaded === 0 && (
@@ -240,21 +240,21 @@ export default function OrderDetailPage() {
                 {po.sessions.map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center justify-between p-2 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="flex items-center justify-between p-2 rounded-lg border border-border hover:bg-surface cursor-pointer transition-colors"
                     onClick={() => navigate(`/app/sessions/${s.id}`)}
                   >
                     <div>
-                      <p className="text-sm font-medium font-mono text-gray-900">{s.sessionCode}</p>
-                      <p className="text-xs text-gray-500">{new Date(s.openedAt).toLocaleDateString('en-IN')}</p>
+                      <p className="text-sm font-medium font-mono text-text-primary">{s.sessionCode}</p>
+                      <p className="text-xs text-text-secondary">{new Date(s.openedAt).toLocaleDateString('en-IN')}</p>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
                       <StatusBadge status={s.status} />
                       {s.pod ? (
                         <StatusBadge status={s.pod.status} />
                       ) : (
-                        <span className="text-[10px] text-gray-400 uppercase">No POD</span>
+                        <span className="text-[10px] text-text-secondary/50 uppercase">No POD</span>
                       )}
-                      <p className="text-xs text-gray-500 mt-0.5">{s.totalBoxesScanned}/{s.totalBoxesExpected} boxes</p>
+                      <p className="text-xs text-text-secondary mt-0.5">{s.totalBoxesScanned}/{s.totalBoxesExpected} boxes</p>
                     </div>
                   </div>
                 ))}
@@ -273,16 +273,16 @@ export default function OrderDetailPage() {
                 const dims = [li.variant.lengthMm, li.variant.widthMm, li.variant.thicknessMm].filter(Boolean).join('×');
                 const completed = li.loadedBoxes >= li.orderedBoxes && li.orderedBoxes > 0;
                 return (
-                  <div key={li.id} className="border border-gray-100 rounded-xl p-4 bg-white">
+                  <div key={li.id} className="border border-border rounded-xl p-4 bg-card">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900">{li.variant.colourName}</p>
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-sm font-semibold text-text-primary">{li.variant.colourName}</p>
+                        <p className="text-xs text-text-secondary truncate">
                           <span className="font-mono text-accent">{li.variant.product.sku}</span>
                           {dims ? <span className="ml-2">{dims}mm</span> : null}
                         </p>
                       </div>
-                      <p className={`text-xs font-medium ${completed ? 'text-green-700' : 'text-gray-700'} shrink-0`}>
+                      <p className={`text-xs font-medium ${completed ? 'text-green-700' : 'text-text-primary'} shrink-0`}>
                         {li.loadedBoxes}/{li.orderedBoxes}
                       </p>
                     </div>
@@ -303,12 +303,12 @@ export default function OrderDetailPage() {
                           Print Labels
                         </Button>
                       </div>
-                      <p className="text-xs font-medium tabular-nums text-right text-gray-700">
+                      <p className="text-xs font-medium tabular-nums text-right text-text-primary">
                         ₹{(li.ratePerBoxPaise / 100).toFixed(2)}
                       </p>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-3">
-                      <p className="text-xs text-gray-500">Amount</p>
+                      <p className="text-xs text-text-secondary">Amount</p>
                       <p className="text-sm font-bold tabular-nums text-right text-accent">
                         ₹{(li.totalAmountPaise / 100).toFixed(2)}
                       </p>
@@ -318,7 +318,7 @@ export default function OrderDetailPage() {
               })}
 
               <div className="pt-2 text-right">
-                <p className="text-sm text-gray-500">Total</p>
+                <p className="text-sm text-text-secondary">Total</p>
                 <p className="text-sm font-bold text-accent">
                   ₹{(po.totalAmountPaise / 100).toFixed(2)}
                 </p>
@@ -328,7 +328,7 @@ export default function OrderDetailPage() {
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 text-left text-gray-500 font-medium">
+                  <tr className="border-b border-border text-left text-text-secondary font-medium">
                     <th className="px-4 py-3">Product</th>
                     <th className="px-4 py-3 text-right">Ordered</th>
                     <th className="px-4 py-3 text-right">Loaded</th>
@@ -337,33 +337,33 @@ export default function OrderDetailPage() {
                     <th className="px-4 py-3 text-right">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-border">
                   {po.lineItems.map((li) => {
                     const dims = [li.variant.lengthMm, li.variant.widthMm, li.variant.thicknessMm].filter(Boolean).join('×');
                     return (
-                      <tr key={li.id} className="hover:bg-gray-50">
+                      <tr key={li.id} className="hover:bg-surface/50">
                         <td className="px-4 py-3">
-                          <p className="font-medium text-gray-900">{li.variant.colourName}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="font-medium text-text-primary">{li.variant.colourName}</p>
+                          <p className="text-xs text-text-secondary">
                             <span className="font-mono text-accent">{li.variant.product.sku}</span>
                             {dims && <span className="ml-2">{dims}mm</span>}
                           </p>
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums font-medium">{li.orderedBoxes}</td>
                         <td className="px-4 py-3 text-right tabular-nums">
-                          <span className={li.loadedBoxes === li.orderedBoxes ? 'text-green-600 font-semibold' : 'text-gray-700'}>
+                          <span className={li.loadedBoxes === li.orderedBoxes ? 'text-green-600 font-semibold' : 'text-text-primary'}>
                             {li.loadedBoxes}
                           </span>
                         </td>
                         <td className="px-4 py-3 w-28">
                           <ProgressBar value={li.loadedBoxes} max={li.orderedBoxes} size="sm" />
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-gray-500">
+                        <td className="px-4 py-3 text-right tabular-nums text-text-secondary">
                           ₹{(li.ratePerBoxPaise / 100).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums font-medium">
                           <div className="flex flex-col items-end gap-1">
-                            <span>₹{(li.totalAmountPaise / 100).toFixed(2)}</span>
+                            <span className="text-text-primary">₹{(li.totalAmountPaise / 100).toFixed(2)}</span>
                             <Button
                               variant="ghost"
                               size="xs"
@@ -380,18 +380,18 @@ export default function OrderDetailPage() {
                     );
                   })}
                 </tbody>
-                <tfoot className="border-t-2 border-gray-200">
+                <tfoot className="border-t-2 border-border">
                   <tr>
-                    <td colSpan={5} className="px-4 py-3 text-right font-semibold text-gray-700">Total</td>
+                    <td colSpan={5} className="px-4 py-3 text-right font-semibold text-text-secondary">Total</td>
                     <td className="px-4 py-3 text-right font-bold text-accent">₹{(po.totalAmountPaise / 100).toFixed(2)}</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
             {po.notes && (
-              <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
-                <p className="text-xs text-gray-500 font-medium">Notes</p>
-                <p className="text-sm text-gray-700 mt-1">{po.notes}</p>
+              <div className="px-4 py-3 border-t border-border bg-surface rounded-b-xl">
+                <p className="text-xs text-text-secondary font-medium">Notes</p>
+                <p className="text-sm text-text-primary mt-1">{po.notes}</p>
               </div>
             )}
           </Card>

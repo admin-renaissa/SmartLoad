@@ -61,18 +61,18 @@ function parseBarcode(barcode: string): any {
 
 const SectionTitle = ({ title, icon: Icon }: { title: string; icon?: any }) => (
   <div className="flex items-center gap-2 mb-4">
-    {Icon && <Icon className="h-4 w-4 text-gray-400" />}
-    <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">{title}</h2>
+    {Icon && <Icon className="h-4 w-4 text-text-secondary" />}
+    <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">{title}</h2>
   </div>
 );
 
 const DetailRow = ({ label, value, icon: Icon, className }: { label: string; value: React.ReactNode; icon?: any; className?: string }) => (
-  <div className={cn("flex items-center justify-between py-2 border-b border-gray-50 last:border-0", className)}>
+  <div className={cn("flex items-center justify-between py-2 border-b border-border last:border-0", className)}>
     <div className="flex items-center gap-2">
-      {Icon && <Icon className="h-3.5 w-3.5 text-gray-400" />}
-      <span className="text-xs font-medium text-gray-500 uppercase tracking-tight">{label}</span>
+      {Icon && <Icon className="h-3.5 w-3.5 text-text-secondary/50" />}
+      <span className="text-xs font-medium text-text-secondary uppercase tracking-tight">{label}</span>
     </div>
-    <div className="text-sm font-semibold text-gray-900">{value}</div>
+    <div className="text-sm font-semibold text-text-primary">{value}</div>
   </div>
 );
 
@@ -209,14 +209,14 @@ export default function ProductDetailPage() {
   if (isLoading) return (
     <div className="flex flex-col items-center justify-center py-32 space-y-4">
       <LoadingSpinner size="lg" />
-      <p className="text-sm text-gray-500 animate-pulse font-medium">Loading enterprise resources...</p>
+      <p className="text-sm text-text-secondary animate-pulse font-medium">Loading enterprise resources...</p>
     </div>
   );
 
   if (!product) return (
-    <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+    <div className="flex flex-col items-center justify-center py-24 text-text-secondary/50">
       <Package className="h-16 w-16 mb-4 opacity-20" />
-      <p className="text-lg font-semibold text-gray-600">Product not found</p>
+      <p className="text-lg font-semibold text-text-secondary">Product not found</p>
       <Button variant="outline" className="mt-6" onClick={() => navigate('/app/products')}>Return to Inventory</Button>
     </div>
   );
@@ -235,18 +235,18 @@ export default function ProductDetailPage() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate('/app/products')}
-            className="p-2 hover:bg-white rounded-full border border-transparent hover:border-gray-100 transition-all shadow-none hover:shadow-sm"
+            className="p-2 hover:bg-surface rounded-full border border-transparent hover:border-border transition-all shadow-none hover:shadow-sm"
           >
-            <ArrowLeft className="h-5 w-5 text-gray-500" />
+            <ArrowLeft className="h-5 w-5 text-text-secondary" />
           </button>
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-accent uppercase tracking-widest mb-1">
               <Layers className="h-3 w-3" />
               <span>{product.category?.name || 'Uncategorized'}</span>
-              <ChevronRight className="h-3 w-3 text-gray-300" />
+              <ChevronRight className="h-3 w-3 text-text-secondary/30" />
               <span>Product Details</span>
             </div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{product.name}</h1>
+            <h1 className="text-3xl font-extrabold text-text-primary tracking-tight">{product.name}</h1>
           </div>
         </div>
 
@@ -274,8 +274,8 @@ export default function ProductDetailPage() {
         <aside className="lg:sticky lg:top-24 space-y-6">
           
           {/* Main Identity Card */}
-          <Card className="overflow-hidden border-gray-100 shadow-xl shadow-gray-200/40">
-            <div className="h-48 bg-gray-50 flex items-center justify-center border-b border-gray-100 relative group">
+          <Card className="overflow-hidden border-border shadow-xl shadow-black/5">
+            <div className="h-48 bg-surface flex items-center justify-center border-b border-border relative group">
               <Package className="h-20 w-20 text-gray-200 group-hover:scale-110 transition-transform duration-500" />
               <div className="absolute top-4 right-4">
                 <StatusBadge status={product.status} />
@@ -283,7 +283,7 @@ export default function ProductDetailPage() {
             </div>
             <CardContent className="p-6">
               <div className="space-y-1 mb-6">
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Stock Keeping Unit</div>
+                <div className="text-[10px] font-black text-text-secondary/50 uppercase tracking-[0.2em]">Stock Keeping Unit</div>
                 <div className="text-xl font-mono font-bold text-accent">{product.sku}</div>
               </div>
 
@@ -295,14 +295,14 @@ export default function ProductDetailPage() {
                 <DetailRow label="Material" value={product.materialType || 'Standard'} icon={Info} />
               </div>
 
-              <div className="mt-8 pt-6 border-t border-gray-100 grid grid-cols-2 gap-4 text-center">
+              <div className="mt-8 pt-6 border-t border-border grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <div className="text-xl font-bold text-gray-900">{stats?.totalVariants}</div>
-                  <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Variants</div>
+                  <div className="text-xl font-bold text-text-primary">{stats?.totalVariants}</div>
+                  <div className="text-[10px] text-text-secondary/50 uppercase font-black tracking-widest">Variants</div>
                 </div>
-                <div className="border-l border-gray-100">
+                <div className="border-l border-border">
                   <div className="text-xl font-bold text-green-600">{stats?.totalStock}</div>
-                  <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Total Stock</div>
+                  <div className="text-[10px] text-text-secondary/50 uppercase font-black tracking-widest">Total Stock</div>
                 </div>
               </div>
             </CardContent>
@@ -337,12 +337,12 @@ export default function ProductDetailPage() {
               </div>
               <div className="flex justify-between mt-2 px-4">
                 <div className="text-center">
-                  <div className="text-sm font-bold text-gray-900">{stats?.activeVariants}</div>
-                  <div className="text-[9px] text-gray-400 uppercase font-bold">Active</div>
+                  <div className="text-sm font-bold text-text-primary">{stats?.activeVariants}</div>
+                  <div className="text-[9px] text-text-secondary/50 uppercase font-bold">Active</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold text-gray-400">{stats?.archivedVariants}</div>
-                  <div className="text-[9px] text-gray-400 uppercase font-bold">Inactive</div>
+                  <div className="text-sm font-bold text-text-secondary/50">{stats?.archivedVariants}</div>
+                  <div className="text-[9px] text-text-secondary/50 uppercase font-bold">Inactive</div>
                 </div>
               </div>
             </CardContent>
@@ -353,17 +353,17 @@ export default function ProductDetailPage() {
         <main className="space-y-8">
           
           {/* Section 1: Overview */}
-          <Card className="border-gray-100 shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <Card className="border-border shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-surface to-card px-6 py-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
+                <div className="p-2 bg-card rounded-lg shadow-sm">
                   <FileText className="h-5 w-5 text-accent" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-900">Product Overview</h2>
+                <h2 className="text-lg font-bold text-text-primary">Product Overview</h2>
               </div>
               <div className="flex gap-2">
                 {(product.tags || []).map(tag => (
-                  <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-bold uppercase tracking-wider">
+                  <span key={tag} className="px-2 py-0.5 bg-surface text-text-secondary rounded text-[10px] font-bold uppercase tracking-wider">
                     {tag}
                   </span>
                 ))}
@@ -373,22 +373,22 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Description</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">
+                    <h3 className="text-xs font-black text-text-secondary/50 uppercase tracking-widest mb-3">Description</h3>
+                    <p className="text-sm text-text-secondary leading-relaxed">
                       {product.description || "No description provided for this product catalogue entry."}
                     </p>
                   </div>
                   <div>
-                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Usage & Applications</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed italic">
+                    <h3 className="text-xs font-black text-text-secondary/50 uppercase tracking-widest mb-3">Usage & Applications</h3>
+                    <p className="text-sm text-text-secondary leading-relaxed italic">
                       {product.usageGuide || "Standard industrial usage patterns apply."}
                     </p>
                   </div>
                 </div>
                 <div className="space-y-6">
                    <div>
-                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Packaging Details</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed italic">
+                    <h3 className="text-xs font-black text-text-secondary/50 uppercase tracking-widest mb-3">Packaging Details</h3>
+                    <p className="text-sm text-text-secondary leading-relaxed italic">
                       {product.packagingDetails || "Standard pallet packaging."}
                     </p>
                   </div>
@@ -418,7 +418,7 @@ export default function ProductDetailPage() {
                   <tab.icon className="h-4 w-4" />
                   {tab.label}
                   {tab.id === 'variants' && (
-                    <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded-full">
+                    <span className="ml-2 px-1.5 py-0.5 bg-surface text-text-secondary text-[10px] rounded-full">
                       {product.variants.length}
                     </span>
                   )}
@@ -436,9 +436,9 @@ export default function ProductDetailPage() {
                   className="space-y-4"
                 >
                   {product.variants.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center py-20">
-                      <Layers className="h-12 w-12 text-gray-200 mb-4" />
-                      <p className="text-gray-500 font-medium">No variants defined</p>
+                    <div className="bg-card rounded-xl border border-dashed border-border flex flex-col items-center justify-center py-20">
+                      <Layers className="h-12 w-12 text-text-secondary/20 mb-4" />
+                      <p className="text-text-secondary font-medium">No variants defined</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-4">
@@ -452,39 +452,39 @@ export default function ProductDetailPage() {
                           <div 
                             key={v.id} 
                             className={cn(
-                              "bg-white rounded-2xl border transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/40 group relative overflow-hidden",
-                              isArchived ? "border-gray-50 opacity-60 grayscale-[0.5]" : "border-gray-100"
+                              "bg-card rounded-2xl border transition-all duration-300 hover:shadow-lg hover:shadow-black/5 group relative overflow-hidden",
+                              isArchived ? "border-border/50 opacity-60 grayscale-[0.5]" : "border-border"
                             )}
                           >
                             <div className="flex flex-col md:flex-row md:items-center gap-6 p-5">
                               {/* Color Chip */}
-                              <div className="flex-shrink-0 w-16 h-16 rounded-2xl shadow-inner border border-gray-100 flex items-center justify-center bg-gray-50 overflow-hidden">
+                              <div className="flex-shrink-0 w-16 h-16 rounded-2xl shadow-inner border border-border flex items-center justify-center bg-surface overflow-hidden">
                                 <div 
                                   className="w-10 h-10 rounded-full shadow-lg" 
-                                  style={{ backgroundColor: v.colourCode.startsWith('#') ? v.colourCode : '#f3f4f6' }} 
+                                  style={{ backgroundColor: v.colourCode.startsWith('#') ? v.colourCode : 'var(--bg-secondary)' }} 
                                 />
                               </div>
 
                               {/* Info */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-3 mb-1">
-                                  <h4 className="text-base font-bold text-gray-900 truncate">{v.colourName}</h4>
-                                  <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-2 py-0.5 rounded uppercase tracking-wider">
+                                  <h4 className="text-base font-bold text-text-primary truncate">{v.colourName}</h4>
+                                  <span className="text-[10px] font-black bg-surface text-text-secondary px-2 py-0.5 rounded uppercase tracking-wider">
                                     {v.colourCode}
                                   </span>
                                   <StatusBadge status={v.status} className="scale-90 origin-left" />
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5">
-                                  <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
-                                    <Ruler className="h-3.5 w-3.5 text-gray-300" />
+                                  <div className="flex items-center gap-1.5 text-xs text-text-secondary font-medium">
+                                    <Ruler className="h-3.5 w-3.5 text-text-secondary/30" />
                                     {dims || 'Standard'} mm
                                   </div>
-                                  <div className="flex items-center gap-1.5 text-xs text-gray-400 font-mono">
-                                    <Barcode className="h-3.5 w-3.5 text-gray-200" />
+                                  <div className="flex items-center gap-1.5 text-xs text-text-secondary/50 font-mono">
+                                    <Barcode className="h-3.5 w-3.5 text-text-secondary/20" />
                                     {v.barcodeValue.length > 20 ? v.barcodeValue.slice(0, 20) + '...' : v.barcodeValue}
                                   </div>
                                   {v.mrpPaise && (
-                                    <div className="flex items-center gap-1.5 text-xs font-bold text-gray-900">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-text-primary">
                                       <Tag className="h-3.5 w-3.5 text-accent/40" />
                                       ₹{(v.mrpPaise / 100).toFixed(2)}
                                     </div>
@@ -493,11 +493,11 @@ export default function ProductDetailPage() {
                               </div>
 
                               {/* Inventory Stat */}
-                              <div className="flex-shrink-0 text-center px-6 border-x border-gray-50 hidden md:block">
-                                <div className={cn("text-2xl font-black tabular-nums", available < 10 ? "text-red-500" : "text-gray-900")}>
+                              <div className="flex-shrink-0 text-center px-6 border-x border-border hidden md:block">
+                                <div className={cn("text-2xl font-black tabular-nums", available < 10 ? "text-red-500" : "text-text-primary")}>
                                   {available}
                                 </div>
-                                <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Available</div>
+                                <div className="text-[10px] text-text-secondary/50 uppercase font-black tracking-widest">Available</div>
                               </div>
 
                               {/* Actions */}
@@ -537,7 +537,7 @@ export default function ProductDetailPage() {
                                       <Button 
                                         variant="ghost" 
                                         size="sm" 
-                                        className="h-10 w-10 p-0 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                        className="h-10 w-10 p-0 rounded-xl text-text-secondary/50 hover:text-red-500 hover:bg-red-500/10"
                                         title="Archive"
                                         onClick={() => setDeleteVariant(v)}
                                       >
@@ -549,7 +549,7 @@ export default function ProductDetailPage() {
                               </div>
                             </div>
                             
-                            <div className="h-1 bg-gray-50 w-full overflow-hidden">
+                            <div className="h-1 bg-surface w-full overflow-hidden">
                               <div 
                                 className={cn("h-full transition-all duration-1000", available < 10 ? "bg-red-400" : "bg-accent/40")}
                                 style={{ width: `${Math.min(100, (available / 200) * 100)}%` }}
@@ -580,28 +580,28 @@ export default function ProductDetailPage() {
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden z-10"
+              className="bg-card rounded-3xl shadow-2xl w-full max-w-md overflow-hidden z-10 border border-border"
             >
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="p-6 border-b border-border flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-black text-gray-900">Variant Identity</h3>
-                  <p className="text-xs text-gray-500">{qrVariant.colourName} ({qrVariant.colourCode})</p>
+                  <h3 className="text-lg font-black text-text-primary">Variant Identity</h3>
+                  <p className="text-xs text-text-secondary">{qrVariant.colourName} ({qrVariant.colourCode})</p>
                 </div>
-                <button onClick={() => setQrVariant(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                  <X className="h-5 w-5 text-gray-400" />
+                <button onClick={() => setQrVariant(null)} className="p-2 hover:bg-surface rounded-full transition-colors">
+                  <X className="h-5 w-5 text-text-secondary/50" />
                 </button>
               </div>
               <div className="p-8 flex flex-col items-center space-y-8">
-                <div className="p-4 bg-white border-4 border-gray-50 rounded-3xl shadow-inner">
+                <div className="p-4 bg-white border-4 border-surface rounded-3xl shadow-inner">
                   <QRCodeSVG value={qrVariant.barcodeValue} size={200} level="H" />
                 </div>
                 <div className="w-full space-y-4">
-                   <div className="bg-gray-50 p-4 rounded-2xl flex items-center justify-between">
+                   <div className="bg-surface p-4 rounded-2xl flex items-center justify-between">
                       <div className="min-w-0">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Full Barcode Payload</p>
-                        <p className="text-xs font-mono font-bold text-gray-700 truncate">{qrVariant.barcodeValue}</p>
+                        <p className="text-[10px] font-black text-text-secondary/50 uppercase tracking-widest">Full Barcode Payload</p>
+                        <p className="text-xs font-mono font-bold text-text-primary truncate">{qrVariant.barcodeValue}</p>
                       </div>
-                      <button onClick={() => copyToClipboard(qrVariant.barcodeValue)} className="p-2 hover:bg-white rounded-xl shadow-sm border border-transparent hover:border-gray-100">
+                      <button onClick={() => copyToClipboard(qrVariant.barcodeValue)} className="p-2 hover:bg-card rounded-xl shadow-sm border border-transparent hover:border-border">
                         <Copy className="h-4 w-4 text-accent" />
                       </button>
                    </div>
@@ -627,48 +627,48 @@ export default function ProductDetailPage() {
             />
             <motion.div 
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-              className="absolute right-0 top-0 bottom-0 bg-white shadow-2xl w-full max-w-lg overflow-y-auto z-10 flex flex-col"
+              className="absolute right-0 top-0 bottom-0 bg-card shadow-2xl w-full max-w-lg overflow-y-auto z-10 flex flex-col border-l border-border"
             >
-               <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+               <div className="p-8 border-b border-border flex items-center justify-between bg-surface/50">
                   <div>
-                    <h3 className="text-2xl font-black text-gray-900">Edit Variant</h3>
-                    <p className="text-sm text-gray-500">Update inventory and technical specifications</p>
+                    <h3 className="text-2xl font-black text-text-primary">Edit Variant</h3>
+                    <p className="text-sm text-text-secondary">Update inventory and technical specifications</p>
                   </div>
-                  <button onClick={() => setEditVariant(null)} className="p-2 hover:bg-white rounded-full shadow-sm">
-                    <X className="h-6 w-6 text-gray-400" />
+                  <button onClick={() => setEditVariant(null)} className="p-2 hover:bg-surface rounded-full shadow-sm">
+                    <X className="h-6 w-6 text-text-secondary/50" />
                   </button>
                </div>
                <div className="p-8 space-y-8 flex-1">
                   <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Display Name</label>
+                      <label className="text-[10px] font-black text-text-secondary/50 uppercase tracking-widest ml-1">Display Name</label>
                       <input 
                         defaultValue={editVariant.colourName} 
                         onChange={(e) => setEditVariant({...editVariant, colourName: e.target.value})}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none font-bold" 
+                        className="w-full h-12 px-4 rounded-xl border border-border bg-card text-text-primary focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none font-bold" 
                       />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                        <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Length (mm)</label>
-                        <input type="number" defaultValue={editVariant.lengthMm || ''} onChange={(e) => setEditVariant({...editVariant, lengthMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-gray-200 outline-none" />
+                        <label className="text-[10px] font-black text-text-secondary/50 uppercase tracking-widest">Length (mm)</label>
+                        <input type="number" defaultValue={editVariant.lengthMm || ''} onChange={(e) => setEditVariant({...editVariant, lengthMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-border bg-card text-text-primary outline-none" />
                        </div>
                        <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Width (mm)</label>
-                        <input type="number" defaultValue={editVariant.widthMm || ''} onChange={(e) => setEditVariant({...editVariant, widthMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-gray-200 outline-none" />
+                        <label className="text-[10px] font-black text-text-secondary/50 uppercase tracking-widest">Width (mm)</label>
+                        <input type="number" defaultValue={editVariant.widthMm || ''} onChange={(e) => setEditVariant({...editVariant, widthMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-border bg-card text-text-primary outline-none" />
                        </div>
                        <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thick (mm)</label>
-                        <input type="number" defaultValue={editVariant.thicknessMm || ''} onChange={(e) => setEditVariant({...editVariant, thicknessMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-gray-200 outline-none" />
+                        <label className="text-[10px] font-black text-text-secondary/50 uppercase tracking-widest">Thick (mm)</label>
+                        <input type="number" defaultValue={editVariant.thicknessMm || ''} onChange={(e) => setEditVariant({...editVariant, thicknessMm: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-border bg-card text-text-primary outline-none" />
                        </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">MRP (Paise)</label>
-                      <input type="number" defaultValue={editVariant.mrpPaise || ''} onChange={(e) => setEditVariant({...editVariant, mrpPaise: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-gray-200 outline-none font-bold text-accent" />
+                      <label className="text-[10px] font-black text-text-secondary/50 uppercase tracking-widest">MRP (Paise)</label>
+                      <input type="number" defaultValue={editVariant.mrpPaise || ''} onChange={(e) => setEditVariant({...editVariant, mrpPaise: Number(e.target.value)})} className="w-full h-12 px-4 rounded-xl border border-border bg-card text-text-primary outline-none font-bold text-accent" />
                     </div>
                   </div>
                </div>
-               <div className="p-8 border-t border-gray-100 flex gap-4 bg-gray-50/30">
+               <div className="p-8 border-t border-border flex gap-4 bg-surface/30">
                   <Button variant="outline" className="flex-1" onClick={() => setEditVariant(null)}>Cancel</Button>
                   <Button 
                     className="flex-1 shadow-lg shadow-accent/20" 
@@ -695,14 +695,14 @@ export default function ProductDetailPage() {
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden z-10 p-8 text-center"
+              className="bg-card rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden z-10 p-8 text-center border border-border"
             >
-               <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+               <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                   <AlertTriangle className="h-10 w-10" />
                </div>
-               <h3 className="text-xl font-black text-gray-900 mb-2">Archive Variant?</h3>
-               <p className="text-sm text-gray-500 mb-8">
-                 Are you sure you want to archive <span className="font-bold text-gray-900">{deleteVariant.colourName}</span>? 
+               <h3 className="text-xl font-black text-text-primary mb-2">Archive Variant?</h3>
+               <p className="text-sm text-text-secondary mb-8">
+                 Are you sure you want to archive <span className="font-bold text-text-primary">{deleteVariant.colourName}</span>? 
                  This will hide it from active catalogs but preserve historical inventory data.
                </p>
                <div className="flex flex-col gap-3">

@@ -106,7 +106,7 @@ function ProductActions({ product, onUpdated }: { product: Product; onUpdated: (
     }
 
     const items = [
-      { label: t('common.edit', 'Edit'), icon: <Edit2 className="h-4 w-4 text-gray-500" />, action: () => navigate(`/app/products/${product.id}/edit`) },
+      { label: t('common.edit', 'Edit'), icon: <Edit2 className="h-4 w-4 text-text-secondary" />, action: () => navigate(`/app/products/${product.id}/edit`) },
     ];
 
     if (product.status === ProductStatus.ACTIVE) {
@@ -129,7 +129,7 @@ function ProductActions({ product, onUpdated }: { product: Product; onUpdated: (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
-            <MoreVertical className="h-4 w-4 text-gray-500" />
+            <MoreVertical className="h-4 w-4 text-text-secondary" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
@@ -208,11 +208,11 @@ interface StatCardProps {
 
 function StatCard({ title, value, subtitle, icon: Icon, color, bgColor, borderColor }: StatCardProps) {
   return (
-    <Card className="group p-5 flex flex-col justify-between relative overflow-hidden h-full border-none shadow-lg shadow-gray-200/40 hover:shadow-xl hover:shadow-gray-200/60 transition-all duration-300 bg-white rounded-[20px]">
+    <Card className="group p-5 flex flex-col justify-between relative overflow-hidden h-full border-none shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 transition-all duration-300 bg-card rounded-[20px]">
       <div className="flex justify-between items-start mb-2">
         <div className="space-y-0.5">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.05em]">{title}</span>
-          <div className="text-3xl font-extrabold text-gray-900 tracking-tight leading-none pt-1">{value}</div>
+          <span className="text-[11px] font-bold text-text-secondary uppercase tracking-[0.05em]">{title}</span>
+          <div className="text-3xl font-extrabold text-text-primary tracking-tight leading-none pt-1">{value}</div>
         </div>
         <div className={cn("p-2.5 rounded-[14px] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm", bgColor)}>
           <Icon className={cn("h-5 w-5", color)} />
@@ -220,7 +220,7 @@ function StatCard({ title, value, subtitle, icon: Icon, color, bgColor, borderCo
       </div>
       
       <div className="mt-auto">
-        <p className="text-[11px] text-gray-500 font-medium mb-3.5 opacity-80">{subtitle}</p>
+        <p className="text-[11px] text-text-secondary font-medium mb-3.5 opacity-80">{subtitle}</p>
         <div className={cn("h-[3px] w-full rounded-full opacity-80", borderColor)} />
       </div>
     </Card>
@@ -392,11 +392,11 @@ export default function ProductListPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
-        <Card className="p-5 lg:col-span-1 flex flex-col border-none shadow-lg shadow-gray-200/40 bg-white rounded-[20px]">
+        <Card className="p-5 lg:col-span-1 flex flex-col border-none shadow-lg shadow-black/5 bg-card rounded-[20px]">
           <div className="flex justify-between items-center mb-2">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.05em]">Lifecycle Overview</p>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-gray-50 rounded-full">
-              <MoreVertical className="h-4 w-4 text-gray-400" />
+            <p className="text-[11px] font-bold text-text-secondary uppercase tracking-[0.05em]">Lifecycle Overview</p>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-surface rounded-full">
+              <MoreVertical className="h-4 w-4 text-text-secondary" />
             </Button>
           </div>
           
@@ -409,7 +409,7 @@ export default function ProductListPage() {
               {lifecycleSlices.filter(s => s.value > 0).map((slice, i) => (
                 <div key={i} className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: slice.color }} />
-                  <span className="text-[9px] font-bold text-gray-500 whitespace-nowrap tracking-tight uppercase">
+                  <span className="text-[9px] font-bold text-text-secondary whitespace-nowrap tracking-tight uppercase">
                     {slice.label} {slice.value} ({totalCount > 0 ? Math.round((slice.value / totalCount) * 100) : 0}%)
                   </span>
                 </div>
@@ -456,7 +456,7 @@ export default function ProductListPage() {
         />
       </div>
 
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-border">
         {[
           { id: 'ALL', label: 'All Products', count: stats?.total },
           { id: 'INACTIVE', label: 'Inactive', count: stats?.inactive },
@@ -473,13 +473,13 @@ export default function ProductListPage() {
               "px-6 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
               currentTab === tab.id
                 ? "border-accent text-accent"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                : "border-transparent text-text-secondary hover:text-text-primary hover:border-border"
             )}
           >
             {tab.label}
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] font-bold",
-              currentTab === tab.id ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-500"
+              currentTab === tab.id ? "bg-accent/10 text-accent" : "bg-surface text-text-secondary"
             )}>
               {tab.count ?? 0}
             </span>
@@ -488,20 +488,20 @@ export default function ProductListPage() {
       </div>
 
       {canManage && (
-        <p className="text-sm text-gray-500">{t('products.selectForLabels')}</p>
+        <p className="text-sm text-text-secondary">{t('products.selectForLabels')}</p>
       )}
 
       <Card>
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-4 border-b border-border">
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
               <input
                 type="text"
                 placeholder={t('products.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+                className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent bg-card text-text-primary"
               />
             </div>
             <select
@@ -510,7 +510,7 @@ export default function ProductListPage() {
                 setCategoryId(e.target.value);
                 setPage(1);
               }}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 bg-card text-text-primary"
             >
               <option value="">{t('products.allCategories')}</option>
               {categories?.map((c) => (
@@ -534,7 +534,7 @@ export default function ProductListPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 text-left text-gray-500 font-medium">
+                  <tr className="border-b border-border text-left text-text-secondary font-medium">
                     {canManage && (
                       <th className="px-3 py-3 w-10">
                         <input
@@ -546,7 +546,7 @@ export default function ProductListPage() {
                             e.stopPropagation();
                             togglePage(e);
                           }}
-                          className="rounded border-gray-300"
+                          className="rounded border-border bg-card"
                         />
                       </th>
                     )}
@@ -559,11 +559,11 @@ export default function ProductListPage() {
                     <th className="px-6 py-3 text-right">{t('common.actions', 'Actions')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-border">
                   {products.map((p) => (
                     <tr
                       key={p.id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="hover:bg-surface/50 transition-colors"
                     >
                       {canManage && (
                         <td className="px-3 py-4">
@@ -576,7 +576,7 @@ export default function ProductListPage() {
                               else next.delete(p.id);
                               setSelectedIds(next);
                             }}
-                            className="rounded border-gray-300 cursor-pointer"
+                            className="rounded border-border bg-card cursor-pointer"
                           />
                         </td>
                       )}
@@ -593,13 +593,13 @@ export default function ProductListPage() {
                           onClick={() => navigate(`/app/products/${p.id}`)}
                           className="flex items-center gap-2 group text-left"
                         >
-                          <Package className="h-4 w-4 text-gray-400 flex-shrink-0 group-hover:text-accent transition-colors" />
-                          <span className="font-medium text-gray-900 group-hover:text-accent transition-colors">
+                          <Package className="h-4 w-4 text-text-secondary flex-shrink-0 group-hover:text-accent transition-colors" />
+                          <span className="font-medium text-text-primary group-hover:text-accent transition-colors">
                             {p.name}
                           </span>
                         </button>
                       </td>
-                      <td className="px-6 py-4 text-gray-500">{p.category?.name}</td>
+                      <td className="px-6 py-4 text-text-secondary">{p.category?.name}</td>
                       <td className="px-6 py-4 text-right tabular-nums">{p.piecesPerBox}</td>
                       <td className="px-6 py-4 text-right">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
@@ -621,9 +621,9 @@ export default function ProductListPage() {
                   {products.length === 0 && (
                     <tr>
                       <td colSpan={canManage ? 8 : 7} className="px-6 py-16 text-center">
-                        <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500 font-medium">{t('products.empty')}</p>
-                        <p className="text-gray-400 text-xs mt-1">{t('products.emptyHint')}</p>
+                        <Package className="h-10 w-10 text-text-secondary/30 mx-auto mb-3" />
+                        <p className="text-text-secondary font-medium">{t('products.empty')}</p>
+                        <p className="text-text-secondary/50 text-xs mt-1">{t('products.emptyHint')}</p>
                       </td>
                     </tr>
                   )}
@@ -632,13 +632,13 @@ export default function ProductListPage() {
             </div>
 
             {meta && meta.totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-                <p className="text-sm text-gray-500">{t('products.totalListed', { count: meta.total })}</p>
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                <p className="text-sm text-text-secondary">{t('products.totalListed', { count: meta.total })}</p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((prev) => prev - 1)}>
                     Previous
                   </Button>
-                  <span className="px-3 py-1.5 text-sm text-gray-600">
+                  <span className="px-3 py-1.5 text-sm text-text-secondary">
                     Page {page} of {meta.totalPages}
                   </span>
                   <Button

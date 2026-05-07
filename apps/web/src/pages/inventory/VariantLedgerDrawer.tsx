@@ -63,37 +63,37 @@ export function VariantLedgerDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <button type="button" className="absolute inset-0 bg-black/40" aria-label="Close" onClick={onClose} />
-      <div className="relative w-full max-w-[560px] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right">
-        <div className="flex items-start justify-between p-4 border-b">
+      <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-label="Close" onClick={onClose} />
+      <div className="relative w-full max-w-[560px] h-full bg-card shadow-2xl flex flex-col animate-in slide-in-from-right border-l border-border">
+        <div className="flex items-start justify-between p-4 border-b border-border">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-text-primary">
               {(product?.name as string) ?? '—'} — {(v?.colourName as string) ?? ''}{' '}
-              <span className="text-gray-500">({(v?.colourCode as string) ?? ''})</span>
+              <span className="text-text-secondary/50">({(v?.colourCode as string) ?? ''})</span>
             </h2>
             <p className="font-mono text-sm text-accent mt-1">{(product?.sku as string) ?? ''}</p>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100">
+          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-surface text-text-secondary">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-4 border-b bg-gray-50">
+        <div className="p-4 border-b border-border bg-surface/30">
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <p className="text-xs text-gray-500 uppercase">Total</p>
-              <p className="text-2xl font-bold">{total}</p>
+              <p className="text-xs text-text-secondary uppercase font-bold tracking-tight">Total</p>
+              <p className="text-2xl font-bold text-text-primary">{total}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase">Reserved</p>
-              <p className="text-2xl font-bold text-amber-600">{reserved}</p>
+              <p className="text-xs text-text-secondary uppercase font-bold tracking-tight">Reserved</p>
+              <p className="text-2xl font-bold text-amber-500">{reserved}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase">Available</p>
-              <p className="text-2xl font-bold text-emerald-600">{available}</p>
+              <p className="text-xs text-text-secondary uppercase font-bold tracking-tight">Available</p>
+              <p className="text-2xl font-bold text-emerald-500">{available}</p>
             </div>
           </div>
-          <div className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="mt-3 h-2 bg-border rounded-full overflow-hidden">
             <div
               className="h-full bg-amber-500"
               style={{ width: `${total > 0 ? Math.min(100, (reserved / total) * 100) : 0}%` }}
@@ -102,17 +102,17 @@ export function VariantLedgerDrawer({
         </div>
 
         <Tabs.Root defaultValue="history" className="flex-1 flex flex-col min-h-0">
-          <Tabs.List className="flex border-b px-4 gap-4">
+          <Tabs.List className="flex border-b border-border px-4 gap-4">
             <Tabs.Trigger
               value="history"
-              className="py-3 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-accent"
+              className="py-3 text-sm font-medium text-text-secondary data-[state=active]:text-text-primary data-[state=active]:border-b-2 data-[state=active]:border-accent transition-all"
             >
               Movement History
             </Tabs.Trigger>
             {canAdjust && (
               <Tabs.Trigger
                 value="adjust"
-                className="py-3 text-sm font-medium data-[state=active]:border-b-2 data-[state=active]:border-accent"
+                className="py-3 text-sm font-medium text-text-secondary data-[state=active]:text-text-primary data-[state=active]:border-b-2 data-[state=active]:border-accent transition-all"
               >
                 Stock Adjustments
               </Tabs.Trigger>
@@ -123,20 +123,20 @@ export function VariantLedgerDrawer({
             <div className="flex flex-wrap gap-2 text-xs">
               <input
                 type="date"
-                className="border rounded px-2 py-1"
+                className="border border-border rounded px-2 py-1 bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                 onChange={(e) =>
                   setLedgerQuery((q) => ({ ...q, page: 1, dateFrom: e.target.value || undefined }))
                 }
               />
               <input
                 type="date"
-                className="border rounded px-2 py-1"
+                className="border border-border rounded px-2 py-1 bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                 onChange={(e) =>
                   setLedgerQuery((q) => ({ ...q, page: 1, dateTo: e.target.value || undefined }))
                 }
               />
               <select
-                className="border rounded px-2 py-1"
+                className="border border-border rounded px-2 py-1 bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                 onChange={(e) =>
                   setLedgerQuery((q) => ({
                     ...q,
@@ -154,9 +154,9 @@ export function VariantLedgerDrawer({
               </select>
             </div>
 
-            {isFetching && <p className="text-gray-500 text-sm">Loading…</p>}
+            {isFetching && <p className="text-text-secondary/50 text-sm italic">Loading movements…</p>}
             {!isFetching && entries.length === 0 && (
-              <p className="text-gray-500 text-sm">No movements recorded yet</p>
+              <p className="text-text-secondary/50 text-sm italic">No movements recorded yet</p>
             )}
 
             <ul className="space-y-2">
@@ -166,35 +166,27 @@ export function VariantLedgerDrawer({
                 return (
                   <li
                     key={e.id as string}
-                    className="flex gap-3 border rounded-lg p-3 bg-white shadow-sm"
+                    className="flex gap-3 border border-border rounded-lg p-3 bg-surface shadow-sm"
                   >
                     <div
-                      className={`w-1 rounded shrink-0 ${inward ? 'bg-emerald-500' : 'bg-red-500'}`}
+                      className={`w-1 rounded shrink-0 ${inward ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]'}`}
                     />
                     <div className="flex-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-text-secondary text-[11px] font-medium">
                           {e.createdAt ? new Date(e.createdAt as string).toLocaleString('en-IN') : ''}
                         </span>
-                        <span className="font-mono text-xs bg-gray-100 px-2 rounded">
+                        <span className="font-mono text-[10px] bg-card border border-border px-2 py-0.5 rounded text-text-primary uppercase tracking-tighter">
                           {e.movementType as string}
                         </span>
                       </div>
-                      <p className={`font-bold ${inward ? 'text-emerald-700' : 'text-red-700'}`}>
-                        {e.signedBoxes as string}
+                      <p className={`font-black text-lg ${inward ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {inward ? '+' : ''}{e.signedBoxes as string}
                       </p>
-                      <p className="text-xs text-gray-500">Balance after: {String(e.balanceAfter)}</p>
-                      <p className="text-xs text-gray-600 mt-1">
-                        Ref:{' '}
-                        {href ?
-                          <Link to={href} className="text-accent underline">
-                            {(e.referenceType as string) === 'GRN' ? 'GRN' : 'Session'}{' '}
-                            {(e.referenceId as string).slice(0, 8)}…
-                          </Link>
-                        : `${e.referenceType as string}`}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        By {(e.createdBy as { name?: string })?.name ?? '—'}
+                      <p className="text-xs text-text-secondary font-medium">Balance after: <span className="text-text-primary">{String(e.balanceAfter)}</span></p>
+                      <p className="text-[11px] text-text-secondary mt-2 flex items-center justify-between">
+                        <span>Ref: {href ? <Link to={href} className="text-accent underline font-bold">{(e.referenceType as string) === 'GRN' ? 'GRN' : 'Session'} {(e.referenceId as string).slice(0, 8)}…</Link> : `${e.referenceType as string}`}</span>
+                        <span className="italic opacity-60">By {(e.createdBy as { name?: string })?.name ?? '—'}</span>
                       </p>
                     </div>
                   </li>
@@ -229,47 +221,47 @@ export function VariantLedgerDrawer({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="px-3 py-1 border rounded"
+                  className="px-3 py-1 border border-border rounded bg-surface hover:bg-card text-text-primary"
                   onClick={() => setBoxes((b) => b - 1)}
                 >
                   −
                 </button>
                 <input
                   type="number"
-                  className="border rounded px-3 py-2 w-28 text-center"
+                  className="border border-border rounded px-3 py-2 w-28 text-center bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                   value={boxes}
                   onChange={(ev) => setBoxes(Number(ev.target.value) || 0)}
                 />
                 <button
                   type="button"
-                  className="px-3 py-1 border rounded"
+                  className="px-3 py-1 border border-border rounded bg-surface hover:bg-card text-text-primary"
                   onClick={() => setBoxes((b) => b + 1)}
                 >
                   +
                 </button>
               </div>
-              <p className="text-sm">
-                New total will be: <strong>{newTotalPreview}</strong> boxes
+              <p className="text-sm text-text-secondary">
+                New total will be: <strong className="text-text-primary font-black">{newTotalPreview}</strong> boxes
               </p>
               {newTotalPreview < 0 && (
-                <p className="text-sm text-red-600">Cannot go below zero.</p>
+                <p className="text-sm text-red-500 font-bold">⚠ Cannot go below zero.</p>
               )}
               {newTotalPreview < reserved && (
-                <p className="text-sm text-red-600">Cannot go below reserved ({reserved}).</p>
+                <p className="text-sm text-red-500 font-bold">⚠ Cannot go below reserved ({reserved}).</p>
               )}
               <div>
-                <label className="text-sm font-medium">Reason (min 10 chars)</label>
+                <label className="text-sm font-medium text-text-primary">Reason (min 10 chars)</label>
                 <textarea
-                  className="w-full border rounded-lg mt-1 px-3 py-2 text-sm"
+                  className="w-full border border-border rounded-lg mt-1 px-3 py-2 text-sm bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                   rows={2}
                   value={reason}
                   onChange={(ev) => setReason(ev.target.value)}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Notes (optional)</label>
+                <label className="text-sm font-medium text-text-primary">Notes (optional)</label>
                 <textarea
-                  className="w-full border rounded-lg mt-1 px-3 py-2 text-sm"
+                  className="w-full border border-border rounded-lg mt-1 px-3 py-2 text-sm bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
                   rows={2}
                   value={notes}
                   onChange={(ev) => setNotes(ev.target.value)}
@@ -296,12 +288,15 @@ export function VariantLedgerDrawer({
       </div>
 
       {confirmOpen && (
-        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full space-y-3">
-            <p className="font-semibold">Confirm stock adjustment?</p>
-            <p className="text-sm text-gray-600">
-              {boxes > 0 ? `Add ${boxes}` : `Remove ${Math.abs(boxes)}`} boxes. New total {newTotalPreview}.
-            </p>
+        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <p className="font-bold text-lg text-text-primary">Confirm adjustment?</p>
+            <div className="p-4 bg-surface rounded-lg border border-border">
+              <p className="text-sm text-text-secondary">
+                {boxes > 0 ? `Adding` : `Removing`} <strong className="text-text-primary font-black">{Math.abs(boxes)}</strong> boxes.
+              </p>
+              <p className="text-xs text-text-secondary mt-1">New total will be {newTotalPreview}.</p>
+            </div>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setConfirmOpen(false)}>
                 Cancel

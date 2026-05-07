@@ -96,7 +96,7 @@ export default function UserDetailPage() {
     return (
       <div>
         <PageHeader title="User" />
-        <p className="text-gray-500">You do not have access.</p>
+        <p className="text-text-secondary italic">You do not have access.</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate('/app/dashboard')}>Back to app</Button>
       </div>
     );
@@ -116,7 +116,7 @@ export default function UserDetailPage() {
         <PageHeader title="User not found" />
         <Link
           to="/app/users"
-          className="inline-flex items-center justify-center h-10 px-4 text-sm font-medium border border-gray-300 rounded-button bg-white text-gray-700 hover:bg-gray-50"
+          className="inline-flex items-center justify-center h-10 px-4 text-sm font-medium border border-border rounded-button bg-surface text-text-primary hover:bg-card transition-colors"
         >
           Back to users
         </Link>
@@ -126,17 +126,17 @@ export default function UserDetailPage() {
 
   const isSelf = user.id === currentUserId;
   const fieldClass =
-    'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30';
+    'w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30';
 
   return (
     <div className="space-y-6 max-w-xl">
       <div className="flex items-center gap-3">
         <Link
           to="/app/users"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-text-secondary hover:text-accent transition-colors uppercase tracking-wider"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Users
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to Users
         </Link>
       </div>
 
@@ -146,7 +146,7 @@ export default function UserDetailPage() {
         actions={
           <Button
             variant="outline"
-            className="text-red-600 border-red-200 hover:bg-red-50"
+            className="text-red-500 border-red-500/30 bg-red-500/5 hover:bg-red-500 hover:text-white"
             disabled={isSelf}
             onClick={() => {
               if (window.confirm('Deactivate this user? They will no longer be able to sign in.')) {
@@ -161,20 +161,20 @@ export default function UserDetailPage() {
       />
 
       {isSelf && (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          This is your account. You cannot deactivate yourself here.
+        <p className="text-sm text-amber-500 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 font-medium">
+          ⚠ This is your account. You cannot deactivate yourself here.
         </p>
       )}
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          <div className="flex items-center gap-3 text-gray-500 text-sm">
-            <UserCircle className="h-5 w-5" />
-            <span className="font-mono text-xs">{user.id}</span>
+          <div className="flex items-center gap-3 text-text-secondary text-xs">
+            <UserCircle className="h-4 w-4 opacity-50" />
+            <span className="font-mono opacity-50 tracking-tight">{user.id}</span>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Name</label>
             <input
               className={fieldClass}
               value={form.name}
@@ -182,7 +182,7 @@ export default function UserDetailPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Role</label>
             <select
               className={fieldClass}
               value={form.role}
@@ -194,7 +194,7 @@ export default function UserDetailPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Phone</label>
             <input
               className={fieldClass}
               value={form.phone}
@@ -205,14 +205,14 @@ export default function UserDetailPage() {
             <input
               id="isActive"
               type="checkbox"
-              className="rounded border-gray-300"
+              className="rounded border-border bg-surface text-accent focus:ring-accent/30"
               checked={form.isActive}
               onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.checked }))}
               disabled={isSelf}
             />
-            <label htmlFor="isActive" className="text-sm text-gray-700">Active (can sign in)</label>
+            <label htmlFor="isActive" className="text-sm font-medium text-text-primary">Active (can sign in)</label>
           </div>
-          {isSelf && <p className="text-xs text-gray-400">You cannot turn off your own access here.</p>}
+          {isSelf && <p className="text-[10px] text-text-secondary italic opacity-50">You cannot turn off your own access here.</p>}
 
           <div className="pt-2 flex justify-end">
             <Button

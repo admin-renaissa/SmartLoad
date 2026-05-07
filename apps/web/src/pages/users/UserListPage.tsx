@@ -81,7 +81,7 @@ export default function UserListPage() {
     return (
       <div>
         <PageHeader title="Users" />
-        <p className="text-gray-500">You do not have access to user management.</p>
+        <p className="text-text-secondary italic">You do not have access to user management.</p>
       </div>
     );
   }
@@ -101,9 +101,9 @@ export default function UserListPage() {
       />
 
       <Card>
-        <div className="p-4 border-b border-gray-100">
-          <p className="text-sm font-medium text-gray-900">Role mix</p>
-          <p className="text-xs text-gray-500 mt-0.5">Distribution in the current list</p>
+        <div className="p-4 border-b border-border bg-surface/30">
+          <p className="text-sm font-semibold text-text-primary">Role mix</p>
+          <p className="text-xs text-text-secondary mt-0.5">Distribution in the current list</p>
         </div>
         <div className="p-4">
           <DonutChart data={roleSlices} height={220} showLegend />
@@ -111,21 +111,21 @@ export default function UserListPage() {
       </Card>
 
       <Card>
-        <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
             <input
               type="text"
               placeholder="Filter by name, email, phone…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
             />
           </div>
           <select
             value={role}
             onChange={(e) => { setRole(e.target.value); setPage(1); }}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white min-w-[140px] focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="px-3 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary min-w-[140px] focus:outline-none focus:ring-2 focus:ring-accent/30"
           >
             {roleOptions.map((o) => (
               <option key={o.value || 'all'} value={o.value}>{o.label}</option>
@@ -137,12 +137,12 @@ export default function UserListPage() {
           <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
         ) : (
           <>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-border">
               {filtered.map((u) => (
                 <Link
                   key={u.id}
                   to={`/app/users/${u.id}`}
-                  className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-surface transition-colors"
                 >
                   <div className="flex items-start gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
@@ -150,33 +150,33 @@ export default function UserListPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-900">{u.name}</span>
+                        <span className="font-bold text-text-primary">{u.name}</span>
                         <StatusBadge status={u.isActive ? 'ACTIVE' : 'INACTIVE'} />
-                        <span className="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{u.role}</span>
+                        <span className="text-[10px] font-bold font-mono text-text-secondary bg-surface border border-border px-1.5 py-0.5 rounded tracking-tighter uppercase">{u.role}</span>
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mt-1">
-                        <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{u.email}</span>
-                        {u.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{u.phone}</span>}
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-secondary mt-1">
+                        <span className="flex items-center gap-1.5"><Mail className="h-3 w-3 opacity-60" />{u.email}</span>
+                        {u.phone && <span className="flex items-center gap-1.5"><Phone className="h-3 w-3 opacity-60" />{u.phone}</span>}
                       </div>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-gray-300 flex-shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-text-secondary opacity-30 flex-shrink-0" />
                 </Link>
               ))}
               {filtered.length === 0 && (
-                <div className="px-6 py-16 text-center">
-                  <UserCircle className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 font-medium">No users match</p>
+                <div className="px-6 py-20 text-center">
+                  <UserCircle className="h-12 w-12 text-border mx-auto mb-4 opacity-20" />
+                  <p className="text-text-secondary font-medium italic">No users match your filters.</p>
                 </div>
               )}
             </div>
 
             {meta && meta.totalPages > 1 && !search && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-                <p className="text-sm text-gray-500">{meta.total} users</p>
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                <p className="text-xs font-medium text-text-secondary">{meta.total} total users</p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-                  <span className="px-3 py-1.5 text-sm text-gray-600">Page {page} of {meta.totalPages}</span>
+                  <span className="px-3 py-1.5 text-xs font-bold text-text-primary bg-surface border border-border rounded-lg">Page {page} / {meta.totalPages}</span>
                   <Button variant="outline" size="sm" disabled={page === meta.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
                 </div>
               </div>

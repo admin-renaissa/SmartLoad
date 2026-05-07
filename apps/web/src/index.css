@@ -4,20 +4,47 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --bg-primary: #f9fafb;
+    --bg-secondary: #ffffff;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --chart-tooltip-bg: #ffffff;
+    --chart-tooltip-text: #020817;
+  }
+
+  .dark {
+    --bg-primary: #020617;
+    --bg-secondary: #0f172a;
+    --card-bg: #1e293b;
+    --border-color: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --chart-tooltip-bg: #111827;
+    --chart-tooltip-text: #f8fafc;
   }
 
   * {
-    @apply border-gray-200;
+    @apply transition-colors duration-200;
+    border-color: var(--border-color);
   }
 
   body {
-    @apply bg-surface text-gray-900 font-sans antialiased;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    @apply font-sans antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold;
+    color: var(--text-primary);
+  }
+
+  input, select, textarea {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
   }
 }
 

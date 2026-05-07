@@ -131,13 +131,13 @@ export default function ExecutiveDashboard({ data }: Props) {
           trend={{ value: kpis.dispatchesTodayDelta, label: t('executive.vsYesterday') }}
           colorScheme="accent"
         />
-        <div className="bg-white rounded-card shadow-card border-l-4 border-l-green-500 p-6 flex flex-col">
+        <div className="bg-card rounded-card shadow-card border-l-4 border-l-green-500 border border-border/50 p-6 flex flex-col">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">{t('executive.boxesWeek')}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{kpis.boxesThisWeek}</p>
+              <p className="text-sm text-text-secondary font-medium">{t('executive.boxesWeek')}</p>
+              <p className="text-3xl font-bold text-text-primary mt-1">{kpis.boxesThisWeek}</p>
             </div>
-            <div className="p-2 rounded-lg bg-gray-50 text-gray-500">
+            <div className="p-2 rounded-lg bg-surface text-text-secondary">
               <Package className="h-5 w-5" />
             </div>
           </div>
@@ -149,29 +149,29 @@ export default function ExecutiveDashboard({ data }: Props) {
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="bg-white rounded-card shadow-card border-l-4 border-l-gray-300 p-6">
+        <div className="bg-card rounded-card shadow-card border-l-4 border-l-gray-300 dark:border-l-gray-700 border border-border/50 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">{t('executive.scanErrorRate')}</p>
-              <p className={`text-3xl font-bold mt-1 ${errHigh ? 'text-red-600' : 'text-gray-900'}`}>
+              <p className="text-sm text-text-secondary font-medium">{t('executive.scanErrorRate')}</p>
+              <p className={`text-3xl font-bold mt-1 ${errHigh ? 'text-red-600' : 'text-text-primary'}`}>
                 {kpis.scanErrorRateToday}%
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-text-secondary mt-1">
                 {t('executive.scanErrorsMeta', { errors: kpis.errorScansToday, total: kpis.totalScansToday })}
               </p>
             </div>
-            <div className={`p-2 rounded-lg ${errHigh ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-500'}`}>
+            <div className={`p-2 rounded-lg ${errHigh ? 'bg-red-500/10 text-red-600' : 'bg-surface text-text-secondary'}`}>
               <AlertTriangle className="h-5 w-5" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-card shadow-card border-l-4 border-l-amber-500 p-6">
+        <div className="bg-card rounded-card shadow-card border-l-4 border-l-amber-500 border border-border/50 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">{t('executive.podPending')}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{kpis.pendingPODs}</p>
+              <p className="text-sm text-text-secondary font-medium">{t('executive.podPending')}</p>
+              <p className="text-3xl font-bold text-text-primary mt-1">{kpis.pendingPODs}</p>
             </div>
-            <div className="p-2 rounded-lg bg-gray-50 text-amber-600">
+            <div className="p-2 rounded-lg bg-surface text-amber-600">
               <Clock className="h-5 w-5" />
             </div>
           </div>
@@ -187,13 +187,13 @@ export default function ExecutiveDashboard({ data }: Props) {
             </Link>
           </div>
         </div>
-        <div className="bg-white rounded-card shadow-card border-l-4 border-l-red-500 p-6">
+        <div className="bg-card rounded-card shadow-card border-l-4 border-l-red-500 border border-border/50 p-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">{t('executive.podDisputed')}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{kpis.disputedPODs}</p>
+              <p className="text-sm text-text-secondary font-medium">{t('executive.podDisputed')}</p>
+              <p className="text-3xl font-bold text-text-primary mt-1">{kpis.disputedPODs}</p>
             </div>
-            <div className="p-2 rounded-lg bg-red-50 text-red-600">
+            <div className="p-2 rounded-lg bg-red-500/10 text-red-600">
               <AlertTriangle className="h-5 w-5" />
             </div>
           </div>
@@ -215,10 +215,10 @@ export default function ExecutiveDashboard({ data }: Props) {
         <Card>
           <CardHeader>
             <CardTitle>{t('executive.inventoryValue')}</CardTitle>
-            <p className="text-sm text-gray-500 font-normal">{t('executive.inventoryNote')}</p>
+            <p className="text-sm text-text-secondary font-normal">{t('executive.inventoryNote')}</p>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-bold text-text-primary">
               ₹{(inventoryValuePaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </CardContent>
@@ -232,10 +232,17 @@ export default function ExecutiveDashboard({ data }: Props) {
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={podDisputeTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} interval={6} />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} interval={6} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} allowDecimals={false} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'var(--chart-tooltip-bg)', 
+                      color: 'var(--chart-tooltip-text)',
+                      borderRadius: '8px', 
+                      border: '1px solid var(--border-color)' 
+                    }}
+                  />
                   <Legend />
                   <Line type="monotone" dataKey="acknowledged" name={t('executive.legendAck')} stroke="#16A34A" strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="disputed" name={t('executive.legendDisputed')} stroke="#DC2626" strokeWidth={2} dot={false} />
@@ -261,15 +268,23 @@ export default function ExecutiveDashboard({ data }: Props) {
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={sessionsCount30d} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
                     interval={3}
                     tickFormatter={(v: string) => (v ? v.slice(5).replace('-', '/') : '')}
                   />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip formatter={(v: number) => [v, 'Sessions']} labelFormatter={(v) => String(v)} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} allowDecimals={false} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'var(--chart-tooltip-bg)', 
+                      color: 'var(--chart-tooltip-text)',
+                      borderRadius: '8px', 
+                      border: '1px solid var(--border-color)' 
+                    }}
+                    formatter={(v: number) => [v, 'Sessions']} labelFormatter={(v) => String(v)} 
+                  />
                   <Line type="monotone" dataKey="sessions" stroke="#0D9488" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -300,15 +315,23 @@ export default function ExecutiveDashboard({ data }: Props) {
                       <stop offset="95%" stopColor="#DC2626" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
                     interval={2}
                     tickFormatter={(v: string) => (v ? v.slice(5).replace('-', '/') : '')}
                   />
-                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <Tooltip formatter={(v: number) => [`${v}%`, 'Error rate']} labelFormatter={(v) => String(v)} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} allowDecimals={false} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'var(--chart-tooltip-bg)', 
+                      color: 'var(--chart-tooltip-text)',
+                      borderRadius: '8px', 
+                      border: '1px solid var(--border-color)' 
+                    }}
+                    formatter={(v: number) => [`${v}%`, 'Error rate']} labelFormatter={(v) => String(v)} 
+                  />
                   <Area type="monotone" dataKey="errorRate" stroke="#DC2626" fill="url(#colorErrRate)" fillOpacity={1} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -338,16 +361,21 @@ export default function ExecutiveDashboard({ data }: Props) {
                       <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
                     tickFormatter={(v: string) => (v ? v.slice(5).replace('-', '/') : '')}
                     interval={4}
                   />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                  <YAxis tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} allowDecimals={false} />
                   <Tooltip
-                    contentStyle={{ borderRadius: 8 }}
+                    contentStyle={{ 
+                      backgroundColor: 'var(--chart-tooltip-bg)', 
+                      color: 'var(--chart-tooltip-text)',
+                      borderRadius: '8px', 
+                      border: '1px solid var(--border-color)' 
+                    }}
                     formatter={(v: number) => [v, 'Boxes']}
                     labelFormatter={(_l, p) => (p[0]?.payload as { date?: string })?.date || ''}
                   />
@@ -376,12 +404,20 @@ export default function ExecutiveDashboard({ data }: Props) {
                       innerRadius={48}
                       outerRadius={88}
                       paddingAngle={2}
+                      stroke="transparent"
                     >
                       {orderPie.map((e, i) => (
                         <Cell key={i} fill={ORDER_COLORS[e.status] || `hsl(${(i * 50) % 360} 60% 50%)`} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--chart-tooltip-bg)', 
+                        color: 'var(--chart-tooltip-text)',
+                        borderRadius: '8px', 
+                        border: '1px solid var(--border-color)' 
+                      }}
+                    />
                     <Legend layout="vertical" align="right" verticalAlign="middle" />
                   </PieChart>
                 </ResponsiveContainer>
@@ -408,15 +444,23 @@ export default function ExecutiveDashboard({ data }: Props) {
                     data={topClientsMonth}
                     margin={{ left: 8, right: 16, top: 8, bottom: 8 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-gray-100" />
-                    <XAxis type="number" allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--text-secondary)' }} />
                     <YAxis
                       type="category"
                       dataKey="clientName"
                       width={100}
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
                     />
-                    <Tooltip formatter={(v: number) => [v, 'Boxes']} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--chart-tooltip-bg)', 
+                        color: 'var(--chart-tooltip-text)',
+                        borderRadius: '8px', 
+                        border: '1px solid var(--border-color)' 
+                      }}
+                      formatter={(v: number) => [v, 'Boxes']} 
+                    />
                     <Bar dataKey="boxes" fill={BAR_COLOR} radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -439,10 +483,18 @@ export default function ExecutiveDashboard({ data }: Props) {
                     data={topProductsMonth}
                     margin={{ left: 8, right: 16, top: 8, bottom: 8 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-gray-100" />
-                    <XAxis type="number" allowDecimals={false} />
-                    <YAxis type="category" dataKey="productName" width={120} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(v: number) => [v, 'Boxes']} />
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
+                    <XAxis type="number" allowDecimals={false} tick={{ fill: 'var(--text-secondary)' }} />
+                    <YAxis type="category" dataKey="productName" width={120} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'var(--chart-tooltip-bg)', 
+                        color: 'var(--chart-tooltip-text)',
+                        borderRadius: '8px', 
+                        border: '1px solid var(--border-color)' 
+                      }}
+                      formatter={(v: number) => [v, 'Boxes']} 
+                    />
                     <Bar dataKey="boxes" fill="#0D9488" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -463,9 +515,9 @@ export default function ExecutiveDashboard({ data }: Props) {
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 text-left text-gray-500">
+                  <tr className="border-b border-border text-left text-text-secondary">
                     <th className="px-4 py-2 font-medium">Code</th>
                     <th className="px-4 py-2 font-medium">PO</th>
                     <th className="px-4 py-2 font-medium">Client</th>
@@ -482,7 +534,7 @@ export default function ExecutiveDashboard({ data }: Props) {
                     </tr>
                   ) : (
                     recentSessions.map((s) => (
-                      <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                      <tr key={s.id} className="border-b border-border hover:bg-surface/50">
                         <td className="px-4 py-3">
                           <Link to={`/app/sessions/${s.id}`} className="font-mono font-medium text-accent hover:underline">
                             {s.sessionCode}
@@ -514,10 +566,10 @@ export default function ExecutiveDashboard({ data }: Props) {
             ) : (
               <ul className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
                 {lowStockAlerts.map((row) => (
-                  <li key={row.variantId} className="py-3 flex items-start justify-between gap-2">
+                  <li key={row.variantId} className="py-3 flex items-start justify-between gap-2 border-b border-border last:border-0">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{row.label}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm font-medium text-text-primary truncate">{row.label}</p>
+                      <p className="text-xs text-text-secondary">
                         {t('executive.availableMin', { available: row.availableBoxes, min: row.minThreshold })}
                       </p>
                     </div>
@@ -536,8 +588,8 @@ export default function ExecutiveDashboard({ data }: Props) {
       </div>
 
       {/* Row 5 — Tally sync */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50/80 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-text-primary">
           <span>
             <span className="text-gray-500">{t('executive.lastTallySync')} </span>
             {tallySync.lastSyncAt

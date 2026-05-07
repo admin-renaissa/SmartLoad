@@ -53,10 +53,25 @@ export function DonutChart({
             ))}
           </Pie>
           <Tooltip 
-            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+            contentStyle={{ 
+              backgroundColor: 'var(--chart-tooltip-bg)', 
+              color: 'var(--chart-tooltip-text)',
+              borderRadius: '8px', 
+              border: '1px solid var(--border)', 
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+            }}
+            itemStyle={{ color: 'var(--chart-tooltip-text)' }}
             formatter={(v: number, name: string) => [v, name]} 
           />
-          {showLegend && <Legend layout="horizontal" align="center" verticalAlign="bottom" iconType="circle" />}
+          {showLegend && (
+            <Legend 
+              layout="horizontal" 
+              align="center" 
+              verticalAlign="bottom" 
+              iconType="circle"
+              wrapperStyle={{ paddingTop: '20px' }}
+            />
+          )}
         </PieChart>
       </ResponsiveContainer>
     </div>

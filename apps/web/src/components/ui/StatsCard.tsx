@@ -11,7 +11,7 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, icon, trend, className, colorScheme = 'default' }: StatsCardProps) {
   const colors = {
-    default: 'border-gray-100',
+    default: 'border-border',
     success: 'border-l-4 border-l-green-500',
     warning: 'border-l-4 border-l-amber-500',
     error: 'border-l-4 border-l-red-500',
@@ -21,15 +21,15 @@ export function StatsCard({ title, value, icon, trend, className, colorScheme = 
   return (
     <div
       className={cn(
-        'bg-white rounded-card shadow-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(15,23,42,0.08)]',
+        'bg-card rounded-card shadow-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(15,23,42,0.15)] border border-border/50',
         colors[colorScheme],
         className,
       )}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-500 font-medium">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-sm text-text-secondary font-medium">{title}</p>
+          <p className="text-3xl font-bold text-text-primary mt-1">{value}</p>
           {trend && (
             <p className={cn('text-xs mt-1 font-medium', trend.value >= 0 ? 'text-green-600' : 'text-red-600')}>
               {trend.value >= 0 ? '↑' : '↓'} {Math.abs(trend.value)} {trend.label}
@@ -37,7 +37,7 @@ export function StatsCard({ title, value, icon, trend, className, colorScheme = 
           )}
         </div>
         {icon && (
-          <div className="p-2 rounded-lg bg-gray-50 text-gray-500">
+          <div className="p-2 rounded-lg bg-surface text-text-secondary">
             {icon}
           </div>
         )}

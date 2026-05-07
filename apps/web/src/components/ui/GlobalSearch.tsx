@@ -289,7 +289,7 @@ export function GlobalSearch() {
   return (
     <div ref={containerRef} className="relative flex items-center">
       {/* Search input + scope select combined pill */}
-      <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white focus-within:ring-2 focus-within:ring-accent/30 transition-all w-56 sm:w-72">
+      <div className="flex items-center border border-border rounded-lg overflow-hidden bg-surface focus-within:ring-2 focus-within:ring-accent/30 transition-all w-56 sm:w-72">
         <div className="pl-3 flex items-center text-gray-400 flex-shrink-0">
           {loading
             ? <Loader2 className="h-4 w-4 animate-spin text-accent" />
@@ -304,7 +304,7 @@ export function GlobalSearch() {
           onKeyDown={onKeyDown}
           onFocus={() => { if (hits.length > 0) setOpen(true); }}
           placeholder="Search…"
-          className="flex-1 px-2 py-2 text-sm bg-transparent outline-none text-gray-800 placeholder-gray-400 min-w-0"
+          className="flex-1 px-2 py-2 text-sm bg-transparent outline-none text-text-primary placeholder-text-secondary/50 min-w-0"
         />
         {query && (
           <button
@@ -317,37 +317,37 @@ export function GlobalSearch() {
           </button>
         )}
         {/* Divider */}
-        <span className="w-px h-5 bg-gray-200 flex-shrink-0" />
+        <span className="w-px h-5 bg-border flex-shrink-0" />
         {/* Scope select */}
         <select
           value={scope}
           onChange={(e) => setScope(e.target.value as Scope)}
-          className="pr-2 pl-2 py-2 text-xs text-gray-600 bg-transparent outline-none cursor-pointer appearance-none border-none font-medium"
+          className="pr-2 pl-2 py-2 text-xs text-text-secondary bg-transparent outline-none cursor-pointer appearance-none border-none font-medium"
           style={{ WebkitAppearance: 'none' }}
         >
-          <option value="all">All</option>
+          <option value="all" className="bg-surface">All</option>
           {SCOPES.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
+            <option key={s.value} value={s.value} className="bg-surface">{s.label}</option>
           ))}
         </select>
-        <span className="pr-2 text-gray-400 pointer-events-none text-xs">▾</span>
+        <span className="pr-2 text-text-secondary pointer-events-none text-xs">▾</span>
       </div>
 
       {/* Result panel — fixed so it escapes overflow:hidden ancestors */}
       {open && (
-        <div style={panelStyle} className="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden max-h-[420px] flex flex-col">
+        <div style={panelStyle} className="bg-surface rounded-xl shadow-xl border border-border overflow-hidden max-h-[420px] flex flex-col">
           {hits.length === 0 && !loading ? (
             <div className="px-4 py-8 text-center text-sm text-gray-400">
               No results for <span className="font-medium text-gray-600">&quot;{query}&quot;</span>
             </div>
           ) : scope === 'all' ? (
-            <ul className="overflow-y-auto divide-y divide-gray-50">
+            <ul className="overflow-y-auto divide-y divide-border">
               {[...grouped.entries()].map(([type, items]) => {
                 const Icon = SCOPE_ICONS[type];
                 return (
                   <li key={type}>
                     {/* Section header */}
-                    <div className="flex items-center gap-1.5 px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <div className="flex items-center gap-1.5 px-4 py-2 bg-background/50 text-xs font-semibold text-text-secondary uppercase tracking-wide">
                       <Icon className="h-3 w-3" />
                       {SCOPE_LABELS[type]}
                     </div>
@@ -409,16 +409,16 @@ function ResultRow({
         onMouseEnter={onHover}
         onClick={onClick}
         className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-          active ? 'bg-accent/10' : 'hover:bg-gray-50'
+          active ? 'bg-accent/10' : 'hover:bg-background/50'
         }`}
       >
-        <div className={`flex-shrink-0 p-1.5 rounded-md ${active ? 'bg-accent/20 text-accent' : 'bg-gray-100 text-gray-500'}`}>
+        <div className={`flex-shrink-0 p-1.5 rounded-md ${active ? 'bg-accent/20 text-accent' : 'bg-background text-text-secondary'}`}>
           <Icon className="h-3.5 w-3.5" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">{hit.title}</p>
+          <p className="text-sm font-medium text-text-primary truncate">{hit.title}</p>
           {hit.subtitle && (
-            <p className="text-xs text-gray-500 truncate">{hit.subtitle}</p>
+            <p className="text-xs text-text-secondary truncate">{hit.subtitle}</p>
           )}
         </div>
       </button>
