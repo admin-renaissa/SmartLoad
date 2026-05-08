@@ -4,7 +4,7 @@ import { Plus, Search, Building2, Phone, Mail, MapPin, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
-import { Card } from '../../components/ui/Card.tsx';
+import { Card, CardHeader, CardContent, CardTitle } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
 import api from '../../lib/axios.ts';
@@ -91,46 +91,46 @@ function ClientFormModal({ client, onClose }: { client?: Client; onClose: () => 
   const f = (key: keyof typeof defaultForm) => ({
     value: form[key],
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: e.target.value }),
-    className: 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30',
+    className: 'w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30',
   });
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">{client ? 'Edit Client' : 'New Client'}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-            <X className="h-4 w-4 text-gray-500" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-border">
+        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-lg font-bold text-text-primary">{client ? 'Edit Client' : 'New Client'}</h2>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-surface transition-colors">
+            <X className="h-5 w-5 text-text-secondary opacity-60" />
           </button>
         </div>
         <div className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
+            <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5 opacity-60">Company Name *</label>
             <input {...f('name')} placeholder="e.g. ABC Traders" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5 opacity-60">Phone *</label>
               <input {...f('phone')} placeholder="+919876543210" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5 opacity-60">Email</label>
               <input {...f('email')} type="email" placeholder="purchase@company.in" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">GSTIN</label>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5 opacity-60">GSTIN</label>
               <input {...f('gstin')} placeholder="29AAAAA0000A1Z5" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+              <label className="block text-xs font-bold text-text-secondary uppercase tracking-widest mb-1.5 opacity-60">Contact Person</label>
               <input {...f('contactPersonName')} placeholder="Mr. Ramesh Kumar" />
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Billing Address</h3>
+          <div className="border-t border-border pt-5">
+            <h3 className="text-xs font-black text-text-primary uppercase tracking-widest mb-4">Billing Address</h3>
             <div className="space-y-3">
               <input {...f('billingAddressLine1')} placeholder="Street / Area" />
               <div className="grid grid-cols-3 gap-3">
@@ -141,8 +141,8 @@ function ClientFormModal({ client, onClose }: { client?: Client; onClose: () => 
             </div>
           </div>
         </div>
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex gap-3 justify-end">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <div className="sticky bottom-0 bg-surface border-t border-border px-6 py-4 flex gap-3 justify-end z-10">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button loading={mutation.isPending} disabled={!form.name || !form.phone} onClick={() => mutation.mutate()}>
             {client ? 'Save Changes' : 'Create Client'}
           </Button>
@@ -203,25 +203,25 @@ export default function ClientListPage() {
       />
 
       <Card>
-        <div className="p-4 border-b border-gray-100">
-          <p className="text-sm font-medium text-gray-900">Client status</p>
-          <p className="text-xs text-gray-500 mt-0.5">Active vs inactive clients on this page</p>
-        </div>
-        <div className="p-4">
+        <CardHeader className="bg-surface/30 border-b border-border">
+          <CardTitle className="text-text-primary">Client status</CardTitle>
+          <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60 mt-0.5">Active vs inactive clients on this page</p>
+        </CardHeader>
+        <CardContent className="py-6">
           <DonutChart data={activeStatusSlices} height={210} showLegend={false} />
-        </div>
+        </CardContent>
       </Card>
 
       <Card>
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-4 border-b border-border bg-surface/30">
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary opacity-40" />
             <input
               type="text"
               placeholder="Search clients…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg bg-card text-text-primary outline-none focus:ring-2 focus:ring-accent/30"
             />
           </div>
         </div>
@@ -230,30 +230,30 @@ export default function ClientListPage() {
           <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>
         ) : (
           <>
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-border">
               {clients.map((c) => (
-                <div key={c.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div key={c.id} className="px-6 py-5 hover:bg-surface transition-colors group">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-start gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
                         <Building2 className="h-5 w-5 text-accent" />
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-semibold text-gray-900">{c.name}</span>
-                          <span className="font-mono text-xs text-gray-400">{c.clientCode}</span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-text-primary text-lg tracking-tight">{c.name}</span>
+                          <span className="font-mono text-[10px] text-text-secondary font-bold opacity-40">{c.clientCode}</span>
                           <StatusBadge status={c.isActive ? 'ACTIVE' : 'INACTIVE'} />
                         </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                          <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{c.phone}</span>
-                          {c.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{c.email}</span>}
+                        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-text-secondary font-medium">
+                          <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 opacity-60" />{c.phone}</span>
+                          {c.email && <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 opacity-60" />{c.email}</span>}
                           {(c.billingAddress as { city?: string })?.city && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
+                            <span className="flex items-center gap-1.5">
+                              <MapPin className="h-3.5 w-3.5 opacity-60" />
                               {(c.billingAddress as { city?: string; state?: string })?.city}, {(c.billingAddress as { city?: string; state?: string })?.state}
                             </span>
                           )}
-                          {c.gstin && <span>GSTIN: {c.gstin}</span>}
+                          {c.gstin && <span className="opacity-70 font-mono text-[10px] uppercase tracking-tighter">GST: {c.gstin}</span>}
                         </div>
                       </div>
                     </div>
@@ -264,21 +264,21 @@ export default function ClientListPage() {
                 </div>
               ))}
               {clients.length === 0 && (
-                <div className="px-6 py-16 text-center">
-                  <Building2 className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 font-medium">No clients yet</p>
-                  <p className="text-gray-400 text-xs mt-1">Add your first customer to start creating orders</p>
+                <div className="px-6 py-20 text-center">
+                  <Building2 className="h-12 w-12 text-border mx-auto mb-4 opacity-20" />
+                  <p className="text-text-primary font-bold">No clients found</p>
+                  <p className="text-text-secondary text-xs mt-1 italic opacity-60">Add your first customer to start creating orders</p>
                 </div>
               )}
             </div>
 
             {meta && meta.totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-                <p className="text-sm text-gray-500">{meta.total} clients</p>
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-surface/30">
+                <p className="text-xs font-bold text-text-secondary uppercase tracking-widest opacity-60">{meta.total} clients total</p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-                  <span className="px-3 py-1.5 text-sm text-gray-600">Page {page} of {meta.totalPages}</span>
-                  <Button variant="outline" size="sm" disabled={page === meta.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+                  <Button variant="ghost" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+                  <span className="px-3 py-1.5 text-xs font-black text-text-primary">Page {page} / {meta.totalPages}</span>
+                  <Button variant="ghost" size="sm" disabled={page === meta.totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
                 </div>
               </div>
             )}

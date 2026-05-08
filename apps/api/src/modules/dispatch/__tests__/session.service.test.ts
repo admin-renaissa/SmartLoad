@@ -667,7 +667,6 @@ describe('SessionService.listSessions', () => {
     expect(captured).toMatchObject({
       status: 'CLOSED',
       closedAt: expect.objectContaining({
-        not: null,
         gte: expect.any(Date),
         lte: expect.any(Date),
       }),

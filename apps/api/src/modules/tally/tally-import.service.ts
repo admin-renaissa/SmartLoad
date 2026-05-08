@@ -21,6 +21,17 @@ export interface TallyPartyRow {
   parent?: string;
 }
 
+export interface TallyStockItem {
+  name: string;
+  sku?: string;
+  category?: string;
+  unit?: string;
+  mrp?: number;
+  quantity?: number;
+  partNumber?: string;
+  piecesPerBox?: number;
+}
+
 export interface PullOrdersBridgeResponse {
   success?: boolean;
   orders?: TallyPurchaseOrderLine[];
@@ -262,4 +273,101 @@ export async function applyPullOrdersToDatabase(
   }
 
   return { ordersUpserted, linesSkipped, warnings };
+}
+
+/**
+ * Upserts products and variants from Tally stock item list.
+ */
+export async function syncStockItemsToProducts(
+  prisma: PrismaClient,
+  items: TallyStockItem[],
+  adminId?: string,
+): Promise<{ created: number; updated: number }> {
+  let created = 0;
+  let updated = 0;
+
+  for (const item of items) {
+    if (!item.name?.trim()) continue;
+
+    // 1. Resolve Category
+    const categoryName = item.category || 'General';
+    const slug = categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const category = await prisma.productCategory.upsert({
+      where: { slug },
+      create: { name: categoryName, slug },
+      update: { name: categoryName },
+    });
+
+    // 2. Resolve SKU
+    const sku = (item.partNumber || item.sku || item.name.split(' ')[0] || 'SKU-UNK').toUpperCase();
+
+    // 3. Upsert Product
+    const piecesPerBox = item.piecesPerBox || 1;
+    const existingProduct = await prisma.product.findUnique({ where: { sku } });
+
+    let product;
+    if (existingProduct) {
+      product = await prisma.product.update({
+        where: { id: existingProduct.id },
+        data: {
+          name: item.name,
+          categoryId: category.id,
+          unitOfMeasure: item.unit || 'BOX',
+          piecesPerBox,
+        },
+      });
+      updated++;
+    } else {
+      product = await prisma.product.create({
+        data: {
+          sku,
+          name: item.name,
+          categoryId: category.id,
+          unitOfMeasure: item.unit || 'BOX',
+          piecesPerBox,
+          status: 'ACTIVE',
+        },
+      });
+      created++;
+    }
+
+    // 4. Resolve Variant (Assume 1:1 for Tally Stock Item if no specific variants provided)
+    // In SmartLoad, variants usually have colour/dimensions. 
+    // If Tally just gives "PVC Sheet 4mm Blue", we treat it as one variant.
+    const barcodeValue = sku; // Simplified: Use SKU as barcode if none provided
+    const mrpPaise = Math.round((item.mrp || 0) * 100);
+
+    const variant = await prisma.productVariant.upsert({
+      where: { barcodeValue },
+      create: {
+        productId: product.id,
+        colourCode: 'STD',
+        colourName: 'Standard',
+        barcodeValue,
+        mrpPaise,
+        status: 'ACTIVE',
+      },
+      update: {
+        mrpPaise,
+      },
+    });
+
+    // 5. Update InventoryStock (Closing Balance from Tally)
+    if (typeof item.quantity === 'number') {
+      await prisma.inventoryStock.upsert({
+        where: { variantId: variant.id },
+        create: {
+          variantId: variant.id,
+          totalBoxes: item.quantity,
+          reservedBoxes: 0,
+        },
+        update: {
+          totalBoxes: item.quantity,
+        },
+      });
+    }
+  }
+
+  void adminId;
+  return { created, updated };
 }

@@ -39,7 +39,12 @@ const config: Config = {
           foreground: '#FFFFFF',
           light: '#FEE2E2',
         },
-        surface: '#F9FAFB',
+        background: 'var(--bg-primary)',
+        surface: 'var(--bg-secondary)',
+        card: 'var(--card-bg)',
+        border: 'var(--border-color)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

@@ -32,6 +32,7 @@ export const PERMISSIONS = {
   'clients:view': [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS, UserRole.CLIENT],
   'devices:manage': [UserRole.ADMIN],
   'devices:view': [UserRole.ADMIN, UserRole.SUPERVISOR],
+  'pod:view': [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS, UserRole.CLIENT],
 } as const
 
 export type Permission = keyof typeof PERMISSIONS

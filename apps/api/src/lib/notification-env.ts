@@ -13,6 +13,7 @@ type Channel = 'mock' | 'live' | 'misconfigured';
 export function getSmsChannel(): Channel {
   if (notificationsForceMock()) return 'mock';
   if (!process.env.MSG91_API_KEY) return 'mock';
+  // Need at least the POD dispatch template; OTP template is optional (falls back to raw message)
   if (!process.env.MSG91_TEMPLATE_ID_POD || !process.env.MSG91_SENDER_ID) return 'misconfigured';
   return 'live';
 }
@@ -34,7 +35,7 @@ function smsDetail(): string | undefined {
   if (notificationsForceMock()) return 'NOTIFICATIONS_FORCE_MOCK is enabled';
   if (!process.env.MSG91_API_KEY) return 'Set MSG91_API_KEY for production SMS';
   if (getSmsChannel() === 'misconfigured') {
-    return 'Set MSG91_TEMPLATE_ID_POD and MSG91_SENDER_ID to match your MSG91 flow template';
+    return 'Set MSG91_TEMPLATE_ID_POD and MSG91_SENDER_ID. Optionally set MSG91_TEMPLATE_ID_OTP for a dedicated OTP template (otherwise raw message is used).';
   }
   return undefined;
 }

@@ -28,17 +28,7 @@ export default function GRNDetailPage() {
     }
   };
 
-  if (isLoading || !data) {
-    return (
-      <div className="py-20 flex justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  const summary = data.summary as { totalVariants: number; totalBoxes: number; totalPieces: number };
-  const lineItems = (data.lineItems as Record<string, unknown>[]) ?? [];
-  const createdBy = data.createdBy as { name?: string } | undefined;
+  const lineItems = (data?.lineItems as Record<string, unknown>[]) ?? [];
 
   const topVariantSlices = useMemo<DonutSlice[]>(() => {
     if (!lineItems.length) return [];
@@ -76,6 +66,17 @@ export default function GRNDetailPage() {
     return slices;
   }, [lineItems]);
 
+  if (isLoading || !data) {
+    return (
+      <div className="py-20 flex justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  const summary = data.summary as { totalVariants: number; totalBoxes: number; totalPieces: number };
+  const createdBy = data.createdBy as { name?: string } | undefined;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -101,16 +102,16 @@ export default function GRNDetailPage() {
             <Row label="Received date" val={new Date(data.receivedDate as string).toLocaleString('en-IN')} />
             <Row label="Created by" val={createdBy?.name ?? '—'} />
             <Row label="Notes" val={(data.notes as string) || '—'} />
-            <div className="pt-4 border-t">
-              <p className="text-xs text-gray-500 uppercase">Totals</p>
-              <p>
-                Variants <strong>{summary.totalVariants}</strong> · Boxes{' '}
-                <strong>{summary.totalBoxes}</strong> · Pieces <strong>{summary.totalPieces}</strong>
+            <div className="pt-4 border-t border-border">
+              <p className="text-xs text-text-secondary uppercase font-bold tracking-wider">Totals</p>
+              <p className="text-text-primary">
+                Variants <strong className="font-black">{summary.totalVariants}</strong> · Boxes{' '}
+                <strong className="font-black">{summary.totalBoxes}</strong> · Pieces <strong className="font-black">{summary.totalPieces}</strong>
               </p>
             </div>
 
-            <div className="pt-4 border-t">
-              <p className="text-xs text-gray-500 uppercase">Top variants by boxes</p>
+            <div className="pt-4 border-t border-border">
+              <p className="text-xs text-text-secondary uppercase font-bold tracking-wider mb-2">Top variants by boxes</p>
               <DonutChart data={topVariantSlices} height={190} showLegend={false} />
             </div>
           </CardContent>
@@ -124,30 +125,30 @@ export default function GRNDetailPage() {
                 const p = v.product as Record<string, unknown>;
                 const stk = v.inventoryStock as { totalBoxes: number } | null | undefined;
                 return (
-                  <div key={li.id as string} className="border border-gray-100 rounded-xl p-4 bg-white">
+                  <div key={li.id as string} className="border border-border rounded-xl p-4 bg-surface/50">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{String(p?.name ?? '')}</p>
-                        <p className="text-xs text-gray-500 truncate">
-                          <span className="font-mono text-accent">{String(p?.sku ?? '')}</span>
+                        <p className="text-sm font-semibold text-text-primary truncate">{String(p?.name ?? '')}</p>
+                        <p className="text-xs text-text-secondary truncate">
+                          <span className="font-mono text-accent font-bold">{String(p?.sku ?? '')}</span>
                           {' · '}
-                          {String(v.colourName)} <span className="text-gray-400">{String(v.colourCode)}</span>
+                          {String(v.colourName)} <span className="opacity-50">({String(v.colourCode)})</span>
                         </p>
                       </div>
-                      <p className="text-xs text-gray-500 shrink-0">Stock now</p>
+                      <p className="text-[10px] text-text-secondary shrink-0 uppercase font-bold">Stock now</p>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                       <div>
-                        <p className="text-[10px] text-gray-400 uppercase">Boxes</p>
-                        <p className="text-sm font-semibold text-gray-800">{Number(li.receivedBoxes)}</p>
+                        <p className="text-[10px] text-text-secondary uppercase font-bold">Boxes</p>
+                        <p className="text-sm font-black text-text-primary">{Number(li.receivedBoxes)}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-400 uppercase">Pieces</p>
-                        <p className="text-sm font-semibold text-gray-800">{Number(li.receivedPieces)}</p>
+                        <p className="text-[10px] text-text-secondary uppercase font-bold">Pieces</p>
+                        <p className="text-sm font-black text-text-primary">{Number(li.receivedPieces)}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-400 uppercase">Now</p>
-                        <p className="text-sm font-semibold text-gray-800">{stk?.totalBoxes ?? '—'}</p>
+                        <p className="text-[10px] text-accent uppercase font-bold">Now</p>
+                        <p className="text-sm font-black text-accent">{stk?.totalBoxes ?? '—'}</p>
                       </div>
                     </div>
                   </div>
@@ -157,14 +158,14 @@ export default function GRNDetailPage() {
 
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-xs text-gray-600 uppercase text-left">
+                <thead className="bg-surface text-[10px] text-text-secondary uppercase text-left font-bold tracking-widest">
                   <tr>
-                    <th className="p-3">SKU</th>
-                    <th className="p-3">Product</th>
-                    <th className="p-3">Colour</th>
-                    <th className="p-3 text-right">Boxes</th>
-                    <th className="p-3 text-right">Pieces</th>
-                    <th className="p-3 text-right">Stock now</th>
+                    <th className="p-4">SKU</th>
+                    <th className="p-4">Product</th>
+                    <th className="p-4">Colour</th>
+                    <th className="p-4 text-right">Boxes</th>
+                    <th className="p-4 text-right">Pieces</th>
+                    <th className="p-4 text-right">Stock now</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -173,15 +174,15 @@ export default function GRNDetailPage() {
                     const p = v.product as Record<string, unknown>;
                     const stk = v.inventoryStock as { totalBoxes: number } | null | undefined;
                     return (
-                      <tr key={li.id as string} className="border-t">
-                        <td className="p-3 font-mono text-xs">{String(p?.sku ?? '')}</td>
-                        <td className="p-3">{String(p?.name ?? '')}</td>
-                        <td className="p-3">
-                          {String(v.colourName)} <span className="text-xs text-gray-400">{String(v.colourCode)}</span>
+                      <tr key={li.id as string} className="border-t border-border hover:bg-surface/50 transition-colors">
+                        <td className="p-4 font-mono text-xs text-accent font-bold">{String(p?.sku ?? '')}</td>
+                        <td className="p-4 text-text-primary font-medium">{String(p?.name ?? '')}</td>
+                        <td className="p-4 text-text-primary">
+                          {String(v.colourName)} <span className="text-xs text-text-secondary/50 font-mono">({String(v.colourCode)})</span>
                         </td>
-                        <td className="p-3 text-right font-semibold">{Number(li.receivedBoxes)}</td>
-                        <td className="p-3 text-right">{Number(li.receivedPieces)}</td>
-                        <td className="p-3 text-right text-gray-700">{stk?.totalBoxes ?? '—'}</td>
+                        <td className="p-4 text-right font-black text-text-primary">{Number(li.receivedBoxes)}</td>
+                        <td className="p-4 text-right text-text-secondary">{Number(li.receivedPieces)}</td>
+                        <td className="p-4 text-right font-bold text-accent">{stk?.totalBoxes ?? '—'}</td>
                       </tr>
                     );
                   })}
@@ -198,8 +199,8 @@ export default function GRNDetailPage() {
 function Row({ label, val }: { label: string; val: string }) {
   return (
     <div>
-      <p className="text-xs uppercase text-gray-500">{label}</p>
-      <p className="font-medium">{val}</p>
+      <p className="text-[10px] uppercase text-text-secondary font-bold tracking-wider mb-0.5">{label}</p>
+      <p className="font-semibold text-text-primary">{val}</p>
     </div>
   );
 }

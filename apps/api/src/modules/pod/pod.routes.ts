@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { successResponse, errorResponse, UserRole } from '@smartload/shared';
+import { successResponse, errorResponse, UserRole, QUEUES } from '@smartload/shared';
 import { parsePagination, buildPaginationMeta } from '@smartload/shared';
 import { PODStatus, POStatus } from '@prisma/client';
 import { enqueuePodDispatchNotifications } from '../../workers/pod-creation.processor.js';
@@ -70,24 +70,81 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
       data: { otpHash: hashedOtp, otpExpiresAt, receiverPhone, status: PODStatus.LINK_SENT, otpAttempts: 0 },
     });
 
-    // Queue SMS notification
+    // Queue SMS + WhatsApp OTP notifications
     const { Queue } = await import('bullmq');
-    const notifQueue = new Queue('notifications', {
+    const notifQueue = new Queue(QUEUES.NOTIFICATIONS, {
       connection: {
         host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
         port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
       },
     });
-    await notifQueue.add('send', {
-      channel: 'SMS',
-      recipientPhone: receiverPhone,
-      type: 'POD_OTP',
-      variables: { otp, expiryMinutes: '10' },
-    });
-    await notifQueue.close();
+    try {
+      await notifQueue.add('pod-otp-sms', {
+        channel: 'SMS',
+        recipientPhone: receiverPhone,
+        type: 'POD_OTP',
+        variables: { otp, expiryMinutes: '10' },
+      });
+      // Also send WhatsApp OTP for better reachability
+      await notifQueue.add('pod-otp-wa', {
+        channel: 'WHATSAPP',
+        recipientPhone: receiverPhone,
+        type: 'POD_OTP',
+        variables: { otp, expiryMinutes: '10' },
+      });
+    } finally {
+      await notifQueue.close();
+    }
 
     const maskedPhone = receiverPhone.slice(0, 3) + 'XXXXXX' + receiverPhone.slice(-2);
     return reply.send(successResponse({ message: `OTP sent to ${maskedPhone}` }));
+  });
+
+  // POST /api/v1/pod/:id/resend-otp — PUBLIC (resend to already-registered phone, no phone param needed)
+  fastify.post('/:id/resend-otp', {
+    config: { rateLimit: { max: 3, timeWindow: '10 minutes' } },
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    const pod = await fastify.prisma.proofOfDelivery.findUnique({ where: { id } });
+    if (!pod) return reply.code(404).send(errorResponse('POD not found'));
+    if (new Date() > pod.linkExpiresAt) return reply.code(410).send(errorResponse('Link expired'));
+    if (!pod.receiverPhone) return reply.code(400).send(errorResponse('No phone registered — use request-otp first'));
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await fastify.prisma.proofOfDelivery.update({
+      where: { id },
+      data: { otpHash: hashedOtp, otpExpiresAt, otpAttempts: 0 },
+    });
+
+    const { Queue } = await import('bullmq');
+    const notifQueue = new Queue(QUEUES.NOTIFICATIONS, {
+      connection: {
+        host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+        port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+      },
+    });
+    try {
+      await notifQueue.add('pod-otp-resend-sms', {
+        channel: 'SMS',
+        recipientPhone: pod.receiverPhone,
+        type: 'POD_OTP',
+        variables: { otp, expiryMinutes: '10' },
+      });
+      await notifQueue.add('pod-otp-resend-wa', {
+        channel: 'WHATSAPP',
+        recipientPhone: pod.receiverPhone,
+        type: 'POD_OTP',
+        variables: { otp, expiryMinutes: '10' },
+      });
+    } finally {
+      await notifQueue.close();
+    }
+
+    return reply.send(successResponse({ message: 'OTP resent successfully' }));
   });
 
   // POST /api/v1/pod/:id/verify-otp — PUBLIC
@@ -321,6 +378,21 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
       reply.header('Content-Type', 'application/pdf');
       reply.header('Content-Disposition', `attachment; filename="POD-${id.slice(0, 8)}.pdf"`);
       return reply.send(buf);
+    },
+  );
+
+  // GET /api/v1/pod/stats — PRIVATE: counts by status
+  fastify.get(
+    '/stats',
+    { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.ACCOUNTS) },
+    async (_request, reply) => {
+      const groups = await fastify.prisma.proofOfDelivery.groupBy({
+        by: ['status'],
+        _count: { id: true },
+      });
+      const stats: Record<string, number> = {};
+      for (const g of groups) stats[g.status] = g._count.id;
+      return reply.send(successResponse(stats));
     },
   );
 

@@ -346,7 +346,7 @@ function runSync(cmd, args = [], opts = {}) {
   if (FLAGS.dryRun) { log.info(`[dry-run] ${cmd} ${args.join(' ')}`); return { code: 0, stdout: '', stderr: '' }; }
   log.debug(`Running: ${cmd} ${args.join(' ')}`);
   const result = spawnSync(cmd, args, {
-    cwd, env: env || process.env, stdio: 'inherit', shell: false,
+    cwd, env: env || process.env, stdio: 'inherit', shell: IS_WIN,
   });
   if (result.error) {
     if (!ignoreError) throw result.error;
@@ -361,7 +361,7 @@ function runSync(cmd, args = [], opts = {}) {
 function runSyncCapture(cmd, args = [], opts = {}) {
   const { cwd = PROJECT_ROOT, env, ignoreError = false } = opts;
   const result = spawnSync(cmd, args, {
-    cwd, env: env || process.env, stdio: ['pipe', 'pipe', 'pipe'], shell: false,
+    cwd, env: env || process.env, stdio: ['pipe', 'pipe', 'pipe'], shell: IS_WIN,
   });
   const stdout = result.stdout?.toString() || '';
   const stderr = result.stderr?.toString() || '';
@@ -379,7 +379,7 @@ function spawnDetached(key, cmd, args = [], opts = {}) {
     env: env || process.env,
     stdio: ['ignore', logFile ? out : 'pipe', logFile ? out : 'pipe'],
     detached: false,
-    shell: false,
+    shell: IS_WIN,
   });
   if (!logFile) {
     child.stdout?.on('data', d => appendFileSync(join(LOGS_DIR, `${key}.log`), d));
@@ -399,7 +399,7 @@ function spawnService(key, cmd, args = [], opts = {}) {
   const child = spawn(cmd, args, {
     cwd, env: env || process.env,
     stdio: ['ignore', 'pipe', 'pipe'],
-    shell: false,
+    shell: IS_WIN,
   });
   child.stdout?.on('data', d => appendFileSync(logFile, d));
   child.stderr?.on('data', d => appendFileSync(logFile, d));

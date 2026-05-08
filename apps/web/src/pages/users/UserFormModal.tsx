@@ -67,30 +67,30 @@ export function CreateUserModal({ onClose }: { onClose: () => void }) {
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [key]: e.target.value })),
     className:
-      'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30',
+      'w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface text-text-primary outline-none focus:ring-2 focus:ring-accent/30',
   });
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">New user</h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-            <X className="h-4 w-4 text-gray-500" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-text-primary">New user</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface transition-colors">
+            <X className="h-4 w-4 text-text-secondary" />
           </button>
         </div>
         <div className="p-6 space-y-4">
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-500 font-medium">⚠ {error}</p>}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Email *</label>
             <input {...f('email')} type="email" autoComplete="off" placeholder="name@company.in" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full name *</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Full name *</label>
             <input {...f('name')} placeholder="First Last" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Role *</label>
             <select {...f('role')}>
               {Object.values(UserRole).map((r) => (
                 <option key={r} value={r}>{r}</option>
@@ -98,16 +98,16 @@ export function CreateUserModal({ onClose }: { onClose: () => void }) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Phone</label>
             <input {...f('phone')} placeholder="+919876543210" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Initial password *</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Initial password *</label>
             <input {...f('password')} type="password" autoComplete="new-password" placeholder="8+ chars, 1 uppercase, 1 number" />
-            <p className="text-xs text-gray-400 mt-1">Share this with the user or have them change it after first login.</p>
+            <p className="text-xs text-text-secondary opacity-50 mt-1 italic">Share this with the user or have them change it after first login.</p>
           </div>
         </div>
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex gap-3 justify-end">
+        <div className="sticky bottom-0 bg-card border-t border-border px-6 py-4 flex gap-3 justify-end shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button
             loading={mutation.isPending}

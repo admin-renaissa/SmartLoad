@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Truck, History } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader.tsx';
 import { Button } from '../../components/ui/Button.tsx';
-import { Card, CardContent } from '../../components/ui/Card.tsx';
+import { Card, CardHeader, CardContent, CardTitle } from '../../components/ui/Card.tsx';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner.tsx';
 import { usePermission } from '../../hooks/usePermission.ts';
 import { useDeactivateVehicle, useVehicles } from '../../hooks/useVehicles.ts';
@@ -80,19 +80,19 @@ export default function VehicleListPage() {
           ['Inactive', String(totals.inactive)],
         ].map(([k, v]) => (
           <Card key={k}>
-            <CardContent className="py-4">
-              <p className="text-xs text-gray-500">{k}</p>
-              <p className="text-2xl font-bold">{v}</p>
+            <CardContent className="py-5">
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">{k}</p>
+              <p className="text-3xl font-black text-text-primary tracking-tight">{v}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <Card>
-        <div className="p-4 border-b border-gray-100">
-          <p className="text-sm font-medium text-gray-900">Fleet status</p>
-          <p className="text-xs text-gray-500 mt-0.5">Availability across registered vehicles</p>
-        </div>
+        <CardHeader className="bg-surface/30 border-b border-border">
+          <CardTitle className="text-text-primary">Fleet status</CardTitle>
+          <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60 mt-0.5">Availability across registered vehicles</p>
+        </CardHeader>
         <div className="p-4">
           <DonutChart
             data={[
@@ -125,57 +125,57 @@ export default function VehicleListPage() {
             const cap = v.capacityKg as number | null | undefined;
             const active = v.isActive !== false;
             return (
-              <Card key={String(v.id)} className={`${!active ? 'opacity-60' : ''} overflow-hidden`}>
+              <Card key={String(v.id)} className={`${!active ? 'opacity-40' : ''} overflow-hidden border-border hover:border-accent/40 transition-colors group`}>
                 <CardContent className="pt-6 pb-5 space-y-4">
                   <div className="flex justify-between items-start gap-4">
                     <Plate reg={String(v.registrationNumber)} />
                     <span
-                      className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                        open ? 'bg-amber-100 text-amber-800' :
-                        active ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-gray-200 text-gray-600'
+                      className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-wider shadow-sm ${
+                        open ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30' :
+                        active ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
+                        : 'bg-surface text-text-secondary border border-border'
                       }`}
                     >
                       {open ? 'IN USE' : active ? 'AVAILABLE' : 'INACTIVE'}
                     </span>
                   </div>
-                  <div className="text-xs uppercase text-gray-600 font-semibold tracking-wide inline-block bg-gray-100 px-3 py-1 rounded-full">
+                  <div className="text-[10px] uppercase text-text-secondary font-black tracking-[0.15em] inline-block bg-surface border border-border px-3 py-1 rounded-lg">
                     {String(v.type).replace('_', ' ')}
                   </div>
-                  {open && (
-                    <div className="text-sm text-gray-800 space-y-1 border-l-4 border-amber-400 pl-3">
-                      <p className="font-mono text-accent">{String(sess.sessionCode ?? '')}</p>
-                      <p className="text-xs">
+                   {open && (
+                    <div className="text-sm space-y-1.5 border-l-4 border-amber-500 pl-4 py-1 bg-amber-500/5 rounded-r-lg">
+                      <p className="font-mono font-black text-accent">{String(sess.sessionCode ?? '')}</p>
+                      <p className="text-xs text-text-primary font-medium">
                         Client: {String(client?.name ?? '')}{' '}
-                        <span className="font-mono">· PO {(po?.poNumber as string) ?? ''}</span>
+                        <span className="font-mono text-text-secondary opacity-60 ml-1">· PO {(po?.poNumber as string) ?? ''}</span>
                       </p>
                     </div>
                   )}
-                  <div className="text-sm space-y-1">
-                    <p className="font-semibold">{String(v.driverName)}</p>
-                    <a href={`tel:${String(v.driverPhone)}`} className="font-mono text-accent text-xs">
+                  <div className="text-sm space-y-1.5">
+                    <p className="font-bold text-text-primary text-lg tracking-tight">{String(v.driverName)}</p>
+                    <a href={`tel:${String(v.driverPhone)}`} className="font-mono text-accent text-xs font-bold hover:underline">
                       {String(v.driverPhone)}
                     </a>
                     {cap != null && Number(cap) > 0 ?
-                      <p className="text-xs text-gray-500">Capacity: {Number(cap)} kg</p>
+                      <p className="text-[10px] font-black text-text-secondary uppercase tracking-widest opacity-40">Capacity: {Number(cap)} kg</p>
                     : null}
                   </div>
 
-                  <div className="flex flex-wrap gap-2 pt-2 border-t justify-end">
+                  <div className="flex flex-wrap gap-2 pt-4 border-t border-border justify-end">
                     <Link to={`/app/vehicles/${String(v.id)}/history`}>
-                      <Button variant="outline" size="sm" icon={<History className="h-3.5 w-3.5" />}>
+                      <Button variant="ghost" size="sm" icon={<History className="h-3.5 w-3.5" />}>
                         History
                       </Button>
                     </Link>
                     {canManage && active && (
                       <>
-                        <Button variant="ghost" size="sm" onClick={() => setModal(v)}>
+                        <Button variant="outline" size="sm" onClick={() => setModal(v)}>
                           Edit
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-700"
+                          className="text-red-500 hover:bg-red-500/10"
                           onClick={() => {
                             const ok =
                               typeof window !== 'undefined' ?
@@ -203,11 +203,12 @@ export default function VehicleListPage() {
 
       {!isLoading && !list.length && (
         <Card>
-          <CardContent className="py-14 text-center text-gray-500">
-            <Truck className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-            <p className="font-medium mb-4">No vehicles registered</p>
+          <CardContent className="py-20 text-center">
+            <Truck className="h-16 w-16 text-border mx-auto mb-6 opacity-20" />
+            <p className="font-bold text-text-primary text-xl">No vehicles registered</p>
+            <p className="text-text-secondary text-sm mb-8 italic opacity-60">Start by adding your first fleet vehicle</p>
             {canManage ?
-              <Button variant="outline" onClick={() => setModal('new')}>
+              <Button onClick={() => setModal('new')}>
                 Register Vehicle
               </Button>
             : null}

@@ -31,8 +31,11 @@ export function DonutChart({
     );
   }
 
+  const outer = Math.min(height, 220) * 0.4;
+  const inner = outer * 0.6;
+
   return (
-    <div className="w-full" style={{ height }}>
+    <div className="w-full flex justify-center items-center" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -41,16 +44,34 @@ export function DonutChart({
             nameKey="label"
             cx="50%"
             cy="50%"
-            innerRadius={48}
-            outerRadius={88}
+            innerRadius={inner}
+            outerRadius={outer}
             paddingAngle={2}
           >
             {slices.map((s, i) => (
               <Cell key={`${s.label}-${i}`} fill={s.color} />
             ))}
           </Pie>
-          <Tooltip formatter={(v: number, name: string) => [v, name]} />
-          {showLegend && <Legend layout="vertical" align="right" verticalAlign="middle" />}
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: 'var(--chart-tooltip-bg)', 
+              color: 'var(--chart-tooltip-text)',
+              borderRadius: '8px', 
+              border: '1px solid var(--border)', 
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+            }}
+            itemStyle={{ color: 'var(--chart-tooltip-text)' }}
+            formatter={(v: number, name: string) => [v, name]} 
+          />
+          {showLegend && (
+            <Legend 
+              layout="horizontal" 
+              align="center" 
+              verticalAlign="bottom" 
+              iconType="circle"
+              wrapperStyle={{ paddingTop: '20px' }}
+            />
+          )}
         </PieChart>
       </ResponsiveContainer>
     </div>

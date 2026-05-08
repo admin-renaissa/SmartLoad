@@ -15,6 +15,9 @@ const OrderDetailPage = lazy(() => import('./pages/orders/OrderDetailPage.tsx'))
 const CreateOrderPage = lazy(() => import('./pages/orders/CreateOrderPage.tsx'));
 const ProductListPage = lazy(() => import('./pages/products/ProductListPage.tsx'));
 const ProductDetailPage = lazy(() => import('./pages/products/ProductDetailPage.tsx'));
+const CreateProductPage = lazy(() => import('./pages/products/CreateProductPage.tsx'));
+const EditProductPage = lazy(() => import('./pages/products/EditProductPage.tsx'));
+const ProductPrintPage = lazy(() => import('./pages/products/ProductPrintPage.tsx'));
 const ClientListPage = lazy(() => import('./pages/clients/ClientListPage.tsx'));
 const StockViewPage = lazy(() => import('./pages/inventory/StockViewPage.tsx'));
 const GRNCreatePage = lazy(() => import('./pages/inventory/GRNCreatePage.tsx'));
@@ -32,6 +35,7 @@ const UserListPage = lazy(() => import('./pages/users/UserListPage.tsx'));
 const UserDetailPage = lazy(() => import('./pages/users/UserDetailPage.tsx'));
 const ScannerDevicesPage = lazy(() => import('./pages/devices/ScannerDevicesPage.tsx'));
 const DeviceDetailPage = lazy(() => import('./pages/devices/DeviceDetailPage.tsx'));
+const PODListPage = lazy(() => import('./pages/pod/PODListPage.tsx'));
 
 // Scan pages (full-screen, no layout)
 const ScanSessionSelectPage = lazy(() => import('./pages/scan/ScanSessionSelectPage.tsx'));
@@ -78,7 +82,9 @@ export default function App() {
             <Route path="orders/new" element={<CreateOrderPage />} />
             <Route path="orders/:id" element={<OrderDetailPage />} />
             <Route path="products" element={<ProductListPage />} />
+            <Route path="products/new" element={<CreateProductPage />} />
             <Route path="products/:id" element={<ProductDetailPage />} />
+            <Route path="products/:id/edit" element={<EditProductPage />} />
             <Route path="clients" element={<ClientListPage />} />
             <Route path="inventory" element={<StockViewPage />} />
             <Route path="inventory/grn" element={<GRNListPage />} />
@@ -96,7 +102,11 @@ export default function App() {
             <Route path="users/:id" element={<UserDetailPage />} />
             <Route path="devices" element={<ScannerDevicesPage />} />
             <Route path="devices/:id" element={<DeviceDetailPage />} />
+            <Route path="pod" element={<PODListPage />} />
           </Route>
+
+          {/* Standalone Print Route (No Layout) */}
+          <Route path="/app/products/:id/print" element={<ProtectedRoute><ProductPrintPage /></ProtectedRoute>} />
 
           {/* Fallback */}
           <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
