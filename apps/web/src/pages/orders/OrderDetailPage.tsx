@@ -13,6 +13,7 @@ import { ProgressBar } from '../../components/ui/ProgressBar.tsx';
 import { DonutChart, type DonutSlice } from '../../components/charts/DonutChart.tsx';
 import api from '../../lib/axios.ts';
 import { usePermission } from '../../hooks/usePermission.ts';
+import { PrintLabelModal } from './PrintLabelModal.tsx';
 
 interface LineItem {
   id: string;
@@ -66,7 +67,7 @@ export default function OrderDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const canManage = usePermission('orders:update');
-  const [generatingLabels, setGeneratingLabels] = useState<string[]>([]);
+  const [selectedLineItemForLabels, setSelectedLineItemForLabels] = useState<LineItem | null>(null);
 
   const { data: po, isLoading } = useQuery<PurchaseOrder>({
     queryKey: ['order', id],
@@ -114,30 +115,8 @@ export default function OrderDetailPage() {
     ];
   }, [po?.lineItems]);
 
-  async function handlePrintLabel(li: LineItem) {
-    setGeneratingLabels((prev) => [...prev, li.id]);
-    try {
-      const r = await api.post(
-        '/variants/generate-labels',
-        {
-          variantIds: [li.variant.id],
-          orderInfo: {
-            orderId: po?.poNumber,
-            clientName: po?.client.name,
-            date: new Date(po?.orderDate ?? '').toLocaleDateString('en-IN'),
-            totalBoxes: li.orderedBoxes,
-          },
-        },
-        { responseType: 'blob' }
-      );
-      const url = URL.createObjectURL(r.data);
-      window.open(url, '_blank');
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Failed to generate label');
-    } finally {
-      setGeneratingLabels((prev) => prev.filter((id) => id !== li.id));
-    }
+  function handlePrintLabel(li: LineItem) {
+    setSelectedLineItemForLabels(li);
   }
 
   if (isLoading) return <div className="flex justify-center py-20"><LoadingSpinner size="lg" /></div>;
@@ -295,9 +274,8 @@ export default function OrderDetailPage() {
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
-                          size="xs"
+                          size="sm"
                           icon={<QrCode className="h-3 w-3" />}
-                          loading={generatingLabels.includes(li.id)}
                           onClick={() => handlePrintLabel(li)}
                         >
                           Print Labels
@@ -366,10 +344,9 @@ export default function OrderDetailPage() {
                             <span className="text-text-primary">₹{(li.totalAmountPaise / 100).toFixed(2)}</span>
                             <Button
                               variant="ghost"
-                              size="xs"
+                              size="sm"
                               className="h-6 px-2 text-[10px]"
                               icon={<QrCode className="h-3 w-3" />}
-                              loading={generatingLabels.includes(li.id)}
                               onClick={() => handlePrintLabel(li)}
                             >
                               Labels
@@ -397,6 +374,17 @@ export default function OrderDetailPage() {
           </Card>
         </div>
       </div>
+
+      <PrintLabelModal
+        isOpen={!!selectedLineItemForLabels}
+        onClose={() => setSelectedLineItemForLabels(null)}
+        lineItem={selectedLineItemForLabels}
+        orderInfo={{
+          poNumber: po.poNumber,
+          clientName: po.client.name,
+          orderDate: po.orderDate,
+        }}
+      />
     </div>
   );
 }

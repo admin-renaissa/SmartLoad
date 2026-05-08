@@ -169,6 +169,8 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
         clientName: z.string().optional(),
         date: z.string().optional(),
         totalBoxes: z.number().optional(),
+        printQuantity: z.number().optional(),
+        printMode: z.string().optional(),
       }).optional(),
     });
 
@@ -195,9 +197,8 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
     const CENTER = WIDTH / 2;
 
     for (const v of variants) {
-      // Determine how many labels to print for this variant
-      // If orderInfo.totalBoxes is provided, we print that many labels (one per box)
-      const count = orderInfo?.totalBoxes ?? 1;
+      const printMode = orderInfo?.printMode || 'BOX';
+      const count = orderInfo?.printQuantity ?? (printMode === 'BOX' ? (orderInfo?.totalBoxes ?? 1) : 1);
 
       for (let boxNum = 1; boxNum <= count; boxNum++) {
         const page = pdfDoc.addPage([WIDTH, HEIGHT]);
@@ -208,8 +209,9 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
           variantId: v.id,
           colourCode: v.colourCode,
           orderId: orderInfo?.orderId,
-          box: boxNum,
-          total: count,
+          box: printMode === 'BOX' ? boxNum : undefined,
+          totalBoxes: orderInfo?.totalBoxes,
+          mode: printMode
         });
 
         const QR_SIZE = 140;
@@ -259,9 +261,15 @@ export const productVariantRoutes: FastifyPluginAsync = async (fastify) => {
         if (orderInfo?.orderId) {
           drawField('Order ID:', orderInfo.orderId);
           drawField('Client:', orderInfo.clientName || 'N/A');
-          drawField('Date:', orderInfo.date || new Date().toLocaleDateString('en-IN'));
-          if (count > 1) {
-            drawField('Box:', `${boxNum} of ${count}`);
+          if (orderInfo.totalBoxes) {
+            drawField('Total Qty:', `${orderInfo.totalBoxes} boxes`);
+          }
+          if (printMode === 'BOX' && count > 1) {
+            drawField('Label:', `Box ${boxNum} of ${count}`);
+          } else if (printMode === 'MASTER') {
+            drawField('Label:', `MASTER LABEL`);
+          } else if (printMode === 'PALLET') {
+            drawField('Label:', `PALLET LABEL - ${boxNum} of ${count}`);
           }
         } else {
           // Stock label style
