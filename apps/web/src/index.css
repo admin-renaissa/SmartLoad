@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #f9fafb;
+    --bg-secondary: #ffffff;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --chart-tooltip-bg: #ffffff;
+    --chart-tooltip-text: #020817;
+  }
+
+  .dark {
+    --bg-primary: #020617;
+    --bg-secondary: #0f172a;
+    --card-bg: #1e293b;
+    --border-color: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --chart-tooltip-bg: #111827;
+    --chart-tooltip-text: #f8fafc;
+  }
+
+  * {
+    @apply transition-colors duration-200;
+    border-color: var(--border-color);
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    @apply font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+    color: var(--text-primary);
+  }
+
+  input, select, textarea {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+}
+
+@layer utilities {
+  .scan-screen-ready {
+    @apply bg-primary min-h-screen flex flex-col items-center justify-center;
+  }
+  .scan-screen-success {
+    @apply bg-green-500 min-h-screen flex flex-col items-center justify-center;
+  }
+  .scan-screen-error {
+    @apply bg-red-600 min-h-screen flex flex-col items-center justify-center;
+  }
+  .scan-screen-warning {
+    @apply bg-amber-500 min-h-screen flex flex-col items-center justify-center;
+  }
+  .scan-screen-unknown {
+    @apply bg-orange-600 min-h-screen flex flex-col items-center justify-center;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Hide scrollbar on scan pages */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: white !important;
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

@@ -1,0 +1,6 @@
+Role	Email	Password
+Admin	admin@smartload.in	Admin@123
+Supervisor	supervisor@smartload.in	Demo@123
+Operator	operator@smartload.in	Demo@123
+Accounts	accounts@smartload.in	Demo@123
+Driver	driver@smartload.in	Demo@123

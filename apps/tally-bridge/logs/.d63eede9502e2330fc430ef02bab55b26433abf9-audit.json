@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/Users/prashant/Documents/Workspace/Renaissa/SmartLoad/apps/tally-bridge/logs/.d63eede9502e2330fc430ef02bab55b26433abf9-audit.json",
+    "files": [
+        {
+            "date": 1777709183415,
+            "name": "/Users/prashant/Documents/Workspace/Renaissa/SmartLoad/apps/tally-bridge/logs/bridge-error-2026-05-02.log",
+            "hash": "4f54a5cfd02a0d29d85de9a6198c52a26827c9622e27ce08fbdeba0a143fc66f"
+        }
+    ],
+    "hashType": "sha256"
+}

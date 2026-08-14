@@ -1,0 +1,41 @@
+{
+  "name": "smartload",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "description": "SmartLoad — Barcode Verification & Dispatch Management System",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "setup": "node run-smartload.mjs setup",
+    "start": "node run-smartload.mjs start",
+    "stop": "node run-smartload.mjs stop",
+    "restart": "node run-smartload.mjs restart",
+    "clean": "node run-smartload.mjs clean",
+    "status": "node run-smartload.mjs status",
+    "logs": "node run-smartload.mjs logs --follow",
+    "doctor": "node run-smartload.mjs doctor",
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "pnpm --filter @smartload/db exec prisma generate",
+    "db:migrate:deploy": "pnpm --filter @smartload/db run migrate:deploy",
+    "db:migrate": "pnpm --filter @smartload/db run migrate",
+    "db:seed": "pnpm --filter @smartload/db run seed",
+    "db:studio": "pnpm --filter @smartload/db run studio",
+    "db:reset": "pnpm --filter @smartload/db exec prisma migrate reset",
+    "docker:dev": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "typescript": "^5.4.0",
+    "prettier": "^3.2.0",
+    "@types/node": "^20.0.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "D:\\creaternexus\\SmartLoad\\SmartLoad\\apps\\tally-bridge\\logs\\.2619e8bc843b7266679bb689d09a5c9416642425-audit.json",
+    "files": [
+        {
+            "date": 1778038148173,
+            "name": "D:\\creaternexus\\SmartLoad\\SmartLoad\\apps\\tally-bridge\\logs\\bridge-error-2026-05-06.log",
+            "hash": "5f6fed35885da53e50d09fb929532ab1690627b9654881e80373a5b0a0b87af4"
+        },
+        {
+            "date": 1778135149434,
+            "name": "D:\\creaternexus\\SmartLoad\\SmartLoad\\apps\\tally-bridge\\logs\\bridge-error-2026-05-07.log",
+            "hash": "0a1ae40be3b21cdc5d0a1b83d86a9ce13574dc95e8474334173ef06952546f2e"
+        }
+    ],
+    "hashType": "sha256"
+}
