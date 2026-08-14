@@ -24,8 +24,9 @@ services:
     container_name: smartload_redis
     restart: unless-stopped
     command: redis-server --appendonly yes
+    # Host 6380 avoids conflict when another Redis already uses 6379 locally
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:

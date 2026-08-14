@@ -9,7 +9,7 @@ declare module 'fastify' {
 }
 
 const redisPluginImpl: FastifyPluginAsync = async (fastify) => {
-  const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
+  const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6380', {
     maxRetriesPerRequest: 3,
     retryStrategy: (times: number) => {
       if (times > 3) return null;

@@ -71,8 +71,8 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
     const { Queue } = await import('bullmq');
     const notifQueue = new Queue('notifications', {
       connection: {
-        host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-        port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+        host: new URL(process.env.REDIS_URL || 'redis://localhost:6380').hostname,
+        port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6380').port || '6380'),
       },
     });
     await notifQueue.add('send', {
@@ -266,8 +266,8 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
     const { Queue } = await import('bullmq');
     const notifQueue = new Queue('notifications', {
       connection: {
-        host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-        port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+        host: new URL(process.env.REDIS_URL || 'redis://localhost:6380').hostname,
+        port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6380').port || '6380'),
       },
     });
 

@@ -6,8 +6,8 @@ import { Queue } from 'bullmq';
 import { QUEUES } from '@smartload/shared';
 
 const connection = {
-  host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-  port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+  host: new URL(process.env.REDIS_URL || 'redis://localhost:6380').hostname,
+  port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6380').port || '6380'),
 };
 
 const inventoryQueue = new Queue(QUEUES.INVENTORY_DEDUCTION, { connection });

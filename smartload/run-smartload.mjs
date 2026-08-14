@@ -56,7 +56,7 @@ const DEFAULT_PORTS = {
   backend: 4000,        // .env PORT (Phase 0 / .env.example)
   tallyBridge: 7474,    // tally-bridge/src/index.ts BRIDGE_PORT fallback
   postgres: 5433,       // docker-compose host port (5433:5432; avoids local PG on 5432)
-  redis: 6379,          // docker-compose host port
+  redis: 6380,          // docker-compose host port (6380:6379; avoids local Redis on 6379)
   minio: 9000,          // docker-compose host port
   minioConsole: 9001,   // docker-compose console port
 };
@@ -638,7 +638,7 @@ async function cmdSetup() {
       if (!FLAGS.dryRun) writeFileSync(ENV_FILE, [
         'DATABASE_URL="postgresql://smartload:smartload123@localhost:5433/smartload_db"',
         'DIRECT_DATABASE_URL="postgresql://smartload:smartload123@localhost:5433/smartload_db"',
-        'REDIS_URL="redis://localhost:6379"',
+        'REDIS_URL="redis://localhost:6380"',
         'JWT_SECRET="change-me-min-32-chars-aaaaaaaaaaaa"',
         'JWT_REFRESH_SECRET="change-me-different-min-32-chars-bb"',
         'PORT=4000',

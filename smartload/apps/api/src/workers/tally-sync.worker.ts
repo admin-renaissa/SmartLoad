@@ -5,8 +5,8 @@ import axios from 'axios';
 
 const prisma = new PrismaClient();
 const connection = {
-  host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
-  port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port || '6379'),
+  host: new URL(process.env.REDIS_URL || 'redis://localhost:6380').hostname,
+  port: parseInt(new URL(process.env.REDIS_URL || 'redis://localhost:6380').port || '6380'),
 };
 
 interface TallySyncJobData {
