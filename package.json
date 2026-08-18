@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@9.15.4",
-  "description": "SmartLoad — Barcode Verification & Dispatch Management System",
+  "description": "SmartLoad \u2014 Barcode Verification & Dispatch Management System",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
@@ -37,5 +37,12 @@
     "typescript": "^5.4.0",
     "prettier": "^3.2.0",
     "@types/node": "^20.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@renverse/auth-sdk": "file:../packages/auth-sdk",
+      "@renverse/connect-sdk": "file:../packages/connect-sdk",
+      "@renverse/suite-oidc-adapter": "file:../packages/suite-oidc-adapter"
+    }
   }
 }

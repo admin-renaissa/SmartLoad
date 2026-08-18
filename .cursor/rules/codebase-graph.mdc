@@ -1,0 +1,11 @@
+---
+description: Maintain docs/CODEBASE_GRAPH.md; use RenVerse ECOSYSTEM_GRAPH for cross-app work.
+alwaysApply: true
+---
+
+# Codebase graph (token saver)
+
+1. Cross-app: RenVerse `docs/ECOSYSTEM_GRAPH.md`  
+2. This app: `docs/CODEBASE_GRAPH.md` first — open only named paths  
+3. Update graph same turn on structural/suite-bridge changes; bump Last updated  
+4. No mega-merge of other apps’ graphs · Stay scan/dispatch/POD scoped in the map

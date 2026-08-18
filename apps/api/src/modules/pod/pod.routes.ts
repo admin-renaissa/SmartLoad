@@ -8,6 +8,7 @@ import { PODStatus, POStatus } from '@prisma/client';
 import { enqueuePodDispatchNotifications } from '../../workers/pod-creation.processor.js';
 import { dataUrlToBuffer, uploadObject } from '../../lib/object-storage.js';
 import { generatePodPdfBuffer } from './pod-pdf.service.js';
+import { emitPodConfirmed } from '../../renverse/emit-pod-confirmed.js';
 
 export const podRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/v1/pod/link/:token — PUBLIC
@@ -355,6 +356,23 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
         });
       } finally {
         await q.close();
+      }
+    }
+
+    // Suite Connect: emit POD confirmed when acknowledgement succeeds (not disputed)
+    if (!hasDiscrepancy) {
+      const session = await fastify.prisma.dispatchSession.findUnique({
+        where: { id: pod.sessionId },
+      });
+      const orgId = process.env.RENVERSE_ORG_ID || 'org_demo00000001';
+      try {
+        await emitPodConfirmed({
+          shipmentId: session?.poId || pod.sessionId,
+          orgId,
+          podId: id,
+        });
+      } catch (err) {
+        fastify.log.warn({ err }, '[renverse] pod.confirmed emit failed');
       }
     }
 

@@ -40,6 +40,7 @@ import { settingsRoutes } from './modules/settings/settings.routes.js';
 import { auditLogRoutes } from './modules/audit/audit.routes.js';
 import { healthRoutes } from './modules/health/health.routes.js';
 import { deviceRoutes } from './modules/devices/device.routes.js';
+import { renverseRoutes } from './renverse/renverse.routes.js';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -114,6 +115,9 @@ export async function buildServer() {
   await app.register(settingsRoutes, { prefix: `${apiPrefix}/settings` });
   await app.register(auditLogRoutes, { prefix: `${apiPrefix}/audit-logs` });
   await app.register(deviceRoutes, { prefix: `${apiPrefix}/devices` });
+
+  // RenVerse suite scaffolding (status + addon OIDC + POD emit smoke)
+  await app.register(renverseRoutes);
 
   return app;
 }

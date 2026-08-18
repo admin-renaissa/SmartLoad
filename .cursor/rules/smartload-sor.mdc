@@ -1,0 +1,13 @@
+---
+description: SmartLoad optional add-on SoR; ban full WMS/ERP.
+alwaysApply: true
+---
+
+# SmartLoad SoR and bans
+
+- **suiteRole:** **addon** — `hasAddon('smartload')`; not required for core Suite SKU.
+- **SoR:** Ops stock, barcode dispatch, POD (`orgId`).
+- **Ban:** Full WMS / ERP / e-commerce — stay scan + dispatch + POD.
+- Emit `smartload.pod.confirmed.v1` → RenBooks · Dual RBAC after org model.
+- Pack: `docs/renverse/` · Hub: RenVerse `docs/ECOSYSTEM_GRAPH.md`
+- ISSA tools → this app API only · No cross-app DB · No dual-write Tally+RenBooks without org mode flag.

@@ -1,0 +1,11 @@
+---
+description: RenVerse suite membership for SmartLoad (optional add-on).
+alwaysApply: true
+---
+
+# RenVerse membership
+
+1. `renverse.manifest.json` · `RENVERSE_APP_KEY=smartload`  
+2. Entitlement: **`hasAddon('smartload')`** (not `hasApp` core)  
+3. `@renverse/auth-sdk` after org model · `GET /renverse/status`  
+4. Pack: `docs/renverse/` · Hub: RenVerse `docs/ECOSYSTEM_GRAPH.md`

@@ -1,0 +1,15 @@
+---
+description: Dual RBAC for SmartLoad — suite Identity floor; local RBAC always SoR for actions.
+alwaysApply: true
+---
+
+# Dual RBAC (SmartLoad)
+
+Canonical: RenVerse `docs/revamp/150-spec-complete/153_DUAL_RBAC_SUITE_AND_STANDALONE.md`
+
+- **Standalone:** app-local login; **local RBAC only**
+- **Suite:** OIDC; map suite floor → default local role; then **local** `can(user, permission)` + tenant scope
+- Suite: `entitled ∧ local_can ∧ in_scope` · Standalone: `local_can ∧ in_scope`
+- Entitlement is **`hasAddon('smartload')`** — not a core Suite app requirement
+- Never auto-grant super-admin from suite · Never replace SmartLoad permission catalog with Identity roles
+- Stay scan / dispatch / POD — not full WMS/ERP

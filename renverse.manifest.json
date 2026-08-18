@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "appKey": "smartload",
+  "displayName": "SmartLoad",
+  "suiteRole": "addon",
+  "contractsVersion": "1.0.0",
+  "tenantKey": "orgId",
+  "produces": [
+    "smartload.pod.confirmed.v1"
+  ],
+  "consumes": [
+    "identity.user.provisioned.v1",
+    "identity.membership.changed.v1"
+  ],
+  "deepLinks": [
+    {
+      "entityType": "shipment",
+      "path": "/suite/open?type=shipment"
+    }
+  ],
+  "issa": {
+    "tools": [
+      "smartload.shipment.get",
+      "smartload.pod.status"
+    ],
+    "personas": [
+      "smartload.ops_assistant"
+    ]
+  },
+  "bans": [
+    "Not full WMS / e-commerce / ERP",
+    "Not part of Suite SKU by default",
+    "Tally bridge stays on-prem"
+  ],
+  "blockers": [
+    "Product multi-tenant org incomplete \u2014 suite smoke via apps/api/src/renverse/",
+    "Optional add-on \u2014 entitle via addons[] only",
+    "SMARTLOAD_TALLY_MODE=onprem \u2014 Tally bridge stays on-prem"
+  ]
+}

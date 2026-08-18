@@ -1,0 +1,20 @@
+---
+description: Separate product DBs; IdMap + Connect only — no cross-app reads/writes.
+alwaysApply: true
+---
+
+# No Cross-App DB
+
+- **Rule**
+  - SmartLoad owns its database only.
+  - Never join, query, or migrate RenBooks / Renexus / Identity / other app tables from this service.
+
+- **Do instead**
+  - Emit/consume RenConnect events (e.g. `smartload.pod.confirmed.v1`)
+  - Resolve identifiers via IdMap + AppLink
+  - Call the owning app’s API (or ISSA tool → owning app) for mutations
+  - Deep-link to RenBooks for money / inventory SoR where needed
+
+- **Identity**
+  - Global user/org SoR is RenIdentity; keep local users linked by `renverse_sub` / AppLink — do not share Identity tables.
+  - Optional add-on: never require SmartLoad for core Suite SKU.
