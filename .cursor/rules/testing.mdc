@@ -1,0 +1,34 @@
+---
+description: Mandatory test scenarios for SmartLoad changes.
+alwaysApply: true
+---
+
+# Testing
+
+No behavior change is complete without tests. DoD: [definition-of-done.mdc](mdc:.cursor/rules/definition-of-done.mdc). Suite QA: `docs/renverse/11_QA_CHECKLIST.md`.
+
+- **Every change includes**
+  - Code + tests colocated under `apps/api`, `apps/web`, `packages/`, or existing test hubs
+  - Do not drop one-off tests in repo root scratch folders
+
+- **When this applies**
+  - Auth / org membership / suite OIDC
+  - `hasAddon('smartload')` gates on API and UI
+  - POD confirm + Connect outbox (`smartload.pod.confirmed.v1` only)
+  - Identity event consumers
+  - ISSA tool callbacks
+  - Deep link `/suite/open`
+  - Scan / dispatch / inventory within policy
+
+- **Mandatory scenarios (every feature)**
+  - Positive: valid input, allowed principal, success
+  - Negative: invalid input, denied principal, failed validation
+  - Security: unauth, **addon bypass**, cross-org IDOR, unsafe payload
+  - Dual-mode: suite path and standalone path when both exist
+  - Addon absent: core suite apps unaffected; SmartLoad returns 403
+
+- **Failures**
+  - Do not delete tests or weaken assertions to pass
+  - Fix root cause; classify app vs test vs env vs flake
+'''
+

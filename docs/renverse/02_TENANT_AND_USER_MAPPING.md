@@ -1,23 +1,51 @@
-# Tenant and User Mapping — SmartLoad
+# Tenant & User Mapping — SmartLoad
 
-## AppLink
+> **BLOCKER (EP-SL-01):** Product multi-tenant org incomplete. Today users are often global with `UserRole`; `Client` is a counterparty, **not** a suite tenant.  
+> Design: [`152_SMARTLOAD_TENANCY_DESIGN.md`](../../../docs/revamp/150-spec-complete/152_SMARTLOAD_TENANCY_DESIGN.md).
 
-Identity `orgId` ↔ local `organizationId` via AppLink (`contracts/applink/provisioning.md`).
+## Current state
 
-## User IdMap
+| Concept | Today | Target |
+|---------|-------|--------|
+| Access | Site / location / global roles | Org-scoped |
+| Suite tenant | Missing | `organizations` / **`orgId`** |
+| Counterparty | `Client` | Remains customer under org |
 
-Identity `sub` ↔ local user; store `users.renverse_sub`.
+## Target model (EP-SL-01)
 
-## JIT (first suite login)
+```
+Organization (id, name, renverse_org_id)
+  └── OrgMembership (userId, role → UserRole floor)
+  └── Shipments / PODs / scanners / sites scoped by orgId
+  └── Client (counterparty under org)
+```
 
-1. Validate OIDC + hasAddon(claims, 'smartload')  
-2. Resolve/create AppLink tenant  
-3. Create/link local user; write IdMap  
-4. Assign local role from [03_RBAC_MAPPING.md](./03_RBAC_MAPPING.md)  
-5. Persist `renverse_suite_role` + `renverse_floor_role`  
-6. Optional directory hints from membership API/event (not OIDC claims)
+| RenIdentity | SmartLoad | Mechanism |
+|-------------|-----------|-----------|
+| `org_id` | `organizations.id` (`orgId`) | AppLink / `renverse_org_id` |
+| `sub` | `users.renverse_sub` | JIT |
 
-> Entitlement is hasAddon("smartload") NOT hasApp. Client ≠ suite org until tenancy design shipped.
+Multi-site **within** one org is allowed; multi-org requires separate AppLinks.
+
+## JIT (after org model)
+
+1. Validate OIDC + **`hasAddon(claims, 'smartload')`**  
+2. Resolve AppLink org → local `orgId` (fail if missing)  
+3. Create/link user; write membership + floor markers  
+4. Optional directory hints  
+
+## Membership sync
+
+Same pattern as other apps: `identity.membership.changed.v1` / `identity.user.provisioned.v1` per manifest — soft-disable, floor update, keep elevations.
+
+## Standalone
+
+No Identity; site-based / local roles continue.
+
+## Entitlement
+
+Always **`hasAddon`**, never `hasApp` ([08](./08_ENTITLEMENTS_AND_GATES.md)).
 
 ---
-*RenVerse · SmartLoad · 2026-08-16*
+
+*RenVerse · SmartLoad Tenant Mapping · 2026-08-19*

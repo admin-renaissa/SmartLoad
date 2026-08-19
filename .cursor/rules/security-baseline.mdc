@@ -1,0 +1,31 @@
+---
+description: Security baseline for SmartLoad optional add-on.
+alwaysApply: true
+---
+
+# Security Baseline
+
+Do not weaken helmet, CSRF, rate-limit, validation, or auth middleware once present.
+
+- **Secrets**
+  - Env vars only; never commit `.env`, tokens, or key files
+  - Never log JWT/OIDC tokens, cookies, passwords, or webhook secrets
+
+- **Injection and XSS**
+  - Parameterized queries / ORM only (Prisma)
+  - Validate inputs; sanitize user-facing HTML
+  - Uploads / barcode payloads: size and format limits
+
+- **AuthN/AuthZ**
+  - Mutating routes: authenticate → org context → **`hasAddon('smartload')`** (suite) → local `can` + `in_scope`
+  - Never use `hasApp('smartload')`
+  - Do not trust client-supplied `orgId` alone
+  - IDOR: load by `(id, orgId)`, never `id` alone
+  - Dual RBAC: [dual-rbac.mdc](mdc:.cursor/rules/dual-rbac.mdc)
+
+- **Outbound / SSRF**
+  - Tally bridge and external fetches stay on allowlisted hosts / on-prem bridge
+
+- **Audit**
+  - Security-sensitive membership, device admin, and POD confirmations write audit events
+'''

@@ -2,23 +2,18 @@
 
 ```bash
 export RENVERSE_MODE=standalone   # or suite
-export RENVERSE_ISSUER=http://localhost:9100
-export RENVERSE_CLIENT_ID=smartload-dev
+export RENVERSE_APP_KEY=smartload
+export RENVERSE_OIDC_ISSUER=http://localhost:9100
+export RENVERSE_OIDC_CLIENT_ID=app_smartload_web
+export RENVERSE_CONNECT_URL=http://localhost:9110
+export SMARTLOAD_TALLY_MODE=onprem
 ```
 
-- Stub Identity/Connect: `docs/revamp/120-implementation/123_LOCAL_STUB_IDENTITY_CONNECT.md`  
-- Standalone must work with zero Identity  
-- Suite: run platform docker-compose Identity + this app  
+Platform: RenVerse `./run-renverse.sh` (Identity `:9100`, Connect `:9110`).
 
-Ports: follow app README; Identity default `9100`.
+## Suite packages
 
----
-*RenVerse · SmartLoad · 2026-08-16*
-
-
-## Suite packages (local RenVerse monorepo)
-
-From `SmartLoad/apps/api` (three levels up to RenVerse root `packages/`):
+From `SmartLoad/apps/api` (path to RenVerse `packages/`):
 
 ```json
 "@renverse/auth-sdk": "file:../../../packages/auth-sdk",
@@ -26,19 +21,19 @@ From `SmartLoad/apps/api` (three levels up to RenVerse root `packages/`):
 "@renverse/suite-oidc-adapter": "file:../../../packages/suite-oidc-adapter"
 ```
 
-Also: `@fastify/middie`, `express`, `cookie-parser` (suite OIDC adapter is Express; middie bridges Fastify).
-
-SmartLoad root `package.json` includes `pnpm.overrides` so nested `@renverse/*` from `suite-oidc-adapter` resolve to `file:../packages/...` (sibling RenVerse packages), not the public npm registry.
+Also: `@fastify/middie`, `express`, `cookie-parser` (Express adapter + Fastify). Root `pnpm.overrides` for nested `@renverse/*` → sibling packages.
 
 ```bash
-export RENVERSE_MODE=suite
-export RENVERSE_APP_KEY=smartload
-export SMARTLOAD_TALLY_MODE=onprem   # default — Tally bridge stays on-prem
-export RENVERSE_OIDC_ISSUER=http://localhost:9100
-export RENVERSE_CONNECT_URL=http://localhost:9110
-curl -s http://localhost:4000/renverse/status
+curl -s http://localhost:<api-port>/renverse/status
+# Smoke POD (lab): POST /renverse/shipments/:id/pod
 ```
 
-Platform mirror host: RenVerse `apps/suite-host-smartload` `:9203`.
-Entitlement: `addons[]` / `hasAddon('smartload')` — not `apps[]`.
+## Notes
 
+- Standalone must work with zero Identity  
+- Driver offline flows must not hard-require suite  
+- Addon entitlement tests: JWT without `addons: ["smartload"]` → 403  
+
+---
+
+*RenVerse · SmartLoad Local Dev · 2026-08-19*

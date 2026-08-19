@@ -1,0 +1,43 @@
+---
+description: Definition of done for SmartLoad suite addon and product changes.
+alwaysApply: true
+---
+
+# Definition of Done
+
+A feature is **not done** until applicable items are complete. Mark N/A with a one-line reason. Tests: [testing.mdc](mdc:.cursor/rules/testing.mdc).
+
+- **Checklist**
+  - [ ] Implementation in canonical folders (`apps/`, `packages/`, `docs/`)
+  - [ ] `docs/renverse/` updated when suite membership, events, RBAC, or tenancy changed
+  - [ ] `renverse.manifest.json` stays aligned (`suiteRole: addon`, produces/consumes/issa)
+  - [ ] **Optional-addon policy intact:** entitlement is `hasAddon('smartload')`, never `hasApp`; Suite SKU must work without SmartLoad
+  - [ ] SoR bans: no full WMS/ERP; Tally remains on-prem unless explicitly designed
+  - [ ] Auth: dual-mode + addon entitlement + local `can` + `in_scope` on server
+  - [ ] **EP-SL-01 tenancy blocker** respected — do not claim suite GA without org model
+  - [ ] Unit / integration / API tests for changed behavior
+  - [ ] Addon deny (403 `ADDON_NOT_ENABLED`) tested when entitlement surfaces change
+  - [ ] `docs/CODEBASE_GRAPH.md` updated if structure or suite bridge changed
+  - [ ] Lint/typecheck for touched packages; hooks not skipped
+
+- **End of every implementation task, output:**
+
+```
+# Change Summary
+## Feature/Change Implemented
+- Name:
+- Files changed:
+## Contracts / Docs
+| Artifact | Update Summary |
+## Tests Added/Updated
+| Test Type | File Path | Scenarios Covered |
+## Commands Run
+| Command | Result |
+## Definition of Done Status
+- Complete / Incomplete
+- If incomplete, list remaining items.
+```
+
+No tests for a behavior change = not done. Structural change without graph update = not done. Weakening addon-optional policy = not done.
+'''
+

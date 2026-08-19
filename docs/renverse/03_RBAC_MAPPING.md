@@ -1,21 +1,25 @@
 # RBAC Mapping — SmartLoad
 
-Map RenIdentity suite roles → SmartLoad local roles on JIT. Names stay **local**; never rename to `org_*`.
+Map suite floors → live **`UserRole`** (`packages/shared/src/types/enums.ts`). Names stay local.
 
-**Canonical:** `docs/revamp/150-spec-complete/155_RBAC_DESIGN_PRINCIPLES.md`, `150_RBAC_LIVE_AUDIT.md`, `153_DUAL_RBAC_SUITE_AND_STANDALONE.md`.
-**Directory hints:** `docs/revamp/30-identity/37_ORG_DIRECTORY_DEPARTMENTS_TEAMS.md`.
+**Canonical:** [`155`](../../../docs/revamp/150-spec-complete/155_RBAC_DESIGN_PRINCIPLES.md), [`153`](../../../docs/revamp/150-spec-complete/153_DUAL_RBAC_SUITE_AND_STANDALONE.md).  
+Requires org membership model ([`152`](../../../docs/revamp/150-spec-complete/152_SMARTLOAD_TENANCY_DESIGN.md)).
 
-## Suite → local
+## Live local roles
+
+`ADMIN` | `SUPERVISOR` | `OPERATOR` | `ACCOUNTS` | `DRIVER` | `CLIENT`
+
+## Suite → local (floor)
 
 | Suite floor | Local role | Notes |
 |-------------|------------|-------|
-| `org_owner` | `ADMIN` | Requires org membership model (152) |
-| `org_admin` | `ADMIN` |  |
-| `org_member` | `OPERATOR or SUPERVISOR` |  |
-| `org_billing` | `ACCOUNTS` |  |
-| `org_readonly` | `CLIENT or read-only OPERATOR` |  |
+| `org_owner` | `ADMIN` | Org-scoped admin — never global platform admin |
+| `org_admin` | `ADMIN` | |
+| `org_member` | `OPERATOR` | Default ops floor; promote to `SUPERVISOR` locally |
+| `org_billing` | `ACCOUNTS` | |
+| `org_readonly` | `CLIENT` or read-only `OPERATOR` | Prefer least privilege |
 
-**Never auto-grant:** global ADMIN without org scope
+**Never auto-grant** global `ADMIN` without org scope. `DRIVER` remains device/ops assignment (not a suite floor).
 
 ## Floor markers (on `org_memberships`)
 
@@ -26,21 +30,17 @@ ALTER TABLE org_memberships ADD COLUMN IF NOT EXISTS renverse_department_id TEXT
 ALTER TABLE org_memberships ADD COLUMN IF NOT EXISTS renverse_team_ids JSONB DEFAULT '[]';
 ```
 
-## Membership sync
+## Sync & hints
 
 | Action | Behavior |
 |--------|----------|
-| added | JIT provision + floor map |
-| role_changed | Update suite/floor markers; keep local elevations |
-| directory_changed | Update dept/teams cache; hint refresh only if on floor |
-| removed | Soft-disable local access |
+| `added` | JIT + floor |
+| `role_changed` | Update markers; keep elevations |
+| `directory_changed` | Hints only if on floor |
+| `removed` | Soft-disable |
 
-## Department hints
-
-Optional: map Identity department names → default local role **only when still on floor**. Never cross-app grants.
-
-
-> Entitlement is hasAddon("smartload") NOT hasApp. Client ≠ suite org until tenancy design shipped.
+Optional Ops/Logistics dept → `SUPERVISOR` hint when on floor. No cross-app grants.
 
 ---
-*RenVerse · SmartLoad · 2026-08-16*
+
+*RenVerse · SmartLoad RBAC Mapping · 2026-08-19*
