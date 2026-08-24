@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuthStore } from '../store/authStore.ts';
-import { Button } from '../components/ui/Button.tsx';
+import { useAuthStore } from '../../store/authStore';
+import { Button } from '../ui/Button';
 
 const DISMISS_KEY = 'smartload_renverse_link_banner_dismissed';
 
