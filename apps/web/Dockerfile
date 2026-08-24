@@ -32,8 +32,9 @@ RUN pnpm --filter @smartload/web run build
 FROM nginx:alpine AS runner
 
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY apps/web/nginx.conf /etc/nginx/templates/default.conf.template
 
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Only substitute PORT — leave nginx $uri etc. intact.
+ENV NGINX_ENVSUBST_FILTER=PORT
+ENV PORT=8080
+EXPOSE 8080
