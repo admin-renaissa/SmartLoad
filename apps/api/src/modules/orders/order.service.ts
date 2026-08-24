@@ -6,6 +6,7 @@ export interface CreatePODto {
   orderDate: string;
   expectedDispatchDate?: string;
   notes?: string;
+  organizationId?: string | null;
   lineItems: Array<{
     variantId: string;
     orderedBoxes: number;
@@ -21,6 +22,15 @@ export class OrderService {
   async createPO(dto: CreatePODto, createdById: string) {
     const client = await this.prisma.client.findUnique({ where: { id: dto.clientId } });
     if (!client) throw Object.assign(new Error('Client not found'), { statusCode: 404 });
+
+    const organizationId =
+      dto.organizationId ?? client.organizationId ?? null;
+
+    if (organizationId && client.organizationId && client.organizationId !== organizationId) {
+      throw Object.assign(new Error('Client belongs to another organization'), {
+        statusCode: 403,
+      });
+    }
 
     // Validate all variants exist
     const variantIds = dto.lineItems.map((li) => li.variantId);
@@ -58,6 +68,7 @@ export class OrderService {
         data: {
           poNumber,
           clientId: dto.clientId,
+          organizationId: organizationId || undefined,
           orderDate: new Date(dto.orderDate),
           expectedDispatchDate: dto.expectedDispatchDate ? new Date(dto.expectedDispatchDate) : null,
           notes: dto.notes,
@@ -155,11 +166,13 @@ export class OrderService {
     dateTo?: string;
     page?: number;
     limit?: number;
+    organizationId?: string | null;
   }) {
     const { page = 1, limit = 25, ...rest } = filters;
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {};
+    if (rest.organizationId) where.organizationId = rest.organizationId;
     if (rest.status) where.status = rest.status;
     if (rest.clientId) where.clientId = rest.clientId;
     if (rest.dateFrom || rest.dateTo) {

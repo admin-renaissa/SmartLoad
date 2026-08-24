@@ -89,6 +89,9 @@ export const deviceRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       const where: Record<string, unknown> = {};
+      if (request.org?.organizationId) {
+        where.organizationId = request.org.organizationId;
+      }
 
       if (query.search) {
         where.OR = [
@@ -283,7 +286,11 @@ export const deviceRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const device = await fastify.prisma.scannerDevice.create({
-        data: { ...dto, registeredById: request.user.userId },
+        data: {
+          ...dto,
+          registeredById: request.user.userId,
+          organizationId: request.org?.organizationId || undefined,
+        },
         include: {
           registeredBy: { select: { id: true, name: true, email: true } },
         },

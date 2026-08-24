@@ -7,6 +7,8 @@ export interface JwtPayload {
   email: string;
   role: UserRole;
   name: string;
+  /** Local Organization.id when user has suite membership */
+  organizationId?: string;
 }
 
 declare module 'fastify' {

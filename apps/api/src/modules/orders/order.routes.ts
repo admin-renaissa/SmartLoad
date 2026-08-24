@@ -4,6 +4,7 @@ import { POStatus } from '@prisma/client';
 import { successResponse, errorResponse, UserRole } from '@smartload/shared';
 import { parsePagination, buildPaginationMeta } from '@smartload/shared';
 import { OrderService } from './order.service.js';
+import { assertSameOrg } from '../../renverse/tenancy.js';
 
 const lineItemSchema = z.object({
   variantId: z.string().cuid(),
@@ -39,6 +40,7 @@ export const orderRoutes: FastifyPluginAsync = async (fastify) => {
       dateTo: query.dateTo,
       page,
       limit,
+      organizationId: request.org?.organizationId,
     });
 
     return reply.send(successResponse(orders, buildPaginationMeta(total, page, limit)));
@@ -48,7 +50,10 @@ export const orderRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/', { preHandler: fastify.requireRole(UserRole.ADMIN, UserRole.SUPERVISOR) }, async (request, reply) => {
     const body = createOrderSchema.extend({ confirmImmediately: z.boolean().optional() }).parse(request.body);
     const { confirmImmediately, ...dto } = body;
-    const { po, warnings } = await getService().createPO(dto, request.user.userId);
+    const { po, warnings } = await getService().createPO(
+      { ...dto, organizationId: request.org?.organizationId },
+      request.user.userId,
+    );
 
     if (confirmImmediately && po.status === 'DRAFT') {
       const confirmed = await fastify.prisma.purchaseOrder.update({
@@ -65,6 +70,13 @@ export const orderRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id', { preHandler: fastify.requireAuth }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const po = await getService().getPOWithDetails(id);
+    const scope = assertSameOrg(
+      (po as { organizationId?: string | null }).organizationId,
+      request.org?.organizationId,
+    );
+    if (!scope.ok) {
+      return reply.code(403).send(errorResponse('ORG_SCOPE_MISMATCH'));
+    }
     return reply.send(successResponse(po));
   });
 

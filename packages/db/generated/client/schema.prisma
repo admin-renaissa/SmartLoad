@@ -140,6 +140,8 @@ model User {
   lastLoginAt      DateTime?
   totpSecret       String?
   twoFactorEnabled Boolean   @default(false)
+  /// Identity `sub` when user was JIT-provisioned in suite mode
+  renverseSub      String?   @unique @map("renverse_sub")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -153,11 +155,50 @@ model User {
   auditLogs          AuditLog[]
   configsUpdated     SystemConfig[]
   registeredDevices  ScannerDevice[]
+  orgMemberships     OrgMembership[]
 
   @@index([email])
   @@index([role])
   @@index([isActive])
   @@map("users")
+}
+
+/// Suite tenant (maps to RenIdentity org via renverse_org_id). Client remains counterparty.
+model Organization {
+  id            String   @id @default(cuid())
+  name          String
+  renverseOrgId String   @unique @map("renverse_org_id")
+  siteId        String   @map("site_id")
+  booksMode     String   @default("renbooks") @map("books_mode") // tally | renbooks
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  memberships    OrgMembership[]
+  clients        Client[]
+  purchaseOrders PurchaseOrder[]
+  scanners       ScannerDevice[]
+
+  @@index([siteId])
+  @@map("organizations")
+}
+
+model OrgMembership {
+  id                   String       @id @default(cuid())
+  organizationId       String       @map("organization_id")
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId               String       @map("user_id")
+  user                 User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role                 UserRole     @default(OPERATOR)
+  renverseSuiteRole    String?      @map("renverse_suite_role")
+  renverseFloorRole    String?      @map("renverse_floor_role")
+  renverseDepartmentId String?      @map("renverse_department_id")
+  renverseTeamIds      Json         @default("[]") @map("renverse_team_ids")
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("org_memberships")
 }
 
 model ProductCategory {
@@ -250,8 +291,8 @@ model ProductVariant {
 }
 
 model Client {
-  id                String   @id @default(cuid())
-  clientCode        String   @unique
+  id                String        @id @default(cuid())
+  clientCode        String        @unique
   name              String
   gstin             String?
   phone             String
@@ -259,40 +300,46 @@ model Client {
   billingAddress    Json
   shippingAddress   Json
   contactPersonName String?
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  isActive          Boolean       @default(true)
+  organizationId    String?       @map("organization_id")
+  organization      Organization? @relation(fields: [organizationId], references: [id])
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   purchaseOrders PurchaseOrder[]
 
   @@index([clientCode])
   @@index([name])
   @@index([isActive])
+  @@index([organizationId])
   @@map("clients")
 }
 
 model PurchaseOrder {
-  id                   String    @id @default(cuid())
-  poNumber             String    @unique
+  id                   String        @id @default(cuid())
+  poNumber             String        @unique
   clientId             String
-  client               Client    @relation(fields: [clientId], references: [id])
+  client               Client        @relation(fields: [clientId], references: [id])
+  organizationId       String?       @map("organization_id")
+  organization         Organization? @relation(fields: [organizationId], references: [id])
   orderDate            DateTime
   expectedDispatchDate DateTime?
-  status               POStatus  @default(DRAFT)
-  totalAmountPaise     Int       @default(0)
+  status               POStatus      @default(DRAFT)
+  totalAmountPaise     Int           @default(0)
   notes                String?
-  tallyVoucherId       String?   @unique
+  tallyVoucherId       String?       @unique
   createdById          String
-  createdBy            User      @relation("POCreator", fields: [createdById], references: [id])
+  createdBy            User          @relation("POCreator", fields: [createdById], references: [id])
   updatedById          String?
-  updatedBy            User?     @relation("POUpdater", fields: [updatedById], references: [id])
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  updatedBy            User?         @relation("POUpdater", fields: [updatedById], references: [id])
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   lineItems POLineItem[]
   sessions  DispatchSession[]
 
   @@index([clientId])
+  @@index([organizationId])
   @@index([status])
   @@index([orderDate])
   @@index([poNumber])
@@ -341,24 +388,27 @@ model Vehicle {
 }
 
 model ScannerDevice {
-  id             String    @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
-  serialNumber   String    @unique
+  serialNumber   String        @unique
   driverName     String
-  deviceType     String    @default("BARCODE_SCANNER")
+  deviceType     String        @default("BARCODE_SCANNER")
   ipAddress      String?
   location       String?
   notes          String?
-  isActive       Boolean   @default(true)
+  isActive       Boolean       @default(true)
+  organizationId String?       @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id])
   registeredById String
-  registeredBy   User      @relation(fields: [registeredById], references: [id])
+  registeredBy   User          @relation(fields: [registeredById], references: [id])
   lastSeenAt     DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([serialNumber])
   @@index([driverName])
   @@index([isActive])
+  @@index([organizationId])
   @@map("scanner_devices")
 }
 

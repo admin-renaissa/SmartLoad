@@ -26,6 +26,7 @@
     "db:migrate:deploy": "pnpm --filter @smartload/db run migrate:deploy",
     "db:migrate": "pnpm --filter @smartload/db run migrate",
     "db:seed": "pnpm --filter @smartload/db run seed",
+    "db:backfill-org": "pnpm --filter @smartload/db run backfill:org",
     "db:studio": "pnpm --filter @smartload/db run studio",
     "db:reset": "pnpm --filter @smartload/db exec prisma migrate reset",
     "docker:dev": "docker compose up -d",

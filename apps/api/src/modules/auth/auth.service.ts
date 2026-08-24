@@ -37,12 +37,24 @@ export class AuthService {
     private fastify: FastifyInstance,
   ) {}
 
-  private issueTokens(user: UserIssue) {
+  private async issueTokens(user: UserIssue) {
+    let organizationId: string | undefined;
+    try {
+      const m = await this.prisma.orgMembership.findFirst({
+        where: { userId: user.id },
+        select: { organizationId: true },
+      });
+      organizationId = m?.organizationId;
+    } catch {
+      /* org tables may be absent pre-migrate */
+    }
+
     const payload: JwtPayload = {
       userId: user.id,
       email: user.email,
       role: user.role as JwtPayload['role'],
       name: user.name,
+      ...(organizationId ? { organizationId } : {}),
     };
 
     const accessToken = this.fastify.jwt.sign(payload, { expiresIn: '15m' });
@@ -68,11 +80,39 @@ export class AuthService {
         isActive: true,
         twoFactorEnabled: true,
         totpSecret: true,
+        renverseSub: true,
       },
     });
 
     if (!user || !user.isActive) {
       throw Object.assign(new Error('Invalid email or password'), { statusCode: 401 });
+    }
+
+    // EP-X-01 Phase B: env cutover OR user's org membership cutover
+    try {
+      const {
+        shouldBlockLocalLogin,
+        suiteCutoverMessage,
+        SUITE_CUTOVER_CODE,
+      } = await import('../../renverse/suite-auth-gate.js');
+      const { userHasOrgCutover } = await import('../../renverse/suite-cutover.js');
+      let tenantCutover = false;
+      try {
+        tenantCutover = await userHasOrgCutover(this.prisma as any, user.id);
+      } catch (cutoverLookupErr: unknown) {
+        const msg = String((cutoverLookupErr as Error)?.message || cutoverLookupErr || '');
+        if (!/renverse_suite_cutover_at|renverseSuiteCutoverAt|Unknown arg/i.test(msg)) {
+          throw cutoverLookupErr;
+        }
+      }
+      if (shouldBlockLocalLogin({ tenantCutover })) {
+        throw Object.assign(new Error(suiteCutoverMessage()), {
+          statusCode: 403,
+          code: SUITE_CUTOVER_CODE,
+        });
+      }
+    } catch (cutoverErr: any) {
+      if (cutoverErr?.code === 'SUITE_CUTOVER_REQUIRED') throw cutoverErr;
     }
 
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
@@ -108,6 +148,7 @@ export class AuthService {
         name: user.name,
         role: user.role,
         phone: user.phone,
+        renverseSub: user.renverseSub ?? null,
       },
     };
   }

@@ -11,6 +11,17 @@ export SMARTLOAD_TALLY_MODE=onprem
 
 Platform: RenVerse `./run-renverse.sh` (Identity `:9100`, Connect `:9110`).
 
+## DB migrate + org backfill (suite tenancy)
+
+Ensure `.env` has both `DATABASE_URL` and `DIRECT_DATABASE_URL` (see `.env.example`).
+
+```bash
+pnpm db:migrate:deploy   # applies 20260824120000 + 20260824130000 (org + scanner backfill SQL)
+pnpm db:backfill-org     # idempotent: default org + clients/POs/scanners + admin membership
+# or fresh demo:
+pnpm db:seed             # creates org_demo00000001 + scoped clients/POs
+```
+
 ## Suite packages
 
 From `SmartLoad/apps/api` (path to RenVerse `packages/`):

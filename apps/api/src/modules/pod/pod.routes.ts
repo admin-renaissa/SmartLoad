@@ -363,13 +363,40 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
     if (!hasDiscrepancy) {
       const session = await fastify.prisma.dispatchSession.findUnique({
         where: { id: pod.sessionId },
+        include: { purchaseOrder: true },
       });
-      const orgId = process.env.RENVERSE_ORG_ID || 'org_demo00000001';
+      let orgId = process.env.RENVERSE_ORG_ID || 'org_demo00000001';
+      try {
+        const orgLocalId = session?.purchaseOrder?.organizationId;
+        if (orgLocalId) {
+          const org = await fastify.prisma.organization.findUnique({
+            where: { id: orgLocalId },
+          });
+          if (org?.renverseOrgId) orgId = org.renverseOrgId;
+        }
+      } catch {
+        /* organization table may be absent pre-migrate */
+      }
       try {
         await emitPodConfirmed({
           shipmentId: session?.poId || pod.sessionId,
           orgId,
           podId: id,
+          writeOutbox: async (row) => {
+            try {
+              await fastify.prisma.$executeRawUnsafe(
+                `INSERT INTO renverse_outbox (event_id, type, org_id, payload)
+                 VALUES ($1, $2, $3, $4::jsonb)
+                 ON CONFLICT (event_id) DO NOTHING`,
+                row.eventId,
+                row.type,
+                row.orgId,
+                JSON.stringify(row.payload),
+              );
+            } catch {
+              /* optional */
+            }
+          },
         });
       } catch (err) {
         fastify.log.warn({ err }, '[renverse] pod.confirmed emit failed');
@@ -421,6 +448,11 @@ export const podRoutes: FastifyPluginAsync = async (fastify) => {
 
     const where: Record<string, unknown> = {};
     if (query.status) where.status = query.status;
+    if (request.org?.organizationId) {
+      where.session = {
+        purchaseOrder: { organizationId: request.org.organizationId },
+      };
+    }
 
     const [pods, total] = await Promise.all([
       fastify.prisma.proofOfDelivery.findMany({

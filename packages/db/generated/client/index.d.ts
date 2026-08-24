@@ -19,6 +19,16 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model Organization
+ * Suite tenant (maps to RenIdentity org via renverse_org_id). Client remains counterparty.
+ */
+export type Organization = $Result.DefaultSelection<Prisma.$OrganizationPayload>
+/**
+ * Model OrgMembership
+ * 
+ */
+export type OrgMembership = $Result.DefaultSelection<Prisma.$OrgMembershipPayload>
+/**
  * Model ProductCategory
  * 
  */
@@ -469,6 +479,26 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs>;
+
+  /**
+   * `prisma.organization`: Exposes CRUD operations for the **Organization** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Organizations
+    * const organizations = await prisma.organization.findMany()
+    * ```
+    */
+  get organization(): Prisma.OrganizationDelegate<ExtArgs>;
+
+  /**
+   * `prisma.orgMembership`: Exposes CRUD operations for the **OrgMembership** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrgMemberships
+    * const orgMemberships = await prisma.orgMembership.findMany()
+    * ```
+    */
+  get orgMembership(): Prisma.OrgMembershipDelegate<ExtArgs>;
 
   /**
    * `prisma.productCategory`: Exposes CRUD operations for the **ProductCategory** model.
@@ -1111,6 +1141,8 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    Organization: 'Organization',
+    OrgMembership: 'OrgMembership',
     ProductCategory: 'ProductCategory',
     Product: 'Product',
     ProductVariant: 'ProductVariant',
@@ -1146,7 +1178,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "productCategory" | "product" | "productVariant" | "client" | "purchaseOrder" | "pOLineItem" | "vehicle" | "scannerDevice" | "dispatchSession" | "scanEvent" | "inventoryStock" | "inventoryLedger" | "goodsReceiptNote" | "gRNLineItem" | "proofOfDelivery" | "pODLineItem" | "tallySyncJob" | "auditLog" | "notification" | "systemConfig"
+      modelProps: "user" | "organization" | "orgMembership" | "productCategory" | "product" | "productVariant" | "client" | "purchaseOrder" | "pOLineItem" | "vehicle" | "scannerDevice" | "dispatchSession" | "scanEvent" | "inventoryStock" | "inventoryLedger" | "goodsReceiptNote" | "gRNLineItem" | "proofOfDelivery" | "pODLineItem" | "tallySyncJob" | "auditLog" | "notification" | "systemConfig"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1217,6 +1249,146 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      Organization: {
+        payload: Prisma.$OrganizationPayload<ExtArgs>
+        fields: Prisma.OrganizationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrganizationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrganizationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload>
+          }
+          findFirst: {
+            args: Prisma.OrganizationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrganizationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload>
+          }
+          findMany: {
+            args: Prisma.OrganizationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload>[]
+          }
+          create: {
+            args: Prisma.OrganizationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload>
+          }
+          createMany: {
+            args: Prisma.OrganizationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrganizationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload>[]
+          }
+          delete: {
+            args: Prisma.OrganizationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload>
+          }
+          update: {
+            args: Prisma.OrganizationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrganizationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrganizationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.OrganizationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationPayload>
+          }
+          aggregate: {
+            args: Prisma.OrganizationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrganization>
+          }
+          groupBy: {
+            args: Prisma.OrganizationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrganizationCountArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationCountAggregateOutputType> | number
+          }
+        }
+      }
+      OrgMembership: {
+        payload: Prisma.$OrgMembershipPayload<ExtArgs>
+        fields: Prisma.OrgMembershipFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrgMembershipFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrgMembershipFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload>
+          }
+          findFirst: {
+            args: Prisma.OrgMembershipFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrgMembershipFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload>
+          }
+          findMany: {
+            args: Prisma.OrgMembershipFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload>[]
+          }
+          create: {
+            args: Prisma.OrgMembershipCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload>
+          }
+          createMany: {
+            args: Prisma.OrgMembershipCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrgMembershipCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload>[]
+          }
+          delete: {
+            args: Prisma.OrgMembershipDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload>
+          }
+          update: {
+            args: Prisma.OrgMembershipUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrgMembershipDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrgMembershipUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.OrgMembershipUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrgMembershipPayload>
+          }
+          aggregate: {
+            args: Prisma.OrgMembershipAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrgMembership>
+          }
+          groupBy: {
+            args: Prisma.OrgMembershipGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrgMembershipGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrgMembershipCountArgs<ExtArgs>
+            result: $Utils.Optional<OrgMembershipCountAggregateOutputType> | number
           }
         }
       }
@@ -2791,6 +2963,7 @@ export namespace Prisma {
     auditLogs: number
     configsUpdated: number
     registeredDevices: number
+    orgMemberships: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2804,6 +2977,7 @@ export namespace Prisma {
     auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
     configsUpdated?: boolean | UserCountOutputTypeCountConfigsUpdatedArgs
     registeredDevices?: boolean | UserCountOutputTypeCountRegisteredDevicesArgs
+    orgMemberships?: boolean | UserCountOutputTypeCountOrgMembershipsArgs
   }
 
   // Custom InputTypes
@@ -2884,6 +3058,71 @@ export namespace Prisma {
    * UserCountOutputType without action
    */
   export type UserCountOutputTypeCountRegisteredDevicesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ScannerDeviceWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountOrgMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrgMembershipWhereInput
+  }
+
+
+  /**
+   * Count Type OrganizationCountOutputType
+   */
+
+  export type OrganizationCountOutputType = {
+    memberships: number
+    clients: number
+    purchaseOrders: number
+    scanners: number
+  }
+
+  export type OrganizationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    memberships?: boolean | OrganizationCountOutputTypeCountMembershipsArgs
+    clients?: boolean | OrganizationCountOutputTypeCountClientsArgs
+    purchaseOrders?: boolean | OrganizationCountOutputTypeCountPurchaseOrdersArgs
+    scanners?: boolean | OrganizationCountOutputTypeCountScannersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationCountOutputType
+     */
+    select?: OrganizationCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrgMembershipWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountClientsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ClientWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPurchaseOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PurchaseOrderWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountScannersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ScannerDeviceWhereInput
   }
 
@@ -3259,6 +3498,7 @@ export namespace Prisma {
     lastLoginAt: Date | null
     totpSecret: string | null
     twoFactorEnabled: boolean | null
+    renverseSub: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3274,6 +3514,7 @@ export namespace Prisma {
     lastLoginAt: Date | null
     totpSecret: string | null
     twoFactorEnabled: boolean | null
+    renverseSub: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3289,6 +3530,7 @@ export namespace Prisma {
     lastLoginAt: number
     totpSecret: number
     twoFactorEnabled: number
+    renverseSub: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -3306,6 +3548,7 @@ export namespace Prisma {
     lastLoginAt?: true
     totpSecret?: true
     twoFactorEnabled?: true
+    renverseSub?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -3321,6 +3564,7 @@ export namespace Prisma {
     lastLoginAt?: true
     totpSecret?: true
     twoFactorEnabled?: true
+    renverseSub?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -3336,6 +3580,7 @@ export namespace Prisma {
     lastLoginAt?: true
     totpSecret?: true
     twoFactorEnabled?: true
+    renverseSub?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -3424,6 +3669,7 @@ export namespace Prisma {
     lastLoginAt: Date | null
     totpSecret: string | null
     twoFactorEnabled: boolean
+    renverseSub: string | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -3456,6 +3702,7 @@ export namespace Prisma {
     lastLoginAt?: boolean
     totpSecret?: boolean
     twoFactorEnabled?: boolean
+    renverseSub?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     supervisedSessions?: boolean | User$supervisedSessionsArgs<ExtArgs>
@@ -3468,6 +3715,7 @@ export namespace Prisma {
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     configsUpdated?: boolean | User$configsUpdatedArgs<ExtArgs>
     registeredDevices?: boolean | User$registeredDevicesArgs<ExtArgs>
+    orgMemberships?: boolean | User$orgMembershipsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -3482,6 +3730,7 @@ export namespace Prisma {
     lastLoginAt?: boolean
     totpSecret?: boolean
     twoFactorEnabled?: boolean
+    renverseSub?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -3497,6 +3746,7 @@ export namespace Prisma {
     lastLoginAt?: boolean
     totpSecret?: boolean
     twoFactorEnabled?: boolean
+    renverseSub?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -3512,6 +3762,7 @@ export namespace Prisma {
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     configsUpdated?: boolean | User$configsUpdatedArgs<ExtArgs>
     registeredDevices?: boolean | User$registeredDevicesArgs<ExtArgs>
+    orgMemberships?: boolean | User$orgMembershipsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -3529,6 +3780,7 @@ export namespace Prisma {
       auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
       configsUpdated: Prisma.$SystemConfigPayload<ExtArgs>[]
       registeredDevices: Prisma.$ScannerDevicePayload<ExtArgs>[]
+      orgMemberships: Prisma.$OrgMembershipPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3541,6 +3793,10 @@ export namespace Prisma {
       lastLoginAt: Date | null
       totpSecret: string | null
       twoFactorEnabled: boolean
+      /**
+       * Identity `sub` when user was JIT-provisioned in suite mode
+       */
+      renverseSub: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -3917,6 +4173,7 @@ export namespace Prisma {
     auditLogs<T extends User$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany"> | Null>
     configsUpdated<T extends User$configsUpdatedArgs<ExtArgs> = {}>(args?: Subset<T, User$configsUpdatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findMany"> | Null>
     registeredDevices<T extends User$registeredDevicesArgs<ExtArgs> = {}>(args?: Subset<T, User$registeredDevicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ScannerDevicePayload<ExtArgs>, T, "findMany"> | Null>
+    orgMemberships<T extends User$orgMembershipsArgs<ExtArgs> = {}>(args?: Subset<T, User$orgMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3956,6 +4213,7 @@ export namespace Prisma {
     readonly lastLoginAt: FieldRef<"User", 'DateTime'>
     readonly totpSecret: FieldRef<"User", 'String'>
     readonly twoFactorEnabled: FieldRef<"User", 'Boolean'>
+    readonly renverseSub: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -4472,6 +4730,26 @@ export namespace Prisma {
   }
 
   /**
+   * User.orgMemberships
+   */
+  export type User$orgMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    where?: OrgMembershipWhereInput
+    orderBy?: OrgMembershipOrderByWithRelationInput | OrgMembershipOrderByWithRelationInput[]
+    cursor?: OrgMembershipWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrgMembershipScalarFieldEnum | OrgMembershipScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4483,6 +4761,2045 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Organization
+   */
+
+  export type AggregateOrganization = {
+    _count: OrganizationCountAggregateOutputType | null
+    _min: OrganizationMinAggregateOutputType | null
+    _max: OrganizationMaxAggregateOutputType | null
+  }
+
+  export type OrganizationMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    renverseOrgId: string | null
+    siteId: string | null
+    booksMode: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    renverseOrgId: string | null
+    siteId: string | null
+    booksMode: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationCountAggregateOutputType = {
+    id: number
+    name: number
+    renverseOrgId: number
+    siteId: number
+    booksMode: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OrganizationMinAggregateInputType = {
+    id?: true
+    name?: true
+    renverseOrgId?: true
+    siteId?: true
+    booksMode?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationMaxAggregateInputType = {
+    id?: true
+    name?: true
+    renverseOrgId?: true
+    siteId?: true
+    booksMode?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationCountAggregateInputType = {
+    id?: true
+    name?: true
+    renverseOrgId?: true
+    siteId?: true
+    booksMode?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OrganizationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Organization to aggregate.
+     */
+    where?: OrganizationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Organizations to fetch.
+     */
+    orderBy?: OrganizationOrderByWithRelationInput | OrganizationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrganizationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Organizations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Organizations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Organizations
+    **/
+    _count?: true | OrganizationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrganizationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrganizationMaxAggregateInputType
+  }
+
+  export type GetOrganizationAggregateType<T extends OrganizationAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrganization]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrganization[P]>
+      : GetScalarType<T[P], AggregateOrganization[P]>
+  }
+
+
+
+
+  export type OrganizationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationWhereInput
+    orderBy?: OrganizationOrderByWithAggregationInput | OrganizationOrderByWithAggregationInput[]
+    by: OrganizationScalarFieldEnum[] | OrganizationScalarFieldEnum
+    having?: OrganizationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrganizationCountAggregateInputType | true
+    _min?: OrganizationMinAggregateInputType
+    _max?: OrganizationMaxAggregateInputType
+  }
+
+  export type OrganizationGroupByOutputType = {
+    id: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode: string
+    createdAt: Date
+    updatedAt: Date
+    _count: OrganizationCountAggregateOutputType | null
+    _min: OrganizationMinAggregateOutputType | null
+    _max: OrganizationMaxAggregateOutputType | null
+  }
+
+  type GetOrganizationGroupByPayload<T extends OrganizationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrganizationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrganizationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrganizationGroupByOutputType[P]>
+            : GetScalarType<T[P], OrganizationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrganizationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    renverseOrgId?: boolean
+    siteId?: boolean
+    booksMode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    memberships?: boolean | Organization$membershipsArgs<ExtArgs>
+    clients?: boolean | Organization$clientsArgs<ExtArgs>
+    purchaseOrders?: boolean | Organization$purchaseOrdersArgs<ExtArgs>
+    scanners?: boolean | Organization$scannersArgs<ExtArgs>
+    _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organization"]>
+
+  export type OrganizationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    renverseOrgId?: boolean
+    siteId?: boolean
+    booksMode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["organization"]>
+
+  export type OrganizationSelectScalar = {
+    id?: boolean
+    name?: boolean
+    renverseOrgId?: boolean
+    siteId?: boolean
+    booksMode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OrganizationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    memberships?: boolean | Organization$membershipsArgs<ExtArgs>
+    clients?: boolean | Organization$clientsArgs<ExtArgs>
+    purchaseOrders?: boolean | Organization$purchaseOrdersArgs<ExtArgs>
+    scanners?: boolean | Organization$scannersArgs<ExtArgs>
+    _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $OrganizationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Organization"
+    objects: {
+      memberships: Prisma.$OrgMembershipPayload<ExtArgs>[]
+      clients: Prisma.$ClientPayload<ExtArgs>[]
+      purchaseOrders: Prisma.$PurchaseOrderPayload<ExtArgs>[]
+      scanners: Prisma.$ScannerDevicePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      renverseOrgId: string
+      siteId: string
+      booksMode: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["organization"]>
+    composites: {}
+  }
+
+  type OrganizationGetPayload<S extends boolean | null | undefined | OrganizationDefaultArgs> = $Result.GetResult<Prisma.$OrganizationPayload, S>
+
+  type OrganizationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<OrganizationFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: OrganizationCountAggregateInputType | true
+    }
+
+  export interface OrganizationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Organization'], meta: { name: 'Organization' } }
+    /**
+     * Find zero or one Organization that matches the filter.
+     * @param {OrganizationFindUniqueArgs} args - Arguments to find a Organization
+     * @example
+     * // Get one Organization
+     * const organization = await prisma.organization.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrganizationFindUniqueArgs>(args: SelectSubset<T, OrganizationFindUniqueArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Organization that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {OrganizationFindUniqueOrThrowArgs} args - Arguments to find a Organization
+     * @example
+     * // Get one Organization
+     * const organization = await prisma.organization.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrganizationFindUniqueOrThrowArgs>(args: SelectSubset<T, OrganizationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Organization that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationFindFirstArgs} args - Arguments to find a Organization
+     * @example
+     * // Get one Organization
+     * const organization = await prisma.organization.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrganizationFindFirstArgs>(args?: SelectSubset<T, OrganizationFindFirstArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Organization that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationFindFirstOrThrowArgs} args - Arguments to find a Organization
+     * @example
+     * // Get one Organization
+     * const organization = await prisma.organization.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrganizationFindFirstOrThrowArgs>(args?: SelectSubset<T, OrganizationFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Organizations that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Organizations
+     * const organizations = await prisma.organization.findMany()
+     * 
+     * // Get first 10 Organizations
+     * const organizations = await prisma.organization.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const organizationWithIdOnly = await prisma.organization.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OrganizationFindManyArgs>(args?: SelectSubset<T, OrganizationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Organization.
+     * @param {OrganizationCreateArgs} args - Arguments to create a Organization.
+     * @example
+     * // Create one Organization
+     * const Organization = await prisma.organization.create({
+     *   data: {
+     *     // ... data to create a Organization
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrganizationCreateArgs>(args: SelectSubset<T, OrganizationCreateArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Organizations.
+     * @param {OrganizationCreateManyArgs} args - Arguments to create many Organizations.
+     * @example
+     * // Create many Organizations
+     * const organization = await prisma.organization.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrganizationCreateManyArgs>(args?: SelectSubset<T, OrganizationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Organizations and returns the data saved in the database.
+     * @param {OrganizationCreateManyAndReturnArgs} args - Arguments to create many Organizations.
+     * @example
+     * // Create many Organizations
+     * const organization = await prisma.organization.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Organizations and only return the `id`
+     * const organizationWithIdOnly = await prisma.organization.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrganizationCreateManyAndReturnArgs>(args?: SelectSubset<T, OrganizationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Organization.
+     * @param {OrganizationDeleteArgs} args - Arguments to delete one Organization.
+     * @example
+     * // Delete one Organization
+     * const Organization = await prisma.organization.delete({
+     *   where: {
+     *     // ... filter to delete one Organization
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrganizationDeleteArgs>(args: SelectSubset<T, OrganizationDeleteArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Organization.
+     * @param {OrganizationUpdateArgs} args - Arguments to update one Organization.
+     * @example
+     * // Update one Organization
+     * const organization = await prisma.organization.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrganizationUpdateArgs>(args: SelectSubset<T, OrganizationUpdateArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Organizations.
+     * @param {OrganizationDeleteManyArgs} args - Arguments to filter Organizations to delete.
+     * @example
+     * // Delete a few Organizations
+     * const { count } = await prisma.organization.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrganizationDeleteManyArgs>(args?: SelectSubset<T, OrganizationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Organizations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Organizations
+     * const organization = await prisma.organization.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrganizationUpdateManyArgs>(args: SelectSubset<T, OrganizationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Organization.
+     * @param {OrganizationUpsertArgs} args - Arguments to update or create a Organization.
+     * @example
+     * // Update or create a Organization
+     * const organization = await prisma.organization.upsert({
+     *   create: {
+     *     // ... data to create a Organization
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Organization we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrganizationUpsertArgs>(args: SelectSubset<T, OrganizationUpsertArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Organizations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationCountArgs} args - Arguments to filter Organizations to count.
+     * @example
+     * // Count the number of Organizations
+     * const count = await prisma.organization.count({
+     *   where: {
+     *     // ... the filter for the Organizations we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrganizationCountArgs>(
+      args?: Subset<T, OrganizationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrganizationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Organization.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrganizationAggregateArgs>(args: Subset<T, OrganizationAggregateArgs>): Prisma.PrismaPromise<GetOrganizationAggregateType<T>>
+
+    /**
+     * Group by Organization.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrganizationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrganizationGroupByArgs['orderBy'] }
+        : { orderBy?: OrganizationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrganizationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrganizationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Organization model
+   */
+  readonly fields: OrganizationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Organization.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrganizationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    memberships<T extends Organization$membershipsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "findMany"> | Null>
+    clients<T extends Organization$clientsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$clientsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ClientPayload<ExtArgs>, T, "findMany"> | Null>
+    purchaseOrders<T extends Organization$purchaseOrdersArgs<ExtArgs> = {}>(args?: Subset<T, Organization$purchaseOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PurchaseOrderPayload<ExtArgs>, T, "findMany"> | Null>
+    scanners<T extends Organization$scannersArgs<ExtArgs> = {}>(args?: Subset<T, Organization$scannersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ScannerDevicePayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Organization model
+   */ 
+  interface OrganizationFieldRefs {
+    readonly id: FieldRef<"Organization", 'String'>
+    readonly name: FieldRef<"Organization", 'String'>
+    readonly renverseOrgId: FieldRef<"Organization", 'String'>
+    readonly siteId: FieldRef<"Organization", 'String'>
+    readonly booksMode: FieldRef<"Organization", 'String'>
+    readonly createdAt: FieldRef<"Organization", 'DateTime'>
+    readonly updatedAt: FieldRef<"Organization", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Organization findUnique
+   */
+  export type OrganizationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * Filter, which Organization to fetch.
+     */
+    where: OrganizationWhereUniqueInput
+  }
+
+  /**
+   * Organization findUniqueOrThrow
+   */
+  export type OrganizationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * Filter, which Organization to fetch.
+     */
+    where: OrganizationWhereUniqueInput
+  }
+
+  /**
+   * Organization findFirst
+   */
+  export type OrganizationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * Filter, which Organization to fetch.
+     */
+    where?: OrganizationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Organizations to fetch.
+     */
+    orderBy?: OrganizationOrderByWithRelationInput | OrganizationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Organizations.
+     */
+    cursor?: OrganizationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Organizations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Organizations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Organizations.
+     */
+    distinct?: OrganizationScalarFieldEnum | OrganizationScalarFieldEnum[]
+  }
+
+  /**
+   * Organization findFirstOrThrow
+   */
+  export type OrganizationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * Filter, which Organization to fetch.
+     */
+    where?: OrganizationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Organizations to fetch.
+     */
+    orderBy?: OrganizationOrderByWithRelationInput | OrganizationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Organizations.
+     */
+    cursor?: OrganizationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Organizations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Organizations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Organizations.
+     */
+    distinct?: OrganizationScalarFieldEnum | OrganizationScalarFieldEnum[]
+  }
+
+  /**
+   * Organization findMany
+   */
+  export type OrganizationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * Filter, which Organizations to fetch.
+     */
+    where?: OrganizationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Organizations to fetch.
+     */
+    orderBy?: OrganizationOrderByWithRelationInput | OrganizationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Organizations.
+     */
+    cursor?: OrganizationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Organizations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Organizations.
+     */
+    skip?: number
+    distinct?: OrganizationScalarFieldEnum | OrganizationScalarFieldEnum[]
+  }
+
+  /**
+   * Organization create
+   */
+  export type OrganizationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Organization.
+     */
+    data: XOR<OrganizationCreateInput, OrganizationUncheckedCreateInput>
+  }
+
+  /**
+   * Organization createMany
+   */
+  export type OrganizationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Organizations.
+     */
+    data: OrganizationCreateManyInput | OrganizationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Organization createManyAndReturn
+   */
+  export type OrganizationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Organizations.
+     */
+    data: OrganizationCreateManyInput | OrganizationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Organization update
+   */
+  export type OrganizationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Organization.
+     */
+    data: XOR<OrganizationUpdateInput, OrganizationUncheckedUpdateInput>
+    /**
+     * Choose, which Organization to update.
+     */
+    where: OrganizationWhereUniqueInput
+  }
+
+  /**
+   * Organization updateMany
+   */
+  export type OrganizationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Organizations.
+     */
+    data: XOR<OrganizationUpdateManyMutationInput, OrganizationUncheckedUpdateManyInput>
+    /**
+     * Filter which Organizations to update
+     */
+    where?: OrganizationWhereInput
+  }
+
+  /**
+   * Organization upsert
+   */
+  export type OrganizationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Organization to update in case it exists.
+     */
+    where: OrganizationWhereUniqueInput
+    /**
+     * In case the Organization found by the `where` argument doesn't exist, create a new Organization with this data.
+     */
+    create: XOR<OrganizationCreateInput, OrganizationUncheckedCreateInput>
+    /**
+     * In case the Organization was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrganizationUpdateInput, OrganizationUncheckedUpdateInput>
+  }
+
+  /**
+   * Organization delete
+   */
+  export type OrganizationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
+     * Filter which Organization to delete.
+     */
+    where: OrganizationWhereUniqueInput
+  }
+
+  /**
+   * Organization deleteMany
+   */
+  export type OrganizationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Organizations to delete
+     */
+    where?: OrganizationWhereInput
+  }
+
+  /**
+   * Organization.memberships
+   */
+  export type Organization$membershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    where?: OrgMembershipWhereInput
+    orderBy?: OrgMembershipOrderByWithRelationInput | OrgMembershipOrderByWithRelationInput[]
+    cursor?: OrgMembershipWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrgMembershipScalarFieldEnum | OrgMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.clients
+   */
+  export type Organization$clientsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Client
+     */
+    select?: ClientSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClientInclude<ExtArgs> | null
+    where?: ClientWhereInput
+    orderBy?: ClientOrderByWithRelationInput | ClientOrderByWithRelationInput[]
+    cursor?: ClientWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ClientScalarFieldEnum | ClientScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.purchaseOrders
+   */
+  export type Organization$purchaseOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PurchaseOrder
+     */
+    select?: PurchaseOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PurchaseOrderInclude<ExtArgs> | null
+    where?: PurchaseOrderWhereInput
+    orderBy?: PurchaseOrderOrderByWithRelationInput | PurchaseOrderOrderByWithRelationInput[]
+    cursor?: PurchaseOrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PurchaseOrderScalarFieldEnum | PurchaseOrderScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.scanners
+   */
+  export type Organization$scannersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ScannerDevice
+     */
+    select?: ScannerDeviceSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ScannerDeviceInclude<ExtArgs> | null
+    where?: ScannerDeviceWhereInput
+    orderBy?: ScannerDeviceOrderByWithRelationInput | ScannerDeviceOrderByWithRelationInput[]
+    cursor?: ScannerDeviceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ScannerDeviceScalarFieldEnum | ScannerDeviceScalarFieldEnum[]
+  }
+
+  /**
+   * Organization without action
+   */
+  export type OrganizationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrgMembership
+   */
+
+  export type AggregateOrgMembership = {
+    _count: OrgMembershipCountAggregateOutputType | null
+    _min: OrgMembershipMinAggregateOutputType | null
+    _max: OrgMembershipMaxAggregateOutputType | null
+  }
+
+  export type OrgMembershipMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    userId: string | null
+    role: $Enums.UserRole | null
+    renverseSuiteRole: string | null
+    renverseFloorRole: string | null
+    renverseDepartmentId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrgMembershipMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    userId: string | null
+    role: $Enums.UserRole | null
+    renverseSuiteRole: string | null
+    renverseFloorRole: string | null
+    renverseDepartmentId: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrgMembershipCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    userId: number
+    role: number
+    renverseSuiteRole: number
+    renverseFloorRole: number
+    renverseDepartmentId: number
+    renverseTeamIds: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OrgMembershipMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    userId?: true
+    role?: true
+    renverseSuiteRole?: true
+    renverseFloorRole?: true
+    renverseDepartmentId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrgMembershipMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    userId?: true
+    role?: true
+    renverseSuiteRole?: true
+    renverseFloorRole?: true
+    renverseDepartmentId?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrgMembershipCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    userId?: true
+    role?: true
+    renverseSuiteRole?: true
+    renverseFloorRole?: true
+    renverseDepartmentId?: true
+    renverseTeamIds?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OrgMembershipAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrgMembership to aggregate.
+     */
+    where?: OrgMembershipWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrgMemberships to fetch.
+     */
+    orderBy?: OrgMembershipOrderByWithRelationInput | OrgMembershipOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrgMembershipWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrgMemberships from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrgMemberships.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrgMemberships
+    **/
+    _count?: true | OrgMembershipCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrgMembershipMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrgMembershipMaxAggregateInputType
+  }
+
+  export type GetOrgMembershipAggregateType<T extends OrgMembershipAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrgMembership]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrgMembership[P]>
+      : GetScalarType<T[P], AggregateOrgMembership[P]>
+  }
+
+
+
+
+  export type OrgMembershipGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrgMembershipWhereInput
+    orderBy?: OrgMembershipOrderByWithAggregationInput | OrgMembershipOrderByWithAggregationInput[]
+    by: OrgMembershipScalarFieldEnum[] | OrgMembershipScalarFieldEnum
+    having?: OrgMembershipScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrgMembershipCountAggregateInputType | true
+    _min?: OrgMembershipMinAggregateInputType
+    _max?: OrgMembershipMaxAggregateInputType
+  }
+
+  export type OrgMembershipGroupByOutputType = {
+    id: string
+    organizationId: string
+    userId: string
+    role: $Enums.UserRole
+    renverseSuiteRole: string | null
+    renverseFloorRole: string | null
+    renverseDepartmentId: string | null
+    renverseTeamIds: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    _count: OrgMembershipCountAggregateOutputType | null
+    _min: OrgMembershipMinAggregateOutputType | null
+    _max: OrgMembershipMaxAggregateOutputType | null
+  }
+
+  type GetOrgMembershipGroupByPayload<T extends OrgMembershipGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrgMembershipGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrgMembershipGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrgMembershipGroupByOutputType[P]>
+            : GetScalarType<T[P], OrgMembershipGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrgMembershipSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    userId?: boolean
+    role?: boolean
+    renverseSuiteRole?: boolean
+    renverseFloorRole?: boolean
+    renverseDepartmentId?: boolean
+    renverseTeamIds?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["orgMembership"]>
+
+  export type OrgMembershipSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    userId?: boolean
+    role?: boolean
+    renverseSuiteRole?: boolean
+    renverseFloorRole?: boolean
+    renverseDepartmentId?: boolean
+    renverseTeamIds?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["orgMembership"]>
+
+  export type OrgMembershipSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    userId?: boolean
+    role?: boolean
+    renverseSuiteRole?: boolean
+    renverseFloorRole?: boolean
+    renverseDepartmentId?: boolean
+    renverseTeamIds?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OrgMembershipInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type OrgMembershipIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $OrgMembershipPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrgMembership"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      userId: string
+      role: $Enums.UserRole
+      renverseSuiteRole: string | null
+      renverseFloorRole: string | null
+      renverseDepartmentId: string | null
+      renverseTeamIds: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["orgMembership"]>
+    composites: {}
+  }
+
+  type OrgMembershipGetPayload<S extends boolean | null | undefined | OrgMembershipDefaultArgs> = $Result.GetResult<Prisma.$OrgMembershipPayload, S>
+
+  type OrgMembershipCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<OrgMembershipFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: OrgMembershipCountAggregateInputType | true
+    }
+
+  export interface OrgMembershipDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrgMembership'], meta: { name: 'OrgMembership' } }
+    /**
+     * Find zero or one OrgMembership that matches the filter.
+     * @param {OrgMembershipFindUniqueArgs} args - Arguments to find a OrgMembership
+     * @example
+     * // Get one OrgMembership
+     * const orgMembership = await prisma.orgMembership.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrgMembershipFindUniqueArgs>(args: SelectSubset<T, OrgMembershipFindUniqueArgs<ExtArgs>>): Prisma__OrgMembershipClient<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one OrgMembership that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {OrgMembershipFindUniqueOrThrowArgs} args - Arguments to find a OrgMembership
+     * @example
+     * // Get one OrgMembership
+     * const orgMembership = await prisma.orgMembership.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrgMembershipFindUniqueOrThrowArgs>(args: SelectSubset<T, OrgMembershipFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrgMembershipClient<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first OrgMembership that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrgMembershipFindFirstArgs} args - Arguments to find a OrgMembership
+     * @example
+     * // Get one OrgMembership
+     * const orgMembership = await prisma.orgMembership.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrgMembershipFindFirstArgs>(args?: SelectSubset<T, OrgMembershipFindFirstArgs<ExtArgs>>): Prisma__OrgMembershipClient<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first OrgMembership that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrgMembershipFindFirstOrThrowArgs} args - Arguments to find a OrgMembership
+     * @example
+     * // Get one OrgMembership
+     * const orgMembership = await prisma.orgMembership.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrgMembershipFindFirstOrThrowArgs>(args?: SelectSubset<T, OrgMembershipFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrgMembershipClient<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more OrgMemberships that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrgMembershipFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrgMemberships
+     * const orgMemberships = await prisma.orgMembership.findMany()
+     * 
+     * // Get first 10 OrgMemberships
+     * const orgMemberships = await prisma.orgMembership.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const orgMembershipWithIdOnly = await prisma.orgMembership.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OrgMembershipFindManyArgs>(args?: SelectSubset<T, OrgMembershipFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a OrgMembership.
+     * @param {OrgMembershipCreateArgs} args - Arguments to create a OrgMembership.
+     * @example
+     * // Create one OrgMembership
+     * const OrgMembership = await prisma.orgMembership.create({
+     *   data: {
+     *     // ... data to create a OrgMembership
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrgMembershipCreateArgs>(args: SelectSubset<T, OrgMembershipCreateArgs<ExtArgs>>): Prisma__OrgMembershipClient<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many OrgMemberships.
+     * @param {OrgMembershipCreateManyArgs} args - Arguments to create many OrgMemberships.
+     * @example
+     * // Create many OrgMemberships
+     * const orgMembership = await prisma.orgMembership.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrgMembershipCreateManyArgs>(args?: SelectSubset<T, OrgMembershipCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrgMemberships and returns the data saved in the database.
+     * @param {OrgMembershipCreateManyAndReturnArgs} args - Arguments to create many OrgMemberships.
+     * @example
+     * // Create many OrgMemberships
+     * const orgMembership = await prisma.orgMembership.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrgMemberships and only return the `id`
+     * const orgMembershipWithIdOnly = await prisma.orgMembership.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrgMembershipCreateManyAndReturnArgs>(args?: SelectSubset<T, OrgMembershipCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a OrgMembership.
+     * @param {OrgMembershipDeleteArgs} args - Arguments to delete one OrgMembership.
+     * @example
+     * // Delete one OrgMembership
+     * const OrgMembership = await prisma.orgMembership.delete({
+     *   where: {
+     *     // ... filter to delete one OrgMembership
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrgMembershipDeleteArgs>(args: SelectSubset<T, OrgMembershipDeleteArgs<ExtArgs>>): Prisma__OrgMembershipClient<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one OrgMembership.
+     * @param {OrgMembershipUpdateArgs} args - Arguments to update one OrgMembership.
+     * @example
+     * // Update one OrgMembership
+     * const orgMembership = await prisma.orgMembership.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrgMembershipUpdateArgs>(args: SelectSubset<T, OrgMembershipUpdateArgs<ExtArgs>>): Prisma__OrgMembershipClient<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more OrgMemberships.
+     * @param {OrgMembershipDeleteManyArgs} args - Arguments to filter OrgMemberships to delete.
+     * @example
+     * // Delete a few OrgMemberships
+     * const { count } = await prisma.orgMembership.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrgMembershipDeleteManyArgs>(args?: SelectSubset<T, OrgMembershipDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrgMemberships.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrgMembershipUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrgMemberships
+     * const orgMembership = await prisma.orgMembership.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrgMembershipUpdateManyArgs>(args: SelectSubset<T, OrgMembershipUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one OrgMembership.
+     * @param {OrgMembershipUpsertArgs} args - Arguments to update or create a OrgMembership.
+     * @example
+     * // Update or create a OrgMembership
+     * const orgMembership = await prisma.orgMembership.upsert({
+     *   create: {
+     *     // ... data to create a OrgMembership
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrgMembership we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrgMembershipUpsertArgs>(args: SelectSubset<T, OrgMembershipUpsertArgs<ExtArgs>>): Prisma__OrgMembershipClient<$Result.GetResult<Prisma.$OrgMembershipPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of OrgMemberships.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrgMembershipCountArgs} args - Arguments to filter OrgMemberships to count.
+     * @example
+     * // Count the number of OrgMemberships
+     * const count = await prisma.orgMembership.count({
+     *   where: {
+     *     // ... the filter for the OrgMemberships we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrgMembershipCountArgs>(
+      args?: Subset<T, OrgMembershipCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrgMembershipCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrgMembership.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrgMembershipAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrgMembershipAggregateArgs>(args: Subset<T, OrgMembershipAggregateArgs>): Prisma.PrismaPromise<GetOrgMembershipAggregateType<T>>
+
+    /**
+     * Group by OrgMembership.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrgMembershipGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrgMembershipGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrgMembershipGroupByArgs['orderBy'] }
+        : { orderBy?: OrgMembershipGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrgMembershipGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrgMembershipGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrgMembership model
+   */
+  readonly fields: OrgMembershipFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrgMembership.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrgMembershipClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrgMembership model
+   */ 
+  interface OrgMembershipFieldRefs {
+    readonly id: FieldRef<"OrgMembership", 'String'>
+    readonly organizationId: FieldRef<"OrgMembership", 'String'>
+    readonly userId: FieldRef<"OrgMembership", 'String'>
+    readonly role: FieldRef<"OrgMembership", 'UserRole'>
+    readonly renverseSuiteRole: FieldRef<"OrgMembership", 'String'>
+    readonly renverseFloorRole: FieldRef<"OrgMembership", 'String'>
+    readonly renverseDepartmentId: FieldRef<"OrgMembership", 'String'>
+    readonly renverseTeamIds: FieldRef<"OrgMembership", 'Json'>
+    readonly createdAt: FieldRef<"OrgMembership", 'DateTime'>
+    readonly updatedAt: FieldRef<"OrgMembership", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrgMembership findUnique
+   */
+  export type OrgMembershipFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which OrgMembership to fetch.
+     */
+    where: OrgMembershipWhereUniqueInput
+  }
+
+  /**
+   * OrgMembership findUniqueOrThrow
+   */
+  export type OrgMembershipFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which OrgMembership to fetch.
+     */
+    where: OrgMembershipWhereUniqueInput
+  }
+
+  /**
+   * OrgMembership findFirst
+   */
+  export type OrgMembershipFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which OrgMembership to fetch.
+     */
+    where?: OrgMembershipWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrgMemberships to fetch.
+     */
+    orderBy?: OrgMembershipOrderByWithRelationInput | OrgMembershipOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrgMemberships.
+     */
+    cursor?: OrgMembershipWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrgMemberships from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrgMemberships.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrgMemberships.
+     */
+    distinct?: OrgMembershipScalarFieldEnum | OrgMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * OrgMembership findFirstOrThrow
+   */
+  export type OrgMembershipFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which OrgMembership to fetch.
+     */
+    where?: OrgMembershipWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrgMemberships to fetch.
+     */
+    orderBy?: OrgMembershipOrderByWithRelationInput | OrgMembershipOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrgMemberships.
+     */
+    cursor?: OrgMembershipWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrgMemberships from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrgMemberships.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrgMemberships.
+     */
+    distinct?: OrgMembershipScalarFieldEnum | OrgMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * OrgMembership findMany
+   */
+  export type OrgMembershipFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which OrgMemberships to fetch.
+     */
+    where?: OrgMembershipWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrgMemberships to fetch.
+     */
+    orderBy?: OrgMembershipOrderByWithRelationInput | OrgMembershipOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrgMemberships.
+     */
+    cursor?: OrgMembershipWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrgMemberships from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrgMemberships.
+     */
+    skip?: number
+    distinct?: OrgMembershipScalarFieldEnum | OrgMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * OrgMembership create
+   */
+  export type OrgMembershipCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrgMembership.
+     */
+    data: XOR<OrgMembershipCreateInput, OrgMembershipUncheckedCreateInput>
+  }
+
+  /**
+   * OrgMembership createMany
+   */
+  export type OrgMembershipCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrgMemberships.
+     */
+    data: OrgMembershipCreateManyInput | OrgMembershipCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrgMembership createManyAndReturn
+   */
+  export type OrgMembershipCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many OrgMemberships.
+     */
+    data: OrgMembershipCreateManyInput | OrgMembershipCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrgMembership update
+   */
+  export type OrgMembershipUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrgMembership.
+     */
+    data: XOR<OrgMembershipUpdateInput, OrgMembershipUncheckedUpdateInput>
+    /**
+     * Choose, which OrgMembership to update.
+     */
+    where: OrgMembershipWhereUniqueInput
+  }
+
+  /**
+   * OrgMembership updateMany
+   */
+  export type OrgMembershipUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrgMemberships.
+     */
+    data: XOR<OrgMembershipUpdateManyMutationInput, OrgMembershipUncheckedUpdateManyInput>
+    /**
+     * Filter which OrgMemberships to update
+     */
+    where?: OrgMembershipWhereInput
+  }
+
+  /**
+   * OrgMembership upsert
+   */
+  export type OrgMembershipUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrgMembership to update in case it exists.
+     */
+    where: OrgMembershipWhereUniqueInput
+    /**
+     * In case the OrgMembership found by the `where` argument doesn't exist, create a new OrgMembership with this data.
+     */
+    create: XOR<OrgMembershipCreateInput, OrgMembershipUncheckedCreateInput>
+    /**
+     * In case the OrgMembership was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrgMembershipUpdateInput, OrgMembershipUncheckedUpdateInput>
+  }
+
+  /**
+   * OrgMembership delete
+   */
+  export type OrgMembershipDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
+    /**
+     * Filter which OrgMembership to delete.
+     */
+    where: OrgMembershipWhereUniqueInput
+  }
+
+  /**
+   * OrgMembership deleteMany
+   */
+  export type OrgMembershipDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrgMemberships to delete
+     */
+    where?: OrgMembershipWhereInput
+  }
+
+  /**
+   * OrgMembership without action
+   */
+  export type OrgMembershipDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgMembership
+     */
+    select?: OrgMembershipSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgMembershipInclude<ExtArgs> | null
   }
 
 
@@ -7978,6 +10295,7 @@ export namespace Prisma {
     email: string | null
     contactPersonName: string | null
     isActive: boolean | null
+    organizationId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7991,6 +10309,7 @@ export namespace Prisma {
     email: string | null
     contactPersonName: string | null
     isActive: boolean | null
+    organizationId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -8006,6 +10325,7 @@ export namespace Prisma {
     shippingAddress: number
     contactPersonName: number
     isActive: number
+    organizationId: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -8021,6 +10341,7 @@ export namespace Prisma {
     email?: true
     contactPersonName?: true
     isActive?: true
+    organizationId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -8034,6 +10355,7 @@ export namespace Prisma {
     email?: true
     contactPersonName?: true
     isActive?: true
+    organizationId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -8049,6 +10371,7 @@ export namespace Prisma {
     shippingAddress?: true
     contactPersonName?: true
     isActive?: true
+    organizationId?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -8137,6 +10460,7 @@ export namespace Prisma {
     shippingAddress: JsonValue
     contactPersonName: string | null
     isActive: boolean
+    organizationId: string | null
     createdAt: Date
     updatedAt: Date
     _count: ClientCountAggregateOutputType | null
@@ -8169,8 +10493,10 @@ export namespace Prisma {
     shippingAddress?: boolean
     contactPersonName?: boolean
     isActive?: boolean
+    organizationId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    organization?: boolean | Client$organizationArgs<ExtArgs>
     purchaseOrders?: boolean | Client$purchaseOrdersArgs<ExtArgs>
     _count?: boolean | ClientCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["client"]>
@@ -8186,8 +10512,10 @@ export namespace Prisma {
     shippingAddress?: boolean
     contactPersonName?: boolean
     isActive?: boolean
+    organizationId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    organization?: boolean | Client$organizationArgs<ExtArgs>
   }, ExtArgs["result"]["client"]>
 
   export type ClientSelectScalar = {
@@ -8201,19 +10529,24 @@ export namespace Prisma {
     shippingAddress?: boolean
     contactPersonName?: boolean
     isActive?: boolean
+    organizationId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
   export type ClientInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | Client$organizationArgs<ExtArgs>
     purchaseOrders?: boolean | Client$purchaseOrdersArgs<ExtArgs>
     _count?: boolean | ClientCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type ClientIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type ClientIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | Client$organizationArgs<ExtArgs>
+  }
 
   export type $ClientPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Client"
     objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs> | null
       purchaseOrders: Prisma.$PurchaseOrderPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -8227,6 +10560,7 @@ export namespace Prisma {
       shippingAddress: Prisma.JsonValue
       contactPersonName: string | null
       isActive: boolean
+      organizationId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["client"]>
@@ -8593,6 +10927,7 @@ export namespace Prisma {
    */
   export interface Prisma__ClientClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends Client$organizationArgs<ExtArgs> = {}>(args?: Subset<T, Client$organizationArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     purchaseOrders<T extends Client$purchaseOrdersArgs<ExtArgs> = {}>(args?: Subset<T, Client$purchaseOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PurchaseOrderPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -8633,6 +10968,7 @@ export namespace Prisma {
     readonly shippingAddress: FieldRef<"Client", 'Json'>
     readonly contactPersonName: FieldRef<"Client", 'String'>
     readonly isActive: FieldRef<"Client", 'Boolean'>
+    readonly organizationId: FieldRef<"Client", 'String'>
     readonly createdAt: FieldRef<"Client", 'DateTime'>
     readonly updatedAt: FieldRef<"Client", 'DateTime'>
   }
@@ -8856,6 +11192,10 @@ export namespace Prisma {
      */
     data: ClientCreateManyInput | ClientCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ClientIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -8949,6 +11289,21 @@ export namespace Prisma {
   }
 
   /**
+   * Client.organization
+   */
+  export type Client$organizationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+  }
+
+  /**
    * Client.purchaseOrders
    */
   export type Client$purchaseOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9007,6 +11362,7 @@ export namespace Prisma {
     id: string | null
     poNumber: string | null
     clientId: string | null
+    organizationId: string | null
     orderDate: Date | null
     expectedDispatchDate: Date | null
     status: $Enums.POStatus | null
@@ -9023,6 +11379,7 @@ export namespace Prisma {
     id: string | null
     poNumber: string | null
     clientId: string | null
+    organizationId: string | null
     orderDate: Date | null
     expectedDispatchDate: Date | null
     status: $Enums.POStatus | null
@@ -9039,6 +11396,7 @@ export namespace Prisma {
     id: number
     poNumber: number
     clientId: number
+    organizationId: number
     orderDate: number
     expectedDispatchDate: number
     status: number
@@ -9065,6 +11423,7 @@ export namespace Prisma {
     id?: true
     poNumber?: true
     clientId?: true
+    organizationId?: true
     orderDate?: true
     expectedDispatchDate?: true
     status?: true
@@ -9081,6 +11440,7 @@ export namespace Prisma {
     id?: true
     poNumber?: true
     clientId?: true
+    organizationId?: true
     orderDate?: true
     expectedDispatchDate?: true
     status?: true
@@ -9097,6 +11457,7 @@ export namespace Prisma {
     id?: true
     poNumber?: true
     clientId?: true
+    organizationId?: true
     orderDate?: true
     expectedDispatchDate?: true
     status?: true
@@ -9200,6 +11561,7 @@ export namespace Prisma {
     id: string
     poNumber: string
     clientId: string
+    organizationId: string | null
     orderDate: Date
     expectedDispatchDate: Date | null
     status: $Enums.POStatus
@@ -9235,6 +11597,7 @@ export namespace Prisma {
     id?: boolean
     poNumber?: boolean
     clientId?: boolean
+    organizationId?: boolean
     orderDate?: boolean
     expectedDispatchDate?: boolean
     status?: boolean
@@ -9246,6 +11609,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | ClientDefaultArgs<ExtArgs>
+    organization?: boolean | PurchaseOrder$organizationArgs<ExtArgs>
     createdBy?: boolean | UserDefaultArgs<ExtArgs>
     updatedBy?: boolean | PurchaseOrder$updatedByArgs<ExtArgs>
     lineItems?: boolean | PurchaseOrder$lineItemsArgs<ExtArgs>
@@ -9257,6 +11621,7 @@ export namespace Prisma {
     id?: boolean
     poNumber?: boolean
     clientId?: boolean
+    organizationId?: boolean
     orderDate?: boolean
     expectedDispatchDate?: boolean
     status?: boolean
@@ -9268,6 +11633,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     client?: boolean | ClientDefaultArgs<ExtArgs>
+    organization?: boolean | PurchaseOrder$organizationArgs<ExtArgs>
     createdBy?: boolean | UserDefaultArgs<ExtArgs>
     updatedBy?: boolean | PurchaseOrder$updatedByArgs<ExtArgs>
   }, ExtArgs["result"]["purchaseOrder"]>
@@ -9276,6 +11642,7 @@ export namespace Prisma {
     id?: boolean
     poNumber?: boolean
     clientId?: boolean
+    organizationId?: boolean
     orderDate?: boolean
     expectedDispatchDate?: boolean
     status?: boolean
@@ -9290,6 +11657,7 @@ export namespace Prisma {
 
   export type PurchaseOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | ClientDefaultArgs<ExtArgs>
+    organization?: boolean | PurchaseOrder$organizationArgs<ExtArgs>
     createdBy?: boolean | UserDefaultArgs<ExtArgs>
     updatedBy?: boolean | PurchaseOrder$updatedByArgs<ExtArgs>
     lineItems?: boolean | PurchaseOrder$lineItemsArgs<ExtArgs>
@@ -9298,6 +11666,7 @@ export namespace Prisma {
   }
   export type PurchaseOrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | ClientDefaultArgs<ExtArgs>
+    organization?: boolean | PurchaseOrder$organizationArgs<ExtArgs>
     createdBy?: boolean | UserDefaultArgs<ExtArgs>
     updatedBy?: boolean | PurchaseOrder$updatedByArgs<ExtArgs>
   }
@@ -9306,6 +11675,7 @@ export namespace Prisma {
     name: "PurchaseOrder"
     objects: {
       client: Prisma.$ClientPayload<ExtArgs>
+      organization: Prisma.$OrganizationPayload<ExtArgs> | null
       createdBy: Prisma.$UserPayload<ExtArgs>
       updatedBy: Prisma.$UserPayload<ExtArgs> | null
       lineItems: Prisma.$POLineItemPayload<ExtArgs>[]
@@ -9315,6 +11685,7 @@ export namespace Prisma {
       id: string
       poNumber: string
       clientId: string
+      organizationId: string | null
       orderDate: Date
       expectedDispatchDate: Date | null
       status: $Enums.POStatus
@@ -9690,6 +12061,7 @@ export namespace Prisma {
   export interface Prisma__PurchaseOrderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     client<T extends ClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ClientDefaultArgs<ExtArgs>>): Prisma__ClientClient<$Result.GetResult<Prisma.$ClientPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    organization<T extends PurchaseOrder$organizationArgs<ExtArgs> = {}>(args?: Subset<T, PurchaseOrder$organizationArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     createdBy<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     updatedBy<T extends PurchaseOrder$updatedByArgs<ExtArgs> = {}>(args?: Subset<T, PurchaseOrder$updatedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     lineItems<T extends PurchaseOrder$lineItemsArgs<ExtArgs> = {}>(args?: Subset<T, PurchaseOrder$lineItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$POLineItemPayload<ExtArgs>, T, "findMany"> | Null>
@@ -9726,6 +12098,7 @@ export namespace Prisma {
     readonly id: FieldRef<"PurchaseOrder", 'String'>
     readonly poNumber: FieldRef<"PurchaseOrder", 'String'>
     readonly clientId: FieldRef<"PurchaseOrder", 'String'>
+    readonly organizationId: FieldRef<"PurchaseOrder", 'String'>
     readonly orderDate: FieldRef<"PurchaseOrder", 'DateTime'>
     readonly expectedDispatchDate: FieldRef<"PurchaseOrder", 'DateTime'>
     readonly status: FieldRef<"PurchaseOrder", 'POStatus'>
@@ -10051,6 +12424,21 @@ export namespace Prisma {
      * Filter which PurchaseOrders to delete
      */
     where?: PurchaseOrderWhereInput
+  }
+
+  /**
+   * PurchaseOrder.organization
+   */
+  export type PurchaseOrder$organizationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
   }
 
   /**
@@ -12280,6 +14668,7 @@ export namespace Prisma {
     location: string | null
     notes: string | null
     isActive: boolean | null
+    organizationId: string | null
     registeredById: string | null
     lastSeenAt: Date | null
     createdAt: Date | null
@@ -12296,6 +14685,7 @@ export namespace Prisma {
     location: string | null
     notes: string | null
     isActive: boolean | null
+    organizationId: string | null
     registeredById: string | null
     lastSeenAt: Date | null
     createdAt: Date | null
@@ -12312,6 +14702,7 @@ export namespace Prisma {
     location: number
     notes: number
     isActive: number
+    organizationId: number
     registeredById: number
     lastSeenAt: number
     createdAt: number
@@ -12330,6 +14721,7 @@ export namespace Prisma {
     location?: true
     notes?: true
     isActive?: true
+    organizationId?: true
     registeredById?: true
     lastSeenAt?: true
     createdAt?: true
@@ -12346,6 +14738,7 @@ export namespace Prisma {
     location?: true
     notes?: true
     isActive?: true
+    organizationId?: true
     registeredById?: true
     lastSeenAt?: true
     createdAt?: true
@@ -12362,6 +14755,7 @@ export namespace Prisma {
     location?: true
     notes?: true
     isActive?: true
+    organizationId?: true
     registeredById?: true
     lastSeenAt?: true
     createdAt?: true
@@ -12451,6 +14845,7 @@ export namespace Prisma {
     location: string | null
     notes: string | null
     isActive: boolean
+    organizationId: string | null
     registeredById: string
     lastSeenAt: Date | null
     createdAt: Date
@@ -12484,10 +14879,12 @@ export namespace Prisma {
     location?: boolean
     notes?: boolean
     isActive?: boolean
+    organizationId?: boolean
     registeredById?: boolean
     lastSeenAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    organization?: boolean | ScannerDevice$organizationArgs<ExtArgs>
     registeredBy?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["scannerDevice"]>
 
@@ -12501,10 +14898,12 @@ export namespace Prisma {
     location?: boolean
     notes?: boolean
     isActive?: boolean
+    organizationId?: boolean
     registeredById?: boolean
     lastSeenAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    organization?: boolean | ScannerDevice$organizationArgs<ExtArgs>
     registeredBy?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["scannerDevice"]>
 
@@ -12518,6 +14917,7 @@ export namespace Prisma {
     location?: boolean
     notes?: boolean
     isActive?: boolean
+    organizationId?: boolean
     registeredById?: boolean
     lastSeenAt?: boolean
     createdAt?: boolean
@@ -12525,15 +14925,18 @@ export namespace Prisma {
   }
 
   export type ScannerDeviceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | ScannerDevice$organizationArgs<ExtArgs>
     registeredBy?: boolean | UserDefaultArgs<ExtArgs>
   }
   export type ScannerDeviceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | ScannerDevice$organizationArgs<ExtArgs>
     registeredBy?: boolean | UserDefaultArgs<ExtArgs>
   }
 
   export type $ScannerDevicePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "ScannerDevice"
     objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs> | null
       registeredBy: Prisma.$UserPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -12546,6 +14949,7 @@ export namespace Prisma {
       location: string | null
       notes: string | null
       isActive: boolean
+      organizationId: string | null
       registeredById: string
       lastSeenAt: Date | null
       createdAt: Date
@@ -12914,6 +15318,7 @@ export namespace Prisma {
    */
   export interface Prisma__ScannerDeviceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends ScannerDevice$organizationArgs<ExtArgs> = {}>(args?: Subset<T, ScannerDevice$organizationArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     registeredBy<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -12953,6 +15358,7 @@ export namespace Prisma {
     readonly location: FieldRef<"ScannerDevice", 'String'>
     readonly notes: FieldRef<"ScannerDevice", 'String'>
     readonly isActive: FieldRef<"ScannerDevice", 'Boolean'>
+    readonly organizationId: FieldRef<"ScannerDevice", 'String'>
     readonly registeredById: FieldRef<"ScannerDevice", 'String'>
     readonly lastSeenAt: FieldRef<"ScannerDevice", 'DateTime'>
     readonly createdAt: FieldRef<"ScannerDevice", 'DateTime'>
@@ -13272,6 +15678,21 @@ export namespace Prisma {
      * Filter which ScannerDevices to delete
      */
     where?: ScannerDeviceWhereInput
+  }
+
+  /**
+   * ScannerDevice.organization
+   */
+  export type ScannerDevice$organizationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
   }
 
   /**
@@ -25726,11 +28147,41 @@ export namespace Prisma {
     lastLoginAt: 'lastLoginAt',
     totpSecret: 'totpSecret',
     twoFactorEnabled: 'twoFactorEnabled',
+    renverseSub: 'renverseSub',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const OrganizationScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    renverseOrgId: 'renverseOrgId',
+    siteId: 'siteId',
+    booksMode: 'booksMode',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
+
+
+  export const OrgMembershipScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    userId: 'userId',
+    role: 'role',
+    renverseSuiteRole: 'renverseSuiteRole',
+    renverseFloorRole: 'renverseFloorRole',
+    renverseDepartmentId: 'renverseDepartmentId',
+    renverseTeamIds: 'renverseTeamIds',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OrgMembershipScalarFieldEnum = (typeof OrgMembershipScalarFieldEnum)[keyof typeof OrgMembershipScalarFieldEnum]
 
 
   export const ProductCategoryScalarFieldEnum: {
@@ -25813,6 +28264,7 @@ export namespace Prisma {
     shippingAddress: 'shippingAddress',
     contactPersonName: 'contactPersonName',
     isActive: 'isActive',
+    organizationId: 'organizationId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -25824,6 +28276,7 @@ export namespace Prisma {
     id: 'id',
     poNumber: 'poNumber',
     clientId: 'clientId',
+    organizationId: 'organizationId',
     orderDate: 'orderDate',
     expectedDispatchDate: 'expectedDispatchDate',
     status: 'status',
@@ -25882,6 +28335,7 @@ export namespace Prisma {
     location: 'location',
     notes: 'notes',
     isActive: 'isActive',
+    organizationId: 'organizationId',
     registeredById: 'registeredById',
     lastSeenAt: 'lastSeenAt',
     createdAt: 'createdAt',
@@ -26102,19 +28556,19 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
   export const NullableJsonNullValueInput: {
     DbNull: typeof DbNull,
     JsonNull: typeof JsonNull
   };
 
   export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
-
-
-  export const JsonNullValueInput: {
-    JsonNull: typeof JsonNull
-  };
-
-  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -26139,10 +28593,43 @@ export namespace Prisma {
     passwordHash: 'passwordHash',
     name: 'name',
     phone: 'phone',
-    totpSecret: 'totpSecret'
+    totpSecret: 'totpSecret',
+    renverseSub: 'renverseSub'
   };
 
   export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
+
+
+  export const OrganizationOrderByRelevanceFieldEnum: {
+    id: 'id',
+    name: 'name',
+    renverseOrgId: 'renverseOrgId',
+    siteId: 'siteId',
+    booksMode: 'booksMode'
+  };
+
+  export type OrganizationOrderByRelevanceFieldEnum = (typeof OrganizationOrderByRelevanceFieldEnum)[keyof typeof OrganizationOrderByRelevanceFieldEnum]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+  export const OrgMembershipOrderByRelevanceFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    userId: 'userId',
+    renverseSuiteRole: 'renverseSuiteRole',
+    renverseFloorRole: 'renverseFloorRole',
+    renverseDepartmentId: 'renverseDepartmentId'
+  };
+
+  export type OrgMembershipOrderByRelevanceFieldEnum = (typeof OrgMembershipOrderByRelevanceFieldEnum)[keyof typeof OrgMembershipOrderByRelevanceFieldEnum]
 
 
   export const ProductCategoryOrderByRelevanceFieldEnum: {
@@ -26153,15 +28640,6 @@ export namespace Prisma {
   };
 
   export type ProductCategoryOrderByRelevanceFieldEnum = (typeof ProductCategoryOrderByRelevanceFieldEnum)[keyof typeof ProductCategoryOrderByRelevanceFieldEnum]
-
-
-  export const JsonNullValueFilter: {
-    DbNull: typeof DbNull,
-    JsonNull: typeof JsonNull,
-    AnyNull: typeof AnyNull
-  };
-
-  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   export const ProductOrderByRelevanceFieldEnum: {
@@ -26205,7 +28683,8 @@ export namespace Prisma {
     gstin: 'gstin',
     phone: 'phone',
     email: 'email',
-    contactPersonName: 'contactPersonName'
+    contactPersonName: 'contactPersonName',
+    organizationId: 'organizationId'
   };
 
   export type ClientOrderByRelevanceFieldEnum = (typeof ClientOrderByRelevanceFieldEnum)[keyof typeof ClientOrderByRelevanceFieldEnum]
@@ -26215,6 +28694,7 @@ export namespace Prisma {
     id: 'id',
     poNumber: 'poNumber',
     clientId: 'clientId',
+    organizationId: 'organizationId',
     notes: 'notes',
     tallyVoucherId: 'tallyVoucherId',
     createdById: 'createdById',
@@ -26252,6 +28732,7 @@ export namespace Prisma {
     ipAddress: 'ipAddress',
     location: 'location',
     notes: 'notes',
+    organizationId: 'organizationId',
     registeredById: 'registeredById'
   };
 
@@ -26457,6 +28938,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -26481,13 +28969,6 @@ export namespace Prisma {
    * Reference to a field of type 'Float[]'
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Json'
-   */
-  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
@@ -26690,6 +29171,7 @@ export namespace Prisma {
     lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     totpSecret?: StringNullableFilter<"User"> | string | null
     twoFactorEnabled?: BoolFilter<"User"> | boolean
+    renverseSub?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     supervisedSessions?: DispatchSessionListRelationFilter
@@ -26702,6 +29184,7 @@ export namespace Prisma {
     auditLogs?: AuditLogListRelationFilter
     configsUpdated?: SystemConfigListRelationFilter
     registeredDevices?: ScannerDeviceListRelationFilter
+    orgMemberships?: OrgMembershipListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -26715,6 +29198,7 @@ export namespace Prisma {
     lastLoginAt?: SortOrderInput | SortOrder
     totpSecret?: SortOrderInput | SortOrder
     twoFactorEnabled?: SortOrder
+    renverseSub?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     supervisedSessions?: DispatchSessionOrderByRelationAggregateInput
@@ -26727,12 +29211,14 @@ export namespace Prisma {
     auditLogs?: AuditLogOrderByRelationAggregateInput
     configsUpdated?: SystemConfigOrderByRelationAggregateInput
     registeredDevices?: ScannerDeviceOrderByRelationAggregateInput
+    orgMemberships?: OrgMembershipOrderByRelationAggregateInput
     _relevance?: UserOrderByRelevanceInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
+    renverseSub?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -26756,7 +29242,8 @@ export namespace Prisma {
     auditLogs?: AuditLogListRelationFilter
     configsUpdated?: SystemConfigListRelationFilter
     registeredDevices?: ScannerDeviceListRelationFilter
-  }, "id" | "email">
+    orgMemberships?: OrgMembershipListRelationFilter
+  }, "id" | "email" | "renverseSub">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
@@ -26769,6 +29256,7 @@ export namespace Prisma {
     lastLoginAt?: SortOrderInput | SortOrder
     totpSecret?: SortOrderInput | SortOrder
     twoFactorEnabled?: SortOrder
+    renverseSub?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -26790,8 +29278,169 @@ export namespace Prisma {
     lastLoginAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     totpSecret?: StringNullableWithAggregatesFilter<"User"> | string | null
     twoFactorEnabled?: BoolWithAggregatesFilter<"User"> | boolean
+    renverseSub?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type OrganizationWhereInput = {
+    AND?: OrganizationWhereInput | OrganizationWhereInput[]
+    OR?: OrganizationWhereInput[]
+    NOT?: OrganizationWhereInput | OrganizationWhereInput[]
+    id?: StringFilter<"Organization"> | string
+    name?: StringFilter<"Organization"> | string
+    renverseOrgId?: StringFilter<"Organization"> | string
+    siteId?: StringFilter<"Organization"> | string
+    booksMode?: StringFilter<"Organization"> | string
+    createdAt?: DateTimeFilter<"Organization"> | Date | string
+    updatedAt?: DateTimeFilter<"Organization"> | Date | string
+    memberships?: OrgMembershipListRelationFilter
+    clients?: ClientListRelationFilter
+    purchaseOrders?: PurchaseOrderListRelationFilter
+    scanners?: ScannerDeviceListRelationFilter
+  }
+
+  export type OrganizationOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    renverseOrgId?: SortOrder
+    siteId?: SortOrder
+    booksMode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    memberships?: OrgMembershipOrderByRelationAggregateInput
+    clients?: ClientOrderByRelationAggregateInput
+    purchaseOrders?: PurchaseOrderOrderByRelationAggregateInput
+    scanners?: ScannerDeviceOrderByRelationAggregateInput
+    _relevance?: OrganizationOrderByRelevanceInput
+  }
+
+  export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    renverseOrgId?: string
+    AND?: OrganizationWhereInput | OrganizationWhereInput[]
+    OR?: OrganizationWhereInput[]
+    NOT?: OrganizationWhereInput | OrganizationWhereInput[]
+    name?: StringFilter<"Organization"> | string
+    siteId?: StringFilter<"Organization"> | string
+    booksMode?: StringFilter<"Organization"> | string
+    createdAt?: DateTimeFilter<"Organization"> | Date | string
+    updatedAt?: DateTimeFilter<"Organization"> | Date | string
+    memberships?: OrgMembershipListRelationFilter
+    clients?: ClientListRelationFilter
+    purchaseOrders?: PurchaseOrderListRelationFilter
+    scanners?: ScannerDeviceListRelationFilter
+  }, "id" | "renverseOrgId">
+
+  export type OrganizationOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    renverseOrgId?: SortOrder
+    siteId?: SortOrder
+    booksMode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: OrganizationCountOrderByAggregateInput
+    _max?: OrganizationMaxOrderByAggregateInput
+    _min?: OrganizationMinOrderByAggregateInput
+  }
+
+  export type OrganizationScalarWhereWithAggregatesInput = {
+    AND?: OrganizationScalarWhereWithAggregatesInput | OrganizationScalarWhereWithAggregatesInput[]
+    OR?: OrganizationScalarWhereWithAggregatesInput[]
+    NOT?: OrganizationScalarWhereWithAggregatesInput | OrganizationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Organization"> | string
+    name?: StringWithAggregatesFilter<"Organization"> | string
+    renverseOrgId?: StringWithAggregatesFilter<"Organization"> | string
+    siteId?: StringWithAggregatesFilter<"Organization"> | string
+    booksMode?: StringWithAggregatesFilter<"Organization"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
+  }
+
+  export type OrgMembershipWhereInput = {
+    AND?: OrgMembershipWhereInput | OrgMembershipWhereInput[]
+    OR?: OrgMembershipWhereInput[]
+    NOT?: OrgMembershipWhereInput | OrgMembershipWhereInput[]
+    id?: StringFilter<"OrgMembership"> | string
+    organizationId?: StringFilter<"OrgMembership"> | string
+    userId?: StringFilter<"OrgMembership"> | string
+    role?: EnumUserRoleFilter<"OrgMembership"> | $Enums.UserRole
+    renverseSuiteRole?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseFloorRole?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseDepartmentId?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseTeamIds?: JsonFilter<"OrgMembership">
+    createdAt?: DateTimeFilter<"OrgMembership"> | Date | string
+    updatedAt?: DateTimeFilter<"OrgMembership"> | Date | string
+    organization?: XOR<OrganizationRelationFilter, OrganizationWhereInput>
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type OrgMembershipOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    userId?: SortOrder
+    role?: SortOrder
+    renverseSuiteRole?: SortOrderInput | SortOrder
+    renverseFloorRole?: SortOrderInput | SortOrder
+    renverseDepartmentId?: SortOrderInput | SortOrder
+    renverseTeamIds?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+    _relevance?: OrgMembershipOrderByRelevanceInput
+  }
+
+  export type OrgMembershipWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_userId?: OrgMembershipOrganizationIdUserIdCompoundUniqueInput
+    AND?: OrgMembershipWhereInput | OrgMembershipWhereInput[]
+    OR?: OrgMembershipWhereInput[]
+    NOT?: OrgMembershipWhereInput | OrgMembershipWhereInput[]
+    organizationId?: StringFilter<"OrgMembership"> | string
+    userId?: StringFilter<"OrgMembership"> | string
+    role?: EnumUserRoleFilter<"OrgMembership"> | $Enums.UserRole
+    renverseSuiteRole?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseFloorRole?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseDepartmentId?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseTeamIds?: JsonFilter<"OrgMembership">
+    createdAt?: DateTimeFilter<"OrgMembership"> | Date | string
+    updatedAt?: DateTimeFilter<"OrgMembership"> | Date | string
+    organization?: XOR<OrganizationRelationFilter, OrganizationWhereInput>
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }, "id" | "organizationId_userId">
+
+  export type OrgMembershipOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    userId?: SortOrder
+    role?: SortOrder
+    renverseSuiteRole?: SortOrderInput | SortOrder
+    renverseFloorRole?: SortOrderInput | SortOrder
+    renverseDepartmentId?: SortOrderInput | SortOrder
+    renverseTeamIds?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: OrgMembershipCountOrderByAggregateInput
+    _max?: OrgMembershipMaxOrderByAggregateInput
+    _min?: OrgMembershipMinOrderByAggregateInput
+  }
+
+  export type OrgMembershipScalarWhereWithAggregatesInput = {
+    AND?: OrgMembershipScalarWhereWithAggregatesInput | OrgMembershipScalarWhereWithAggregatesInput[]
+    OR?: OrgMembershipScalarWhereWithAggregatesInput[]
+    NOT?: OrgMembershipScalarWhereWithAggregatesInput | OrgMembershipScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"OrgMembership"> | string
+    organizationId?: StringWithAggregatesFilter<"OrgMembership"> | string
+    userId?: StringWithAggregatesFilter<"OrgMembership"> | string
+    role?: EnumUserRoleWithAggregatesFilter<"OrgMembership"> | $Enums.UserRole
+    renverseSuiteRole?: StringNullableWithAggregatesFilter<"OrgMembership"> | string | null
+    renverseFloorRole?: StringNullableWithAggregatesFilter<"OrgMembership"> | string | null
+    renverseDepartmentId?: StringNullableWithAggregatesFilter<"OrgMembership"> | string | null
+    renverseTeamIds?: JsonWithAggregatesFilter<"OrgMembership">
+    createdAt?: DateTimeWithAggregatesFilter<"OrgMembership"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"OrgMembership"> | Date | string
   }
 
   export type ProductCategoryWhereInput = {
@@ -27179,8 +29828,10 @@ export namespace Prisma {
     shippingAddress?: JsonFilter<"Client">
     contactPersonName?: StringNullableFilter<"Client"> | string | null
     isActive?: BoolFilter<"Client"> | boolean
+    organizationId?: StringNullableFilter<"Client"> | string | null
     createdAt?: DateTimeFilter<"Client"> | Date | string
     updatedAt?: DateTimeFilter<"Client"> | Date | string
+    organization?: XOR<OrganizationNullableRelationFilter, OrganizationWhereInput> | null
     purchaseOrders?: PurchaseOrderListRelationFilter
   }
 
@@ -27195,8 +29846,10 @@ export namespace Prisma {
     shippingAddress?: SortOrder
     contactPersonName?: SortOrderInput | SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
     purchaseOrders?: PurchaseOrderOrderByRelationAggregateInput
     _relevance?: ClientOrderByRelevanceInput
   }
@@ -27215,8 +29868,10 @@ export namespace Prisma {
     shippingAddress?: JsonFilter<"Client">
     contactPersonName?: StringNullableFilter<"Client"> | string | null
     isActive?: BoolFilter<"Client"> | boolean
+    organizationId?: StringNullableFilter<"Client"> | string | null
     createdAt?: DateTimeFilter<"Client"> | Date | string
     updatedAt?: DateTimeFilter<"Client"> | Date | string
+    organization?: XOR<OrganizationNullableRelationFilter, OrganizationWhereInput> | null
     purchaseOrders?: PurchaseOrderListRelationFilter
   }, "id" | "clientCode">
 
@@ -27231,6 +29886,7 @@ export namespace Prisma {
     shippingAddress?: SortOrder
     contactPersonName?: SortOrderInput | SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: ClientCountOrderByAggregateInput
@@ -27252,6 +29908,7 @@ export namespace Prisma {
     shippingAddress?: JsonWithAggregatesFilter<"Client">
     contactPersonName?: StringNullableWithAggregatesFilter<"Client"> | string | null
     isActive?: BoolWithAggregatesFilter<"Client"> | boolean
+    organizationId?: StringNullableWithAggregatesFilter<"Client"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Client"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Client"> | Date | string
   }
@@ -27263,6 +29920,7 @@ export namespace Prisma {
     id?: StringFilter<"PurchaseOrder"> | string
     poNumber?: StringFilter<"PurchaseOrder"> | string
     clientId?: StringFilter<"PurchaseOrder"> | string
+    organizationId?: StringNullableFilter<"PurchaseOrder"> | string | null
     orderDate?: DateTimeFilter<"PurchaseOrder"> | Date | string
     expectedDispatchDate?: DateTimeNullableFilter<"PurchaseOrder"> | Date | string | null
     status?: EnumPOStatusFilter<"PurchaseOrder"> | $Enums.POStatus
@@ -27274,6 +29932,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PurchaseOrder"> | Date | string
     updatedAt?: DateTimeFilter<"PurchaseOrder"> | Date | string
     client?: XOR<ClientRelationFilter, ClientWhereInput>
+    organization?: XOR<OrganizationNullableRelationFilter, OrganizationWhereInput> | null
     createdBy?: XOR<UserRelationFilter, UserWhereInput>
     updatedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     lineItems?: POLineItemListRelationFilter
@@ -27284,6 +29943,7 @@ export namespace Prisma {
     id?: SortOrder
     poNumber?: SortOrder
     clientId?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
     orderDate?: SortOrder
     expectedDispatchDate?: SortOrderInput | SortOrder
     status?: SortOrder
@@ -27295,6 +29955,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     client?: ClientOrderByWithRelationInput
+    organization?: OrganizationOrderByWithRelationInput
     createdBy?: UserOrderByWithRelationInput
     updatedBy?: UserOrderByWithRelationInput
     lineItems?: POLineItemOrderByRelationAggregateInput
@@ -27310,6 +29971,7 @@ export namespace Prisma {
     OR?: PurchaseOrderWhereInput[]
     NOT?: PurchaseOrderWhereInput | PurchaseOrderWhereInput[]
     clientId?: StringFilter<"PurchaseOrder"> | string
+    organizationId?: StringNullableFilter<"PurchaseOrder"> | string | null
     orderDate?: DateTimeFilter<"PurchaseOrder"> | Date | string
     expectedDispatchDate?: DateTimeNullableFilter<"PurchaseOrder"> | Date | string | null
     status?: EnumPOStatusFilter<"PurchaseOrder"> | $Enums.POStatus
@@ -27320,6 +29982,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PurchaseOrder"> | Date | string
     updatedAt?: DateTimeFilter<"PurchaseOrder"> | Date | string
     client?: XOR<ClientRelationFilter, ClientWhereInput>
+    organization?: XOR<OrganizationNullableRelationFilter, OrganizationWhereInput> | null
     createdBy?: XOR<UserRelationFilter, UserWhereInput>
     updatedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     lineItems?: POLineItemListRelationFilter
@@ -27330,6 +29993,7 @@ export namespace Prisma {
     id?: SortOrder
     poNumber?: SortOrder
     clientId?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
     orderDate?: SortOrder
     expectedDispatchDate?: SortOrderInput | SortOrder
     status?: SortOrder
@@ -27354,6 +30018,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"PurchaseOrder"> | string
     poNumber?: StringWithAggregatesFilter<"PurchaseOrder"> | string
     clientId?: StringWithAggregatesFilter<"PurchaseOrder"> | string
+    organizationId?: StringNullableWithAggregatesFilter<"PurchaseOrder"> | string | null
     orderDate?: DateTimeWithAggregatesFilter<"PurchaseOrder"> | Date | string
     expectedDispatchDate?: DateTimeNullableWithAggregatesFilter<"PurchaseOrder"> | Date | string | null
     status?: EnumPOStatusWithAggregatesFilter<"PurchaseOrder"> | $Enums.POStatus
@@ -27556,10 +30221,12 @@ export namespace Prisma {
     location?: StringNullableFilter<"ScannerDevice"> | string | null
     notes?: StringNullableFilter<"ScannerDevice"> | string | null
     isActive?: BoolFilter<"ScannerDevice"> | boolean
+    organizationId?: StringNullableFilter<"ScannerDevice"> | string | null
     registeredById?: StringFilter<"ScannerDevice"> | string
     lastSeenAt?: DateTimeNullableFilter<"ScannerDevice"> | Date | string | null
     createdAt?: DateTimeFilter<"ScannerDevice"> | Date | string
     updatedAt?: DateTimeFilter<"ScannerDevice"> | Date | string
+    organization?: XOR<OrganizationNullableRelationFilter, OrganizationWhereInput> | null
     registeredBy?: XOR<UserRelationFilter, UserWhereInput>
   }
 
@@ -27573,10 +30240,12 @@ export namespace Prisma {
     location?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
     registeredById?: SortOrder
     lastSeenAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
     registeredBy?: UserOrderByWithRelationInput
     _relevance?: ScannerDeviceOrderByRelevanceInput
   }
@@ -27594,10 +30263,12 @@ export namespace Prisma {
     location?: StringNullableFilter<"ScannerDevice"> | string | null
     notes?: StringNullableFilter<"ScannerDevice"> | string | null
     isActive?: BoolFilter<"ScannerDevice"> | boolean
+    organizationId?: StringNullableFilter<"ScannerDevice"> | string | null
     registeredById?: StringFilter<"ScannerDevice"> | string
     lastSeenAt?: DateTimeNullableFilter<"ScannerDevice"> | Date | string | null
     createdAt?: DateTimeFilter<"ScannerDevice"> | Date | string
     updatedAt?: DateTimeFilter<"ScannerDevice"> | Date | string
+    organization?: XOR<OrganizationNullableRelationFilter, OrganizationWhereInput> | null
     registeredBy?: XOR<UserRelationFilter, UserWhereInput>
   }, "id" | "serialNumber">
 
@@ -27611,6 +30282,7 @@ export namespace Prisma {
     location?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
     registeredById?: SortOrder
     lastSeenAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -27633,6 +30305,7 @@ export namespace Prisma {
     location?: StringNullableWithAggregatesFilter<"ScannerDevice"> | string | null
     notes?: StringNullableWithAggregatesFilter<"ScannerDevice"> | string | null
     isActive?: BoolWithAggregatesFilter<"ScannerDevice"> | boolean
+    organizationId?: StringNullableWithAggregatesFilter<"ScannerDevice"> | string | null
     registeredById?: StringWithAggregatesFilter<"ScannerDevice"> | string
     lastSeenAt?: DateTimeNullableWithAggregatesFilter<"ScannerDevice"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"ScannerDevice"> | Date | string
@@ -28723,6 +31396,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -28735,6 +31409,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -28748,6 +31423,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -28760,6 +31436,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -28773,6 +31450,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -28785,6 +31463,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -28798,6 +31477,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -28810,6 +31490,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -28823,6 +31504,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -28838,6 +31520,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -28853,6 +31536,182 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationCreateInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrgMembershipCreateNestedManyWithoutOrganizationInput
+    clients?: ClientCreateNestedManyWithoutOrganizationInput
+    purchaseOrders?: PurchaseOrderCreateNestedManyWithoutOrganizationInput
+    scanners?: ScannerDeviceCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrgMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    clients?: ClientUncheckedCreateNestedManyWithoutOrganizationInput
+    purchaseOrders?: PurchaseOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    scanners?: ScannerDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrgMembershipUpdateManyWithoutOrganizationNestedInput
+    clients?: ClientUpdateManyWithoutOrganizationNestedInput
+    purchaseOrders?: PurchaseOrderUpdateManyWithoutOrganizationNestedInput
+    scanners?: ScannerDeviceUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrgMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    clients?: ClientUncheckedUpdateManyWithoutOrganizationNestedInput
+    purchaseOrders?: PurchaseOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    scanners?: ScannerDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateManyInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrgMembershipCreateInput = {
+    id?: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutMembershipsInput
+    user: UserCreateNestedOneWithoutOrgMembershipsInput
+  }
+
+  export type OrgMembershipUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    userId: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrgMembershipUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutMembershipsNestedInput
+    user?: UserUpdateOneRequiredWithoutOrgMembershipsNestedInput
+  }
+
+  export type OrgMembershipUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrgMembershipCreateManyInput = {
+    id?: string
+    organizationId: string
+    userId: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrgMembershipUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrgMembershipUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -29316,6 +32175,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    organization?: OrganizationCreateNestedOneWithoutClientsInput
     purchaseOrders?: PurchaseOrderCreateNestedManyWithoutClientInput
   }
 
@@ -29330,6 +32190,7 @@ export namespace Prisma {
     shippingAddress: JsonNullValueInput | InputJsonValue
     contactPersonName?: string | null
     isActive?: boolean
+    organizationId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     purchaseOrders?: PurchaseOrderUncheckedCreateNestedManyWithoutClientInput
@@ -29348,6 +32209,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneWithoutClientsNestedInput
     purchaseOrders?: PurchaseOrderUpdateManyWithoutClientNestedInput
   }
 
@@ -29362,6 +32224,7 @@ export namespace Prisma {
     shippingAddress?: JsonNullValueInput | InputJsonValue
     contactPersonName?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     purchaseOrders?: PurchaseOrderUncheckedUpdateManyWithoutClientNestedInput
@@ -29378,6 +32241,7 @@ export namespace Prisma {
     shippingAddress: JsonNullValueInput | InputJsonValue
     contactPersonName?: string | null
     isActive?: boolean
+    organizationId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -29408,6 +32272,7 @@ export namespace Prisma {
     shippingAddress?: JsonNullValueInput | InputJsonValue
     contactPersonName?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -29424,6 +32289,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     client: ClientCreateNestedOneWithoutPurchaseOrdersInput
+    organization?: OrganizationCreateNestedOneWithoutPurchaseOrdersInput
     createdBy: UserCreateNestedOneWithoutOrdersCreatedInput
     updatedBy?: UserCreateNestedOneWithoutOrdersUpdatedInput
     lineItems?: POLineItemCreateNestedManyWithoutPurchaseOrderInput
@@ -29434,6 +32300,7 @@ export namespace Prisma {
     id?: string
     poNumber: string
     clientId: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -29460,6 +32327,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: ClientUpdateOneRequiredWithoutPurchaseOrdersNestedInput
+    organization?: OrganizationUpdateOneWithoutPurchaseOrdersNestedInput
     createdBy?: UserUpdateOneRequiredWithoutOrdersCreatedNestedInput
     updatedBy?: UserUpdateOneWithoutOrdersUpdatedNestedInput
     lineItems?: POLineItemUpdateManyWithoutPurchaseOrderNestedInput
@@ -29470,6 +32338,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -29488,6 +32357,7 @@ export namespace Prisma {
     id?: string
     poNumber: string
     clientId: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -29517,6 +32387,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -29737,6 +32608,7 @@ export namespace Prisma {
     lastSeenAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    organization?: OrganizationCreateNestedOneWithoutScannersInput
     registeredBy: UserCreateNestedOneWithoutRegisteredDevicesInput
   }
 
@@ -29750,6 +32622,7 @@ export namespace Prisma {
     location?: string | null
     notes?: string | null
     isActive?: boolean
+    organizationId?: string | null
     registeredById: string
     lastSeenAt?: Date | string | null
     createdAt?: Date | string
@@ -29769,6 +32642,7 @@ export namespace Prisma {
     lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneWithoutScannersNestedInput
     registeredBy?: UserUpdateOneRequiredWithoutRegisteredDevicesNestedInput
   }
 
@@ -29782,6 +32656,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     registeredById?: StringFieldUpdateOperationsInput | string
     lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29798,6 +32673,7 @@ export namespace Prisma {
     location?: string | null
     notes?: string | null
     isActive?: boolean
+    organizationId?: string | null
     registeredById: string
     lastSeenAt?: Date | string | null
     createdAt?: Date | string
@@ -29829,6 +32705,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     registeredById?: StringFieldUpdateOperationsInput | string
     lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31116,6 +33993,12 @@ export namespace Prisma {
     none?: ScannerDeviceWhereInput
   }
 
+  export type OrgMembershipListRelationFilter = {
+    every?: OrgMembershipWhereInput
+    some?: OrgMembershipWhereInput
+    none?: OrgMembershipWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -31153,6 +34036,10 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type OrgMembershipOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type UserOrderByRelevanceInput = {
     fields: UserOrderByRelevanceFieldEnum | UserOrderByRelevanceFieldEnum[]
     sort: SortOrder
@@ -31170,6 +34057,7 @@ export namespace Prisma {
     lastLoginAt?: SortOrder
     totpSecret?: SortOrder
     twoFactorEnabled?: SortOrder
+    renverseSub?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -31185,6 +34073,7 @@ export namespace Prisma {
     lastLoginAt?: SortOrder
     totpSecret?: SortOrder
     twoFactorEnabled?: SortOrder
+    renverseSub?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -31200,6 +34089,7 @@ export namespace Prisma {
     lastLoginAt?: SortOrder
     totpSecret?: SortOrder
     twoFactorEnabled?: SortOrder
+    renverseSub?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -31286,6 +34176,157 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type ClientListRelationFilter = {
+    every?: ClientWhereInput
+    some?: ClientWhereInput
+    none?: ClientWhereInput
+  }
+
+  export type ClientOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrganizationOrderByRelevanceInput = {
+    fields: OrganizationOrderByRelevanceFieldEnum | OrganizationOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type OrganizationCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    renverseOrgId?: SortOrder
+    siteId?: SortOrder
+    booksMode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    renverseOrgId?: SortOrder
+    siteId?: SortOrder
+    booksMode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    renverseOrgId?: SortOrder
+    siteId?: SortOrder
+    booksMode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+  export type JsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type OrganizationRelationFilter = {
+    is?: OrganizationWhereInput
+    isNot?: OrganizationWhereInput
+  }
+
+  export type UserRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type OrgMembershipOrderByRelevanceInput = {
+    fields: OrgMembershipOrderByRelevanceFieldEnum | OrgMembershipOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type OrgMembershipOrganizationIdUserIdCompoundUniqueInput = {
+    organizationId: string
+    userId: string
+  }
+
+  export type OrgMembershipCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    userId?: SortOrder
+    role?: SortOrder
+    renverseSuiteRole?: SortOrder
+    renverseFloorRole?: SortOrder
+    renverseDepartmentId?: SortOrder
+    renverseTeamIds?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrgMembershipMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    userId?: SortOrder
+    role?: SortOrder
+    renverseSuiteRole?: SortOrder
+    renverseFloorRole?: SortOrder
+    renverseDepartmentId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrgMembershipMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    userId?: SortOrder
+    role?: SortOrder
+    renverseSuiteRole?: SortOrder
+    renverseFloorRole?: SortOrder
+    renverseDepartmentId?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type ProductListRelationFilter = {
@@ -31742,27 +34783,10 @@ export namespace Prisma {
     _min?: NestedEnumBarcodeFormatFilter<$PrismaModel>
     _max?: NestedEnumBarcodeFormatFilter<$PrismaModel>
   }
-  export type JsonFilter<$PrismaModel = never> = 
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
 
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  export type OrganizationNullableRelationFilter = {
+    is?: OrganizationWhereInput | null
+    isNot?: OrganizationWhereInput | null
   }
 
   export type ClientOrderByRelevanceInput = {
@@ -31782,6 +34806,7 @@ export namespace Prisma {
     shippingAddress?: SortOrder
     contactPersonName?: SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -31795,6 +34820,7 @@ export namespace Prisma {
     email?: SortOrder
     contactPersonName?: SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -31808,33 +34834,9 @@ export namespace Prisma {
     email?: SortOrder
     contactPersonName?: SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> = 
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type EnumPOStatusFilter<$PrismaModel = never> = {
@@ -31847,11 +34849,6 @@ export namespace Prisma {
   export type ClientRelationFilter = {
     is?: ClientWhereInput
     isNot?: ClientWhereInput
-  }
-
-  export type UserRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
   }
 
   export type UserNullableRelationFilter = {
@@ -31869,6 +34866,7 @@ export namespace Prisma {
     id?: SortOrder
     poNumber?: SortOrder
     clientId?: SortOrder
+    organizationId?: SortOrder
     orderDate?: SortOrder
     expectedDispatchDate?: SortOrder
     status?: SortOrder
@@ -31889,6 +34887,7 @@ export namespace Prisma {
     id?: SortOrder
     poNumber?: SortOrder
     clientId?: SortOrder
+    organizationId?: SortOrder
     orderDate?: SortOrder
     expectedDispatchDate?: SortOrder
     status?: SortOrder
@@ -31905,6 +34904,7 @@ export namespace Prisma {
     id?: SortOrder
     poNumber?: SortOrder
     clientId?: SortOrder
+    organizationId?: SortOrder
     orderDate?: SortOrder
     expectedDispatchDate?: SortOrder
     status?: SortOrder
@@ -32132,6 +35132,7 @@ export namespace Prisma {
     location?: SortOrder
     notes?: SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrder
     registeredById?: SortOrder
     lastSeenAt?: SortOrder
     createdAt?: SortOrder
@@ -32148,6 +35149,7 @@ export namespace Prisma {
     location?: SortOrder
     notes?: SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrder
     registeredById?: SortOrder
     lastSeenAt?: SortOrder
     createdAt?: SortOrder
@@ -32164,6 +35166,7 @@ export namespace Prisma {
     location?: SortOrder
     notes?: SortOrder
     isActive?: SortOrder
+    organizationId?: SortOrder
     registeredById?: SortOrder
     lastSeenAt?: SortOrder
     createdAt?: SortOrder
@@ -33071,6 +36074,13 @@ export namespace Prisma {
     connect?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
   }
 
+  export type OrgMembershipCreateNestedManyWithoutUserInput = {
+    create?: XOR<OrgMembershipCreateWithoutUserInput, OrgMembershipUncheckedCreateWithoutUserInput> | OrgMembershipCreateWithoutUserInput[] | OrgMembershipUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: OrgMembershipCreateOrConnectWithoutUserInput | OrgMembershipCreateOrConnectWithoutUserInput[]
+    createMany?: OrgMembershipCreateManyUserInputEnvelope
+    connect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+  }
+
   export type DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput = {
     create?: XOR<DispatchSessionCreateWithoutSupervisorInput, DispatchSessionUncheckedCreateWithoutSupervisorInput> | DispatchSessionCreateWithoutSupervisorInput[] | DispatchSessionUncheckedCreateWithoutSupervisorInput[]
     connectOrCreate?: DispatchSessionCreateOrConnectWithoutSupervisorInput | DispatchSessionCreateOrConnectWithoutSupervisorInput[]
@@ -33139,6 +36149,13 @@ export namespace Prisma {
     connectOrCreate?: ScannerDeviceCreateOrConnectWithoutRegisteredByInput | ScannerDeviceCreateOrConnectWithoutRegisteredByInput[]
     createMany?: ScannerDeviceCreateManyRegisteredByInputEnvelope
     connect?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+  }
+
+  export type OrgMembershipUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<OrgMembershipCreateWithoutUserInput, OrgMembershipUncheckedCreateWithoutUserInput> | OrgMembershipCreateWithoutUserInput[] | OrgMembershipUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: OrgMembershipCreateOrConnectWithoutUserInput | OrgMembershipCreateOrConnectWithoutUserInput[]
+    createMany?: OrgMembershipCreateManyUserInputEnvelope
+    connect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -33305,6 +36322,20 @@ export namespace Prisma {
     deleteMany?: ScannerDeviceScalarWhereInput | ScannerDeviceScalarWhereInput[]
   }
 
+  export type OrgMembershipUpdateManyWithoutUserNestedInput = {
+    create?: XOR<OrgMembershipCreateWithoutUserInput, OrgMembershipUncheckedCreateWithoutUserInput> | OrgMembershipCreateWithoutUserInput[] | OrgMembershipUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: OrgMembershipCreateOrConnectWithoutUserInput | OrgMembershipCreateOrConnectWithoutUserInput[]
+    upsert?: OrgMembershipUpsertWithWhereUniqueWithoutUserInput | OrgMembershipUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: OrgMembershipCreateManyUserInputEnvelope
+    set?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    disconnect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    delete?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    connect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    update?: OrgMembershipUpdateWithWhereUniqueWithoutUserInput | OrgMembershipUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: OrgMembershipUpdateManyWithWhereWithoutUserInput | OrgMembershipUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: OrgMembershipScalarWhereInput | OrgMembershipScalarWhereInput[]
+  }
+
   export type DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput = {
     create?: XOR<DispatchSessionCreateWithoutSupervisorInput, DispatchSessionUncheckedCreateWithoutSupervisorInput> | DispatchSessionCreateWithoutSupervisorInput[] | DispatchSessionUncheckedCreateWithoutSupervisorInput[]
     connectOrCreate?: DispatchSessionCreateOrConnectWithoutSupervisorInput | DispatchSessionCreateOrConnectWithoutSupervisorInput[]
@@ -33443,6 +36474,216 @@ export namespace Prisma {
     update?: ScannerDeviceUpdateWithWhereUniqueWithoutRegisteredByInput | ScannerDeviceUpdateWithWhereUniqueWithoutRegisteredByInput[]
     updateMany?: ScannerDeviceUpdateManyWithWhereWithoutRegisteredByInput | ScannerDeviceUpdateManyWithWhereWithoutRegisteredByInput[]
     deleteMany?: ScannerDeviceScalarWhereInput | ScannerDeviceScalarWhereInput[]
+  }
+
+  export type OrgMembershipUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<OrgMembershipCreateWithoutUserInput, OrgMembershipUncheckedCreateWithoutUserInput> | OrgMembershipCreateWithoutUserInput[] | OrgMembershipUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: OrgMembershipCreateOrConnectWithoutUserInput | OrgMembershipCreateOrConnectWithoutUserInput[]
+    upsert?: OrgMembershipUpsertWithWhereUniqueWithoutUserInput | OrgMembershipUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: OrgMembershipCreateManyUserInputEnvelope
+    set?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    disconnect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    delete?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    connect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    update?: OrgMembershipUpdateWithWhereUniqueWithoutUserInput | OrgMembershipUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: OrgMembershipUpdateManyWithWhereWithoutUserInput | OrgMembershipUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: OrgMembershipScalarWhereInput | OrgMembershipScalarWhereInput[]
+  }
+
+  export type OrgMembershipCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<OrgMembershipCreateWithoutOrganizationInput, OrgMembershipUncheckedCreateWithoutOrganizationInput> | OrgMembershipCreateWithoutOrganizationInput[] | OrgMembershipUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrgMembershipCreateOrConnectWithoutOrganizationInput | OrgMembershipCreateOrConnectWithoutOrganizationInput[]
+    createMany?: OrgMembershipCreateManyOrganizationInputEnvelope
+    connect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+  }
+
+  export type ClientCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ClientCreateWithoutOrganizationInput, ClientUncheckedCreateWithoutOrganizationInput> | ClientCreateWithoutOrganizationInput[] | ClientUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ClientCreateOrConnectWithoutOrganizationInput | ClientCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ClientCreateManyOrganizationInputEnvelope
+    connect?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+  }
+
+  export type PurchaseOrderCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PurchaseOrderCreateWithoutOrganizationInput, PurchaseOrderUncheckedCreateWithoutOrganizationInput> | PurchaseOrderCreateWithoutOrganizationInput[] | PurchaseOrderUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PurchaseOrderCreateOrConnectWithoutOrganizationInput | PurchaseOrderCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PurchaseOrderCreateManyOrganizationInputEnvelope
+    connect?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+  }
+
+  export type ScannerDeviceCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ScannerDeviceCreateWithoutOrganizationInput, ScannerDeviceUncheckedCreateWithoutOrganizationInput> | ScannerDeviceCreateWithoutOrganizationInput[] | ScannerDeviceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ScannerDeviceCreateOrConnectWithoutOrganizationInput | ScannerDeviceCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ScannerDeviceCreateManyOrganizationInputEnvelope
+    connect?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+  }
+
+  export type OrgMembershipUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<OrgMembershipCreateWithoutOrganizationInput, OrgMembershipUncheckedCreateWithoutOrganizationInput> | OrgMembershipCreateWithoutOrganizationInput[] | OrgMembershipUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrgMembershipCreateOrConnectWithoutOrganizationInput | OrgMembershipCreateOrConnectWithoutOrganizationInput[]
+    createMany?: OrgMembershipCreateManyOrganizationInputEnvelope
+    connect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+  }
+
+  export type ClientUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ClientCreateWithoutOrganizationInput, ClientUncheckedCreateWithoutOrganizationInput> | ClientCreateWithoutOrganizationInput[] | ClientUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ClientCreateOrConnectWithoutOrganizationInput | ClientCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ClientCreateManyOrganizationInputEnvelope
+    connect?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+  }
+
+  export type PurchaseOrderUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PurchaseOrderCreateWithoutOrganizationInput, PurchaseOrderUncheckedCreateWithoutOrganizationInput> | PurchaseOrderCreateWithoutOrganizationInput[] | PurchaseOrderUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PurchaseOrderCreateOrConnectWithoutOrganizationInput | PurchaseOrderCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PurchaseOrderCreateManyOrganizationInputEnvelope
+    connect?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+  }
+
+  export type ScannerDeviceUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<ScannerDeviceCreateWithoutOrganizationInput, ScannerDeviceUncheckedCreateWithoutOrganizationInput> | ScannerDeviceCreateWithoutOrganizationInput[] | ScannerDeviceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ScannerDeviceCreateOrConnectWithoutOrganizationInput | ScannerDeviceCreateOrConnectWithoutOrganizationInput[]
+    createMany?: ScannerDeviceCreateManyOrganizationInputEnvelope
+    connect?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+  }
+
+  export type OrgMembershipUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<OrgMembershipCreateWithoutOrganizationInput, OrgMembershipUncheckedCreateWithoutOrganizationInput> | OrgMembershipCreateWithoutOrganizationInput[] | OrgMembershipUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrgMembershipCreateOrConnectWithoutOrganizationInput | OrgMembershipCreateOrConnectWithoutOrganizationInput[]
+    upsert?: OrgMembershipUpsertWithWhereUniqueWithoutOrganizationInput | OrgMembershipUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: OrgMembershipCreateManyOrganizationInputEnvelope
+    set?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    disconnect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    delete?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    connect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    update?: OrgMembershipUpdateWithWhereUniqueWithoutOrganizationInput | OrgMembershipUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: OrgMembershipUpdateManyWithWhereWithoutOrganizationInput | OrgMembershipUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: OrgMembershipScalarWhereInput | OrgMembershipScalarWhereInput[]
+  }
+
+  export type ClientUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ClientCreateWithoutOrganizationInput, ClientUncheckedCreateWithoutOrganizationInput> | ClientCreateWithoutOrganizationInput[] | ClientUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ClientCreateOrConnectWithoutOrganizationInput | ClientCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ClientUpsertWithWhereUniqueWithoutOrganizationInput | ClientUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ClientCreateManyOrganizationInputEnvelope
+    set?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+    disconnect?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+    delete?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+    connect?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+    update?: ClientUpdateWithWhereUniqueWithoutOrganizationInput | ClientUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ClientUpdateManyWithWhereWithoutOrganizationInput | ClientUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ClientScalarWhereInput | ClientScalarWhereInput[]
+  }
+
+  export type PurchaseOrderUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PurchaseOrderCreateWithoutOrganizationInput, PurchaseOrderUncheckedCreateWithoutOrganizationInput> | PurchaseOrderCreateWithoutOrganizationInput[] | PurchaseOrderUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PurchaseOrderCreateOrConnectWithoutOrganizationInput | PurchaseOrderCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PurchaseOrderUpsertWithWhereUniqueWithoutOrganizationInput | PurchaseOrderUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PurchaseOrderCreateManyOrganizationInputEnvelope
+    set?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+    disconnect?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+    delete?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+    connect?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+    update?: PurchaseOrderUpdateWithWhereUniqueWithoutOrganizationInput | PurchaseOrderUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PurchaseOrderUpdateManyWithWhereWithoutOrganizationInput | PurchaseOrderUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PurchaseOrderScalarWhereInput | PurchaseOrderScalarWhereInput[]
+  }
+
+  export type ScannerDeviceUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ScannerDeviceCreateWithoutOrganizationInput, ScannerDeviceUncheckedCreateWithoutOrganizationInput> | ScannerDeviceCreateWithoutOrganizationInput[] | ScannerDeviceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ScannerDeviceCreateOrConnectWithoutOrganizationInput | ScannerDeviceCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ScannerDeviceUpsertWithWhereUniqueWithoutOrganizationInput | ScannerDeviceUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ScannerDeviceCreateManyOrganizationInputEnvelope
+    set?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+    disconnect?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+    delete?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+    connect?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+    update?: ScannerDeviceUpdateWithWhereUniqueWithoutOrganizationInput | ScannerDeviceUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ScannerDeviceUpdateManyWithWhereWithoutOrganizationInput | ScannerDeviceUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ScannerDeviceScalarWhereInput | ScannerDeviceScalarWhereInput[]
+  }
+
+  export type OrgMembershipUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<OrgMembershipCreateWithoutOrganizationInput, OrgMembershipUncheckedCreateWithoutOrganizationInput> | OrgMembershipCreateWithoutOrganizationInput[] | OrgMembershipUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrgMembershipCreateOrConnectWithoutOrganizationInput | OrgMembershipCreateOrConnectWithoutOrganizationInput[]
+    upsert?: OrgMembershipUpsertWithWhereUniqueWithoutOrganizationInput | OrgMembershipUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: OrgMembershipCreateManyOrganizationInputEnvelope
+    set?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    disconnect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    delete?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    connect?: OrgMembershipWhereUniqueInput | OrgMembershipWhereUniqueInput[]
+    update?: OrgMembershipUpdateWithWhereUniqueWithoutOrganizationInput | OrgMembershipUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: OrgMembershipUpdateManyWithWhereWithoutOrganizationInput | OrgMembershipUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: OrgMembershipScalarWhereInput | OrgMembershipScalarWhereInput[]
+  }
+
+  export type ClientUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ClientCreateWithoutOrganizationInput, ClientUncheckedCreateWithoutOrganizationInput> | ClientCreateWithoutOrganizationInput[] | ClientUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ClientCreateOrConnectWithoutOrganizationInput | ClientCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ClientUpsertWithWhereUniqueWithoutOrganizationInput | ClientUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ClientCreateManyOrganizationInputEnvelope
+    set?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+    disconnect?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+    delete?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+    connect?: ClientWhereUniqueInput | ClientWhereUniqueInput[]
+    update?: ClientUpdateWithWhereUniqueWithoutOrganizationInput | ClientUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ClientUpdateManyWithWhereWithoutOrganizationInput | ClientUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ClientScalarWhereInput | ClientScalarWhereInput[]
+  }
+
+  export type PurchaseOrderUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PurchaseOrderCreateWithoutOrganizationInput, PurchaseOrderUncheckedCreateWithoutOrganizationInput> | PurchaseOrderCreateWithoutOrganizationInput[] | PurchaseOrderUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PurchaseOrderCreateOrConnectWithoutOrganizationInput | PurchaseOrderCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PurchaseOrderUpsertWithWhereUniqueWithoutOrganizationInput | PurchaseOrderUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PurchaseOrderCreateManyOrganizationInputEnvelope
+    set?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+    disconnect?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+    delete?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+    connect?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+    update?: PurchaseOrderUpdateWithWhereUniqueWithoutOrganizationInput | PurchaseOrderUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PurchaseOrderUpdateManyWithWhereWithoutOrganizationInput | PurchaseOrderUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PurchaseOrderScalarWhereInput | PurchaseOrderScalarWhereInput[]
+  }
+
+  export type ScannerDeviceUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<ScannerDeviceCreateWithoutOrganizationInput, ScannerDeviceUncheckedCreateWithoutOrganizationInput> | ScannerDeviceCreateWithoutOrganizationInput[] | ScannerDeviceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: ScannerDeviceCreateOrConnectWithoutOrganizationInput | ScannerDeviceCreateOrConnectWithoutOrganizationInput[]
+    upsert?: ScannerDeviceUpsertWithWhereUniqueWithoutOrganizationInput | ScannerDeviceUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: ScannerDeviceCreateManyOrganizationInputEnvelope
+    set?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+    disconnect?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+    delete?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+    connect?: ScannerDeviceWhereUniqueInput | ScannerDeviceWhereUniqueInput[]
+    update?: ScannerDeviceUpdateWithWhereUniqueWithoutOrganizationInput | ScannerDeviceUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: ScannerDeviceUpdateManyWithWhereWithoutOrganizationInput | ScannerDeviceUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: ScannerDeviceScalarWhereInput | ScannerDeviceScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutMembershipsInput = {
+    create?: XOR<OrganizationCreateWithoutMembershipsInput, OrganizationUncheckedCreateWithoutMembershipsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutMembershipsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutOrgMembershipsInput = {
+    create?: XOR<UserCreateWithoutOrgMembershipsInput, UserUncheckedCreateWithoutOrgMembershipsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutOrgMembershipsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutMembershipsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutMembershipsInput, OrganizationUncheckedCreateWithoutMembershipsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutMembershipsInput
+    upsert?: OrganizationUpsertWithoutMembershipsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutMembershipsInput, OrganizationUpdateWithoutMembershipsInput>, OrganizationUncheckedUpdateWithoutMembershipsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutOrgMembershipsNestedInput = {
+    create?: XOR<UserCreateWithoutOrgMembershipsInput, UserUncheckedCreateWithoutOrgMembershipsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutOrgMembershipsInput
+    upsert?: UserUpsertWithoutOrgMembershipsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutOrgMembershipsInput, UserUpdateWithoutOrgMembershipsInput>, UserUncheckedUpdateWithoutOrgMembershipsInput>
   }
 
   export type ProductCreateNestedManyWithoutCategoryInput = {
@@ -33798,6 +37039,12 @@ export namespace Prisma {
     deleteMany?: ScanEventScalarWhereInput | ScanEventScalarWhereInput[]
   }
 
+  export type OrganizationCreateNestedOneWithoutClientsInput = {
+    create?: XOR<OrganizationCreateWithoutClientsInput, OrganizationUncheckedCreateWithoutClientsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutClientsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
   export type PurchaseOrderCreateNestedManyWithoutClientInput = {
     create?: XOR<PurchaseOrderCreateWithoutClientInput, PurchaseOrderUncheckedCreateWithoutClientInput> | PurchaseOrderCreateWithoutClientInput[] | PurchaseOrderUncheckedCreateWithoutClientInput[]
     connectOrCreate?: PurchaseOrderCreateOrConnectWithoutClientInput | PurchaseOrderCreateOrConnectWithoutClientInput[]
@@ -33810,6 +37057,16 @@ export namespace Prisma {
     connectOrCreate?: PurchaseOrderCreateOrConnectWithoutClientInput | PurchaseOrderCreateOrConnectWithoutClientInput[]
     createMany?: PurchaseOrderCreateManyClientInputEnvelope
     connect?: PurchaseOrderWhereUniqueInput | PurchaseOrderWhereUniqueInput[]
+  }
+
+  export type OrganizationUpdateOneWithoutClientsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutClientsInput, OrganizationUncheckedCreateWithoutClientsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutClientsInput
+    upsert?: OrganizationUpsertWithoutClientsInput
+    disconnect?: OrganizationWhereInput | boolean
+    delete?: OrganizationWhereInput | boolean
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutClientsInput, OrganizationUpdateWithoutClientsInput>, OrganizationUncheckedUpdateWithoutClientsInput>
   }
 
   export type PurchaseOrderUpdateManyWithoutClientNestedInput = {
@@ -33844,6 +37101,12 @@ export namespace Prisma {
     create?: XOR<ClientCreateWithoutPurchaseOrdersInput, ClientUncheckedCreateWithoutPurchaseOrdersInput>
     connectOrCreate?: ClientCreateOrConnectWithoutPurchaseOrdersInput
     connect?: ClientWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedOneWithoutPurchaseOrdersInput = {
+    create?: XOR<OrganizationCreateWithoutPurchaseOrdersInput, OrganizationUncheckedCreateWithoutPurchaseOrdersInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPurchaseOrdersInput
+    connect?: OrganizationWhereUniqueInput
   }
 
   export type UserCreateNestedOneWithoutOrdersCreatedInput = {
@@ -33896,6 +37159,16 @@ export namespace Prisma {
     upsert?: ClientUpsertWithoutPurchaseOrdersInput
     connect?: ClientWhereUniqueInput
     update?: XOR<XOR<ClientUpdateToOneWithWhereWithoutPurchaseOrdersInput, ClientUpdateWithoutPurchaseOrdersInput>, ClientUncheckedUpdateWithoutPurchaseOrdersInput>
+  }
+
+  export type OrganizationUpdateOneWithoutPurchaseOrdersNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPurchaseOrdersInput, OrganizationUncheckedCreateWithoutPurchaseOrdersInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPurchaseOrdersInput
+    upsert?: OrganizationUpsertWithoutPurchaseOrdersInput
+    disconnect?: OrganizationWhereInput | boolean
+    delete?: OrganizationWhereInput | boolean
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPurchaseOrdersInput, OrganizationUpdateWithoutPurchaseOrdersInput>, OrganizationUncheckedUpdateWithoutPurchaseOrdersInput>
   }
 
   export type UserUpdateOneRequiredWithoutOrdersCreatedNestedInput = {
@@ -34096,10 +37369,26 @@ export namespace Prisma {
     deleteMany?: DispatchSessionScalarWhereInput | DispatchSessionScalarWhereInput[]
   }
 
+  export type OrganizationCreateNestedOneWithoutScannersInput = {
+    create?: XOR<OrganizationCreateWithoutScannersInput, OrganizationUncheckedCreateWithoutScannersInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutScannersInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
   export type UserCreateNestedOneWithoutRegisteredDevicesInput = {
     create?: XOR<UserCreateWithoutRegisteredDevicesInput, UserUncheckedCreateWithoutRegisteredDevicesInput>
     connectOrCreate?: UserCreateOrConnectWithoutRegisteredDevicesInput
     connect?: UserWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneWithoutScannersNestedInput = {
+    create?: XOR<OrganizationCreateWithoutScannersInput, OrganizationUncheckedCreateWithoutScannersInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutScannersInput
+    upsert?: OrganizationUpsertWithoutScannersInput
+    disconnect?: OrganizationWhereInput | boolean
+    delete?: OrganizationWhereInput | boolean
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutScannersInput, OrganizationUpdateWithoutScannersInput>, OrganizationUncheckedUpdateWithoutScannersInput>
   }
 
   export type UserUpdateOneRequiredWithoutRegisteredDevicesNestedInput = {
@@ -34729,6 +38018,28 @@ export namespace Prisma {
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
+  export type NestedJsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedFloatNullableFilter<$PrismaModel = never> = {
     equals?: number | FloatFieldRefInput<$PrismaModel> | null
@@ -34854,28 +38165,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumBarcodeFormatFilter<$PrismaModel>
     _max?: NestedEnumBarcodeFormatFilter<$PrismaModel>
-  }
-  export type NestedJsonFilter<$PrismaModel = never> = 
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumPOStatusFilter<$PrismaModel = never> = {
@@ -35315,6 +38604,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     client: ClientCreateNestedOneWithoutPurchaseOrdersInput
+    organization?: OrganizationCreateNestedOneWithoutPurchaseOrdersInput
     updatedBy?: UserCreateNestedOneWithoutOrdersUpdatedInput
     lineItems?: POLineItemCreateNestedManyWithoutPurchaseOrderInput
     sessions?: DispatchSessionCreateNestedManyWithoutPurchaseOrderInput
@@ -35324,6 +38614,7 @@ export namespace Prisma {
     id?: string
     poNumber: string
     clientId: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -35359,6 +38650,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     client: ClientCreateNestedOneWithoutPurchaseOrdersInput
+    organization?: OrganizationCreateNestedOneWithoutPurchaseOrdersInput
     createdBy: UserCreateNestedOneWithoutOrdersCreatedInput
     lineItems?: POLineItemCreateNestedManyWithoutPurchaseOrderInput
     sessions?: DispatchSessionCreateNestedManyWithoutPurchaseOrderInput
@@ -35368,6 +38660,7 @@ export namespace Prisma {
     id?: string
     poNumber: string
     clientId: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -35468,6 +38761,7 @@ export namespace Prisma {
     lastSeenAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    organization?: OrganizationCreateNestedOneWithoutScannersInput
   }
 
   export type ScannerDeviceUncheckedCreateWithoutRegisteredByInput = {
@@ -35480,6 +38774,7 @@ export namespace Prisma {
     location?: string | null
     notes?: string | null
     isActive?: boolean
+    organizationId?: string | null
     lastSeenAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -35492,6 +38787,40 @@ export namespace Prisma {
 
   export type ScannerDeviceCreateManyRegisteredByInputEnvelope = {
     data: ScannerDeviceCreateManyRegisteredByInput | ScannerDeviceCreateManyRegisteredByInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrgMembershipCreateWithoutUserInput = {
+    id?: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutMembershipsInput
+  }
+
+  export type OrgMembershipUncheckedCreateWithoutUserInput = {
+    id?: string
+    organizationId: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrgMembershipCreateOrConnectWithoutUserInput = {
+    where: OrgMembershipWhereUniqueInput
+    create: XOR<OrgMembershipCreateWithoutUserInput, OrgMembershipUncheckedCreateWithoutUserInput>
+  }
+
+  export type OrgMembershipCreateManyUserInputEnvelope = {
+    data: OrgMembershipCreateManyUserInput | OrgMembershipCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -35671,6 +39000,7 @@ export namespace Prisma {
     id?: StringFilter<"PurchaseOrder"> | string
     poNumber?: StringFilter<"PurchaseOrder"> | string
     clientId?: StringFilter<"PurchaseOrder"> | string
+    organizationId?: StringNullableFilter<"PurchaseOrder"> | string | null
     orderDate?: DateTimeFilter<"PurchaseOrder"> | Date | string
     expectedDispatchDate?: DateTimeNullableFilter<"PurchaseOrder"> | Date | string | null
     status?: EnumPOStatusFilter<"PurchaseOrder"> | $Enums.POStatus
@@ -35790,10 +39120,478 @@ export namespace Prisma {
     location?: StringNullableFilter<"ScannerDevice"> | string | null
     notes?: StringNullableFilter<"ScannerDevice"> | string | null
     isActive?: BoolFilter<"ScannerDevice"> | boolean
+    organizationId?: StringNullableFilter<"ScannerDevice"> | string | null
     registeredById?: StringFilter<"ScannerDevice"> | string
     lastSeenAt?: DateTimeNullableFilter<"ScannerDevice"> | Date | string | null
     createdAt?: DateTimeFilter<"ScannerDevice"> | Date | string
     updatedAt?: DateTimeFilter<"ScannerDevice"> | Date | string
+  }
+
+  export type OrgMembershipUpsertWithWhereUniqueWithoutUserInput = {
+    where: OrgMembershipWhereUniqueInput
+    update: XOR<OrgMembershipUpdateWithoutUserInput, OrgMembershipUncheckedUpdateWithoutUserInput>
+    create: XOR<OrgMembershipCreateWithoutUserInput, OrgMembershipUncheckedCreateWithoutUserInput>
+  }
+
+  export type OrgMembershipUpdateWithWhereUniqueWithoutUserInput = {
+    where: OrgMembershipWhereUniqueInput
+    data: XOR<OrgMembershipUpdateWithoutUserInput, OrgMembershipUncheckedUpdateWithoutUserInput>
+  }
+
+  export type OrgMembershipUpdateManyWithWhereWithoutUserInput = {
+    where: OrgMembershipScalarWhereInput
+    data: XOR<OrgMembershipUpdateManyMutationInput, OrgMembershipUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type OrgMembershipScalarWhereInput = {
+    AND?: OrgMembershipScalarWhereInput | OrgMembershipScalarWhereInput[]
+    OR?: OrgMembershipScalarWhereInput[]
+    NOT?: OrgMembershipScalarWhereInput | OrgMembershipScalarWhereInput[]
+    id?: StringFilter<"OrgMembership"> | string
+    organizationId?: StringFilter<"OrgMembership"> | string
+    userId?: StringFilter<"OrgMembership"> | string
+    role?: EnumUserRoleFilter<"OrgMembership"> | $Enums.UserRole
+    renverseSuiteRole?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseFloorRole?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseDepartmentId?: StringNullableFilter<"OrgMembership"> | string | null
+    renverseTeamIds?: JsonFilter<"OrgMembership">
+    createdAt?: DateTimeFilter<"OrgMembership"> | Date | string
+    updatedAt?: DateTimeFilter<"OrgMembership"> | Date | string
+  }
+
+  export type OrgMembershipCreateWithoutOrganizationInput = {
+    id?: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutOrgMembershipsInput
+  }
+
+  export type OrgMembershipUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    userId: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrgMembershipCreateOrConnectWithoutOrganizationInput = {
+    where: OrgMembershipWhereUniqueInput
+    create: XOR<OrgMembershipCreateWithoutOrganizationInput, OrgMembershipUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type OrgMembershipCreateManyOrganizationInputEnvelope = {
+    data: OrgMembershipCreateManyOrganizationInput | OrgMembershipCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ClientCreateWithoutOrganizationInput = {
+    id?: string
+    clientCode: string
+    name: string
+    gstin?: string | null
+    phone: string
+    email?: string | null
+    billingAddress: JsonNullValueInput | InputJsonValue
+    shippingAddress: JsonNullValueInput | InputJsonValue
+    contactPersonName?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    purchaseOrders?: PurchaseOrderCreateNestedManyWithoutClientInput
+  }
+
+  export type ClientUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    clientCode: string
+    name: string
+    gstin?: string | null
+    phone: string
+    email?: string | null
+    billingAddress: JsonNullValueInput | InputJsonValue
+    shippingAddress: JsonNullValueInput | InputJsonValue
+    contactPersonName?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    purchaseOrders?: PurchaseOrderUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type ClientCreateOrConnectWithoutOrganizationInput = {
+    where: ClientWhereUniqueInput
+    create: XOR<ClientCreateWithoutOrganizationInput, ClientUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ClientCreateManyOrganizationInputEnvelope = {
+    data: ClientCreateManyOrganizationInput | ClientCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PurchaseOrderCreateWithoutOrganizationInput = {
+    id?: string
+    poNumber: string
+    orderDate: Date | string
+    expectedDispatchDate?: Date | string | null
+    status?: $Enums.POStatus
+    totalAmountPaise?: number
+    notes?: string | null
+    tallyVoucherId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: ClientCreateNestedOneWithoutPurchaseOrdersInput
+    createdBy: UserCreateNestedOneWithoutOrdersCreatedInput
+    updatedBy?: UserCreateNestedOneWithoutOrdersUpdatedInput
+    lineItems?: POLineItemCreateNestedManyWithoutPurchaseOrderInput
+    sessions?: DispatchSessionCreateNestedManyWithoutPurchaseOrderInput
+  }
+
+  export type PurchaseOrderUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    poNumber: string
+    clientId: string
+    orderDate: Date | string
+    expectedDispatchDate?: Date | string | null
+    status?: $Enums.POStatus
+    totalAmountPaise?: number
+    notes?: string | null
+    tallyVoucherId?: string | null
+    createdById: string
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lineItems?: POLineItemUncheckedCreateNestedManyWithoutPurchaseOrderInput
+    sessions?: DispatchSessionUncheckedCreateNestedManyWithoutPurchaseOrderInput
+  }
+
+  export type PurchaseOrderCreateOrConnectWithoutOrganizationInput = {
+    where: PurchaseOrderWhereUniqueInput
+    create: XOR<PurchaseOrderCreateWithoutOrganizationInput, PurchaseOrderUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PurchaseOrderCreateManyOrganizationInputEnvelope = {
+    data: PurchaseOrderCreateManyOrganizationInput | PurchaseOrderCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ScannerDeviceCreateWithoutOrganizationInput = {
+    id?: string
+    name: string
+    serialNumber: string
+    driverName: string
+    deviceType?: string
+    ipAddress?: string | null
+    location?: string | null
+    notes?: string | null
+    isActive?: boolean
+    lastSeenAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    registeredBy: UserCreateNestedOneWithoutRegisteredDevicesInput
+  }
+
+  export type ScannerDeviceUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    name: string
+    serialNumber: string
+    driverName: string
+    deviceType?: string
+    ipAddress?: string | null
+    location?: string | null
+    notes?: string | null
+    isActive?: boolean
+    registeredById: string
+    lastSeenAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ScannerDeviceCreateOrConnectWithoutOrganizationInput = {
+    where: ScannerDeviceWhereUniqueInput
+    create: XOR<ScannerDeviceCreateWithoutOrganizationInput, ScannerDeviceUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ScannerDeviceCreateManyOrganizationInputEnvelope = {
+    data: ScannerDeviceCreateManyOrganizationInput | ScannerDeviceCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrgMembershipUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: OrgMembershipWhereUniqueInput
+    update: XOR<OrgMembershipUpdateWithoutOrganizationInput, OrgMembershipUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<OrgMembershipCreateWithoutOrganizationInput, OrgMembershipUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type OrgMembershipUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: OrgMembershipWhereUniqueInput
+    data: XOR<OrgMembershipUpdateWithoutOrganizationInput, OrgMembershipUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type OrgMembershipUpdateManyWithWhereWithoutOrganizationInput = {
+    where: OrgMembershipScalarWhereInput
+    data: XOR<OrgMembershipUpdateManyMutationInput, OrgMembershipUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type ClientUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: ClientWhereUniqueInput
+    update: XOR<ClientUpdateWithoutOrganizationInput, ClientUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<ClientCreateWithoutOrganizationInput, ClientUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ClientUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: ClientWhereUniqueInput
+    data: XOR<ClientUpdateWithoutOrganizationInput, ClientUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ClientUpdateManyWithWhereWithoutOrganizationInput = {
+    where: ClientScalarWhereInput
+    data: XOR<ClientUpdateManyMutationInput, ClientUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type ClientScalarWhereInput = {
+    AND?: ClientScalarWhereInput | ClientScalarWhereInput[]
+    OR?: ClientScalarWhereInput[]
+    NOT?: ClientScalarWhereInput | ClientScalarWhereInput[]
+    id?: StringFilter<"Client"> | string
+    clientCode?: StringFilter<"Client"> | string
+    name?: StringFilter<"Client"> | string
+    gstin?: StringNullableFilter<"Client"> | string | null
+    phone?: StringFilter<"Client"> | string
+    email?: StringNullableFilter<"Client"> | string | null
+    billingAddress?: JsonFilter<"Client">
+    shippingAddress?: JsonFilter<"Client">
+    contactPersonName?: StringNullableFilter<"Client"> | string | null
+    isActive?: BoolFilter<"Client"> | boolean
+    organizationId?: StringNullableFilter<"Client"> | string | null
+    createdAt?: DateTimeFilter<"Client"> | Date | string
+    updatedAt?: DateTimeFilter<"Client"> | Date | string
+  }
+
+  export type PurchaseOrderUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PurchaseOrderWhereUniqueInput
+    update: XOR<PurchaseOrderUpdateWithoutOrganizationInput, PurchaseOrderUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PurchaseOrderCreateWithoutOrganizationInput, PurchaseOrderUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PurchaseOrderUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PurchaseOrderWhereUniqueInput
+    data: XOR<PurchaseOrderUpdateWithoutOrganizationInput, PurchaseOrderUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PurchaseOrderUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PurchaseOrderScalarWhereInput
+    data: XOR<PurchaseOrderUpdateManyMutationInput, PurchaseOrderUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type ScannerDeviceUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: ScannerDeviceWhereUniqueInput
+    update: XOR<ScannerDeviceUpdateWithoutOrganizationInput, ScannerDeviceUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<ScannerDeviceCreateWithoutOrganizationInput, ScannerDeviceUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type ScannerDeviceUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: ScannerDeviceWhereUniqueInput
+    data: XOR<ScannerDeviceUpdateWithoutOrganizationInput, ScannerDeviceUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type ScannerDeviceUpdateManyWithWhereWithoutOrganizationInput = {
+    where: ScannerDeviceScalarWhereInput
+    data: XOR<ScannerDeviceUpdateManyMutationInput, ScannerDeviceUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type OrganizationCreateWithoutMembershipsInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    clients?: ClientCreateNestedManyWithoutOrganizationInput
+    purchaseOrders?: PurchaseOrderCreateNestedManyWithoutOrganizationInput
+    scanners?: ScannerDeviceCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutMembershipsInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    clients?: ClientUncheckedCreateNestedManyWithoutOrganizationInput
+    purchaseOrders?: PurchaseOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    scanners?: ScannerDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutMembershipsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutMembershipsInput, OrganizationUncheckedCreateWithoutMembershipsInput>
+  }
+
+  export type UserCreateWithoutOrgMembershipsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    name: string
+    role?: $Enums.UserRole
+    phone?: string | null
+    isActive?: boolean
+    lastLoginAt?: Date | string | null
+    totpSecret?: string | null
+    twoFactorEnabled?: boolean
+    renverseSub?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
+    operatedSessions?: DispatchSessionCreateNestedManyWithoutOperatorInput
+    scanEvents?: ScanEventCreateNestedManyWithoutOperatorInput
+    inventoryLedger?: InventoryLedgerCreateNestedManyWithoutCreatedByInput
+    grnsCreated?: GoodsReceiptNoteCreateNestedManyWithoutCreatedByInput
+    ordersCreated?: PurchaseOrderCreateNestedManyWithoutCreatedByInput
+    ordersUpdated?: PurchaseOrderCreateNestedManyWithoutUpdatedByInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+  }
+
+  export type UserUncheckedCreateWithoutOrgMembershipsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    name: string
+    role?: $Enums.UserRole
+    phone?: string | null
+    isActive?: boolean
+    lastLoginAt?: Date | string | null
+    totpSecret?: string | null
+    twoFactorEnabled?: boolean
+    renverseSub?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
+    operatedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutOperatorInput
+    scanEvents?: ScanEventUncheckedCreateNestedManyWithoutOperatorInput
+    inventoryLedger?: InventoryLedgerUncheckedCreateNestedManyWithoutCreatedByInput
+    grnsCreated?: GoodsReceiptNoteUncheckedCreateNestedManyWithoutCreatedByInput
+    ordersCreated?: PurchaseOrderUncheckedCreateNestedManyWithoutCreatedByInput
+    ordersUpdated?: PurchaseOrderUncheckedCreateNestedManyWithoutUpdatedByInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+  }
+
+  export type UserCreateOrConnectWithoutOrgMembershipsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutOrgMembershipsInput, UserUncheckedCreateWithoutOrgMembershipsInput>
+  }
+
+  export type OrganizationUpsertWithoutMembershipsInput = {
+    update: XOR<OrganizationUpdateWithoutMembershipsInput, OrganizationUncheckedUpdateWithoutMembershipsInput>
+    create: XOR<OrganizationCreateWithoutMembershipsInput, OrganizationUncheckedCreateWithoutMembershipsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutMembershipsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutMembershipsInput, OrganizationUncheckedUpdateWithoutMembershipsInput>
+  }
+
+  export type OrganizationUpdateWithoutMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clients?: ClientUpdateManyWithoutOrganizationNestedInput
+    purchaseOrders?: PurchaseOrderUpdateManyWithoutOrganizationNestedInput
+    scanners?: ScannerDeviceUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clients?: ClientUncheckedUpdateManyWithoutOrganizationNestedInput
+    purchaseOrders?: PurchaseOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    scanners?: ScannerDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type UserUpsertWithoutOrgMembershipsInput = {
+    update: XOR<UserUpdateWithoutOrgMembershipsInput, UserUncheckedUpdateWithoutOrgMembershipsInput>
+    create: XOR<UserCreateWithoutOrgMembershipsInput, UserUncheckedCreateWithoutOrgMembershipsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutOrgMembershipsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutOrgMembershipsInput, UserUncheckedUpdateWithoutOrgMembershipsInput>
+  }
+
+  export type UserUpdateWithoutOrgMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
+    operatedSessions?: DispatchSessionUpdateManyWithoutOperatorNestedInput
+    scanEvents?: ScanEventUpdateManyWithoutOperatorNestedInput
+    inventoryLedger?: InventoryLedgerUpdateManyWithoutCreatedByNestedInput
+    grnsCreated?: GoodsReceiptNoteUpdateManyWithoutCreatedByNestedInput
+    ordersCreated?: PurchaseOrderUpdateManyWithoutCreatedByNestedInput
+    ordersUpdated?: PurchaseOrderUpdateManyWithoutUpdatedByNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutOrgMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
+    operatedSessions?: DispatchSessionUncheckedUpdateManyWithoutOperatorNestedInput
+    scanEvents?: ScanEventUncheckedUpdateManyWithoutOperatorNestedInput
+    inventoryLedger?: InventoryLedgerUncheckedUpdateManyWithoutCreatedByNestedInput
+    grnsCreated?: GoodsReceiptNoteUncheckedUpdateManyWithoutCreatedByNestedInput
+    ordersCreated?: PurchaseOrderUncheckedUpdateManyWithoutCreatedByNestedInput
+    ordersUpdated?: PurchaseOrderUncheckedUpdateManyWithoutUpdatedByNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
   }
 
   export type ProductCreateWithoutCategoryInput = {
@@ -36454,6 +40252,37 @@ export namespace Prisma {
     data: XOR<ScanEventUpdateManyMutationInput, ScanEventUncheckedUpdateManyWithoutResolvedVariantInput>
   }
 
+  export type OrganizationCreateWithoutClientsInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrgMembershipCreateNestedManyWithoutOrganizationInput
+    purchaseOrders?: PurchaseOrderCreateNestedManyWithoutOrganizationInput
+    scanners?: ScannerDeviceCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutClientsInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrgMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    purchaseOrders?: PurchaseOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    scanners?: ScannerDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutClientsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutClientsInput, OrganizationUncheckedCreateWithoutClientsInput>
+  }
+
   export type PurchaseOrderCreateWithoutClientInput = {
     id?: string
     poNumber: string
@@ -36465,6 +40294,7 @@ export namespace Prisma {
     tallyVoucherId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    organization?: OrganizationCreateNestedOneWithoutPurchaseOrdersInput
     createdBy: UserCreateNestedOneWithoutOrdersCreatedInput
     updatedBy?: UserCreateNestedOneWithoutOrdersUpdatedInput
     lineItems?: POLineItemCreateNestedManyWithoutPurchaseOrderInput
@@ -36474,6 +40304,7 @@ export namespace Prisma {
   export type PurchaseOrderUncheckedCreateWithoutClientInput = {
     id?: string
     poNumber: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -36496,6 +40327,43 @@ export namespace Prisma {
   export type PurchaseOrderCreateManyClientInputEnvelope = {
     data: PurchaseOrderCreateManyClientInput | PurchaseOrderCreateManyClientInput[]
     skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutClientsInput = {
+    update: XOR<OrganizationUpdateWithoutClientsInput, OrganizationUncheckedUpdateWithoutClientsInput>
+    create: XOR<OrganizationCreateWithoutClientsInput, OrganizationUncheckedCreateWithoutClientsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutClientsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutClientsInput, OrganizationUncheckedUpdateWithoutClientsInput>
+  }
+
+  export type OrganizationUpdateWithoutClientsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrgMembershipUpdateManyWithoutOrganizationNestedInput
+    purchaseOrders?: PurchaseOrderUpdateManyWithoutOrganizationNestedInput
+    scanners?: ScannerDeviceUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutClientsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrgMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    purchaseOrders?: PurchaseOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    scanners?: ScannerDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type PurchaseOrderUpsertWithWhereUniqueWithoutClientInput = {
@@ -36527,6 +40395,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    organization?: OrganizationCreateNestedOneWithoutClientsInput
   }
 
   export type ClientUncheckedCreateWithoutPurchaseOrdersInput = {
@@ -36540,6 +40409,7 @@ export namespace Prisma {
     shippingAddress: JsonNullValueInput | InputJsonValue
     contactPersonName?: string | null
     isActive?: boolean
+    organizationId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -36547,6 +40417,37 @@ export namespace Prisma {
   export type ClientCreateOrConnectWithoutPurchaseOrdersInput = {
     where: ClientWhereUniqueInput
     create: XOR<ClientCreateWithoutPurchaseOrdersInput, ClientUncheckedCreateWithoutPurchaseOrdersInput>
+  }
+
+  export type OrganizationCreateWithoutPurchaseOrdersInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrgMembershipCreateNestedManyWithoutOrganizationInput
+    clients?: ClientCreateNestedManyWithoutOrganizationInput
+    scanners?: ScannerDeviceCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPurchaseOrdersInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrgMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    clients?: ClientUncheckedCreateNestedManyWithoutOrganizationInput
+    scanners?: ScannerDeviceUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPurchaseOrdersInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPurchaseOrdersInput, OrganizationUncheckedCreateWithoutPurchaseOrdersInput>
   }
 
   export type UserCreateWithoutOrdersCreatedInput = {
@@ -36560,6 +40461,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -36571,6 +40473,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutOrdersCreatedInput = {
@@ -36584,6 +40487,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -36595,6 +40499,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutOrdersCreatedInput = {
@@ -36613,6 +40518,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -36624,6 +40530,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutOrdersUpdatedInput = {
@@ -36637,6 +40544,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -36648,6 +40556,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutOrdersUpdatedInput = {
@@ -36781,6 +40690,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneWithoutClientsNestedInput
   }
 
   export type ClientUncheckedUpdateWithoutPurchaseOrdersInput = {
@@ -36794,8 +40704,46 @@ export namespace Prisma {
     shippingAddress?: JsonNullValueInput | InputJsonValue
     contactPersonName?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationUpsertWithoutPurchaseOrdersInput = {
+    update: XOR<OrganizationUpdateWithoutPurchaseOrdersInput, OrganizationUncheckedUpdateWithoutPurchaseOrdersInput>
+    create: XOR<OrganizationCreateWithoutPurchaseOrdersInput, OrganizationUncheckedCreateWithoutPurchaseOrdersInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPurchaseOrdersInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPurchaseOrdersInput, OrganizationUncheckedUpdateWithoutPurchaseOrdersInput>
+  }
+
+  export type OrganizationUpdateWithoutPurchaseOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrgMembershipUpdateManyWithoutOrganizationNestedInput
+    clients?: ClientUpdateManyWithoutOrganizationNestedInput
+    scanners?: ScannerDeviceUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPurchaseOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrgMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    clients?: ClientUncheckedUpdateManyWithoutOrganizationNestedInput
+    scanners?: ScannerDeviceUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutOrdersCreatedInput = {
@@ -36820,6 +40768,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -36831,6 +40780,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutOrdersCreatedInput = {
@@ -36844,6 +40794,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -36855,6 +40806,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutOrdersUpdatedInput = {
@@ -36879,6 +40831,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -36890,6 +40843,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutOrdersUpdatedInput = {
@@ -36903,6 +40857,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -36914,6 +40869,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type POLineItemUpsertWithWhereUniqueWithoutPurchaseOrderInput = {
@@ -36960,6 +40916,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     client: ClientCreateNestedOneWithoutPurchaseOrdersInput
+    organization?: OrganizationCreateNestedOneWithoutPurchaseOrdersInput
     createdBy: UserCreateNestedOneWithoutOrdersCreatedInput
     updatedBy?: UserCreateNestedOneWithoutOrdersUpdatedInput
     sessions?: DispatchSessionCreateNestedManyWithoutPurchaseOrderInput
@@ -36969,6 +40926,7 @@ export namespace Prisma {
     id?: string
     poNumber: string
     clientId: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -37103,6 +41061,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: ClientUpdateOneRequiredWithoutPurchaseOrdersNestedInput
+    organization?: OrganizationUpdateOneWithoutPurchaseOrdersNestedInput
     createdBy?: UserUpdateOneRequiredWithoutOrdersCreatedNestedInput
     updatedBy?: UserUpdateOneWithoutOrdersUpdatedNestedInput
     sessions?: DispatchSessionUpdateManyWithoutPurchaseOrderNestedInput
@@ -37112,6 +41071,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -37302,6 +41262,37 @@ export namespace Prisma {
     data: XOR<DispatchSessionUpdateManyMutationInput, DispatchSessionUncheckedUpdateManyWithoutVehicleInput>
   }
 
+  export type OrganizationCreateWithoutScannersInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrgMembershipCreateNestedManyWithoutOrganizationInput
+    clients?: ClientCreateNestedManyWithoutOrganizationInput
+    purchaseOrders?: PurchaseOrderCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutScannersInput = {
+    id?: string
+    name: string
+    renverseOrgId: string
+    siteId: string
+    booksMode?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrgMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    clients?: ClientUncheckedCreateNestedManyWithoutOrganizationInput
+    purchaseOrders?: PurchaseOrderUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutScannersInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutScannersInput, OrganizationUncheckedCreateWithoutScannersInput>
+  }
+
   export type UserCreateWithoutRegisteredDevicesInput = {
     id?: string
     email: string
@@ -37313,6 +41304,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -37324,6 +41316,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderCreateNestedManyWithoutUpdatedByInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutRegisteredDevicesInput = {
@@ -37337,6 +41330,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -37348,11 +41342,49 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUncheckedCreateNestedManyWithoutUpdatedByInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutRegisteredDevicesInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutRegisteredDevicesInput, UserUncheckedCreateWithoutRegisteredDevicesInput>
+  }
+
+  export type OrganizationUpsertWithoutScannersInput = {
+    update: XOR<OrganizationUpdateWithoutScannersInput, OrganizationUncheckedUpdateWithoutScannersInput>
+    create: XOR<OrganizationCreateWithoutScannersInput, OrganizationUncheckedCreateWithoutScannersInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutScannersInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutScannersInput, OrganizationUncheckedUpdateWithoutScannersInput>
+  }
+
+  export type OrganizationUpdateWithoutScannersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrgMembershipUpdateManyWithoutOrganizationNestedInput
+    clients?: ClientUpdateManyWithoutOrganizationNestedInput
+    purchaseOrders?: PurchaseOrderUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutScannersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    renverseOrgId?: StringFieldUpdateOperationsInput | string
+    siteId?: StringFieldUpdateOperationsInput | string
+    booksMode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrgMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    clients?: ClientUncheckedUpdateManyWithoutOrganizationNestedInput
+    purchaseOrders?: PurchaseOrderUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutRegisteredDevicesInput = {
@@ -37377,6 +41409,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -37388,6 +41421,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUpdateManyWithoutUpdatedByNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutRegisteredDevicesInput = {
@@ -37401,6 +41435,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -37412,6 +41447,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUncheckedUpdateManyWithoutUpdatedByNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type PurchaseOrderCreateWithoutSessionsInput = {
@@ -37426,6 +41462,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     client: ClientCreateNestedOneWithoutPurchaseOrdersInput
+    organization?: OrganizationCreateNestedOneWithoutPurchaseOrdersInput
     createdBy: UserCreateNestedOneWithoutOrdersCreatedInput
     updatedBy?: UserCreateNestedOneWithoutOrdersUpdatedInput
     lineItems?: POLineItemCreateNestedManyWithoutPurchaseOrderInput
@@ -37435,6 +41472,7 @@ export namespace Prisma {
     id?: string
     poNumber: string
     clientId: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -37493,6 +41531,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     operatedSessions?: DispatchSessionCreateNestedManyWithoutOperatorInput
@@ -37504,6 +41543,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSupervisedSessionsInput = {
@@ -37517,6 +41557,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     operatedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutOperatorInput
@@ -37528,6 +41569,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSupervisedSessionsInput = {
@@ -37546,6 +41588,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -37557,6 +41600,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutOperatedSessionsInput = {
@@ -37570,6 +41614,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -37581,6 +41626,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutOperatedSessionsInput = {
@@ -37692,6 +41738,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: ClientUpdateOneRequiredWithoutPurchaseOrdersNestedInput
+    organization?: OrganizationUpdateOneWithoutPurchaseOrdersNestedInput
     createdBy?: UserUpdateOneRequiredWithoutOrdersCreatedNestedInput
     updatedBy?: UserUpdateOneWithoutOrdersUpdatedNestedInput
     lineItems?: POLineItemUpdateManyWithoutPurchaseOrderNestedInput
@@ -37701,6 +41748,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -37771,6 +41819,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     operatedSessions?: DispatchSessionUpdateManyWithoutOperatorNestedInput
@@ -37782,6 +41831,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSupervisedSessionsInput = {
@@ -37795,6 +41845,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     operatedSessions?: DispatchSessionUncheckedUpdateManyWithoutOperatorNestedInput
@@ -37806,6 +41857,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutOperatedSessionsInput = {
@@ -37830,6 +41882,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -37841,6 +41894,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutOperatedSessionsInput = {
@@ -37854,6 +41908,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -37865,6 +41920,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ScanEventUpsertWithWhereUniqueWithoutSessionInput = {
@@ -38006,6 +42062,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -38017,6 +42074,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutScanEventsInput = {
@@ -38030,6 +42088,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -38041,6 +42100,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutScanEventsInput = {
@@ -38196,6 +42256,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -38207,6 +42268,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutScanEventsInput = {
@@ -38220,6 +42282,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -38231,6 +42294,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ProductVariantUpsertWithoutScanEventsInput = {
@@ -38508,6 +42572,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -38519,6 +42584,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutInventoryLedgerInput = {
@@ -38532,6 +42598,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -38543,6 +42610,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutInventoryLedgerInput = {
@@ -38641,6 +42709,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -38652,6 +42721,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutInventoryLedgerInput = {
@@ -38665,6 +42735,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -38676,6 +42747,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutGrnsCreatedInput = {
@@ -38689,6 +42761,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -38700,6 +42773,7 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutGrnsCreatedInput = {
@@ -38713,6 +42787,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -38724,6 +42799,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutGrnsCreatedInput = {
@@ -38779,6 +42855,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -38790,6 +42867,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutGrnsCreatedInput = {
@@ -38803,6 +42881,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -38814,6 +42893,7 @@ export namespace Prisma {
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type GRNLineItemUpsertWithWhereUniqueWithoutGrnInput = {
@@ -39381,6 +43461,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -39392,6 +43473,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderCreateNestedManyWithoutUpdatedByInput
     configsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -39405,6 +43487,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -39416,6 +43499,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUncheckedCreateNestedManyWithoutUpdatedByInput
     configsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -39445,6 +43529,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -39456,6 +43541,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUpdateManyWithoutUpdatedByNestedInput
     configsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -39469,6 +43555,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -39480,6 +43567,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUncheckedUpdateManyWithoutUpdatedByNestedInput
     configsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutConfigsUpdatedInput = {
@@ -39493,6 +43581,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionCreateNestedManyWithoutSupervisorInput
@@ -39504,6 +43593,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderCreateNestedManyWithoutUpdatedByInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     registeredDevices?: ScannerDeviceCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutConfigsUpdatedInput = {
@@ -39517,6 +43607,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     totpSecret?: string | null
     twoFactorEnabled?: boolean
+    renverseSub?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     supervisedSessions?: DispatchSessionUncheckedCreateNestedManyWithoutSupervisorInput
@@ -39528,6 +43619,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUncheckedCreateNestedManyWithoutUpdatedByInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     registeredDevices?: ScannerDeviceUncheckedCreateNestedManyWithoutRegisteredByInput
+    orgMemberships?: OrgMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutConfigsUpdatedInput = {
@@ -39557,6 +43649,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUpdateManyWithoutSupervisorNestedInput
@@ -39568,6 +43661,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUpdateManyWithoutUpdatedByNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     registeredDevices?: ScannerDeviceUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutConfigsUpdatedInput = {
@@ -39581,6 +43675,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
     twoFactorEnabled?: BoolFieldUpdateOperationsInput | boolean
+    renverseSub?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     supervisedSessions?: DispatchSessionUncheckedUpdateManyWithoutSupervisorNestedInput
@@ -39592,6 +43687,7 @@ export namespace Prisma {
     ordersUpdated?: PurchaseOrderUncheckedUpdateManyWithoutUpdatedByNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     registeredDevices?: ScannerDeviceUncheckedUpdateManyWithoutRegisteredByNestedInput
+    orgMemberships?: OrgMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type DispatchSessionCreateManySupervisorInput = {
@@ -39679,6 +43775,7 @@ export namespace Prisma {
     id?: string
     poNumber: string
     clientId: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -39694,6 +43791,7 @@ export namespace Prisma {
     id?: string
     poNumber: string
     clientId: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -39737,7 +43835,20 @@ export namespace Prisma {
     location?: string | null
     notes?: string | null
     isActive?: boolean
+    organizationId?: string | null
     lastSeenAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrgMembershipCreateManyUserInput = {
+    id?: string
+    organizationId: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -40007,6 +44118,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: ClientUpdateOneRequiredWithoutPurchaseOrdersNestedInput
+    organization?: OrganizationUpdateOneWithoutPurchaseOrdersNestedInput
     updatedBy?: UserUpdateOneWithoutOrdersUpdatedNestedInput
     lineItems?: POLineItemUpdateManyWithoutPurchaseOrderNestedInput
     sessions?: DispatchSessionUpdateManyWithoutPurchaseOrderNestedInput
@@ -40016,6 +44128,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -40033,6 +44146,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -40056,6 +44170,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: ClientUpdateOneRequiredWithoutPurchaseOrdersNestedInput
+    organization?: OrganizationUpdateOneWithoutPurchaseOrdersNestedInput
     createdBy?: UserUpdateOneRequiredWithoutOrdersCreatedNestedInput
     lineItems?: POLineItemUpdateManyWithoutPurchaseOrderNestedInput
     sessions?: DispatchSessionUpdateManyWithoutPurchaseOrderNestedInput
@@ -40065,6 +44180,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -40082,6 +44198,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -40172,6 +44289,7 @@ export namespace Prisma {
     lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneWithoutScannersNestedInput
   }
 
   export type ScannerDeviceUncheckedUpdateWithoutRegisteredByInput = {
@@ -40184,6 +44302,7 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -40199,6 +44318,285 @@ export namespace Prisma {
     location?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrgMembershipUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutMembershipsNestedInput
+  }
+
+  export type OrgMembershipUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrgMembershipUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrgMembershipCreateManyOrganizationInput = {
+    id?: string
+    userId: string
+    role?: $Enums.UserRole
+    renverseSuiteRole?: string | null
+    renverseFloorRole?: string | null
+    renverseDepartmentId?: string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ClientCreateManyOrganizationInput = {
+    id?: string
+    clientCode: string
+    name: string
+    gstin?: string | null
+    phone: string
+    email?: string | null
+    billingAddress: JsonNullValueInput | InputJsonValue
+    shippingAddress: JsonNullValueInput | InputJsonValue
+    contactPersonName?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PurchaseOrderCreateManyOrganizationInput = {
+    id?: string
+    poNumber: string
+    clientId: string
+    orderDate: Date | string
+    expectedDispatchDate?: Date | string | null
+    status?: $Enums.POStatus
+    totalAmountPaise?: number
+    notes?: string | null
+    tallyVoucherId?: string | null
+    createdById: string
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ScannerDeviceCreateManyOrganizationInput = {
+    id?: string
+    name: string
+    serialNumber: string
+    driverName: string
+    deviceType?: string
+    ipAddress?: string | null
+    location?: string | null
+    notes?: string | null
+    isActive?: boolean
+    registeredById: string
+    lastSeenAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrgMembershipUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutOrgMembershipsNestedInput
+  }
+
+  export type OrgMembershipUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrgMembershipUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    renverseSuiteRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseFloorRole?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseDepartmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    renverseTeamIds?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ClientUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientCode?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gstin?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    billingAddress?: JsonNullValueInput | InputJsonValue
+    shippingAddress?: JsonNullValueInput | InputJsonValue
+    contactPersonName?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    purchaseOrders?: PurchaseOrderUpdateManyWithoutClientNestedInput
+  }
+
+  export type ClientUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientCode?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gstin?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    billingAddress?: JsonNullValueInput | InputJsonValue
+    shippingAddress?: JsonNullValueInput | InputJsonValue
+    contactPersonName?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    purchaseOrders?: PurchaseOrderUncheckedUpdateManyWithoutClientNestedInput
+  }
+
+  export type ClientUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientCode?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    gstin?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    billingAddress?: JsonNullValueInput | InputJsonValue
+    shippingAddress?: JsonNullValueInput | InputJsonValue
+    contactPersonName?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PurchaseOrderUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    poNumber?: StringFieldUpdateOperationsInput | string
+    orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
+    totalAmountPaise?: IntFieldUpdateOperationsInput | number
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    tallyVoucherId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: ClientUpdateOneRequiredWithoutPurchaseOrdersNestedInput
+    createdBy?: UserUpdateOneRequiredWithoutOrdersCreatedNestedInput
+    updatedBy?: UserUpdateOneWithoutOrdersUpdatedNestedInput
+    lineItems?: POLineItemUpdateManyWithoutPurchaseOrderNestedInput
+    sessions?: DispatchSessionUpdateManyWithoutPurchaseOrderNestedInput
+  }
+
+  export type PurchaseOrderUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    poNumber?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
+    totalAmountPaise?: IntFieldUpdateOperationsInput | number
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    tallyVoucherId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lineItems?: POLineItemUncheckedUpdateManyWithoutPurchaseOrderNestedInput
+    sessions?: DispatchSessionUncheckedUpdateManyWithoutPurchaseOrderNestedInput
+  }
+
+  export type PurchaseOrderUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    poNumber?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
+    totalAmountPaise?: IntFieldUpdateOperationsInput | number
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    tallyVoucherId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ScannerDeviceUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    serialNumber?: StringFieldUpdateOperationsInput | string
+    driverName?: StringFieldUpdateOperationsInput | string
+    deviceType?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    registeredBy?: UserUpdateOneRequiredWithoutRegisteredDevicesNestedInput
+  }
+
+  export type ScannerDeviceUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    serialNumber?: StringFieldUpdateOperationsInput | string
+    driverName?: StringFieldUpdateOperationsInput | string
+    deviceType?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    registeredById?: StringFieldUpdateOperationsInput | string
+    lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ScannerDeviceUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    serialNumber?: StringFieldUpdateOperationsInput | string
+    driverName?: StringFieldUpdateOperationsInput | string
+    deviceType?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    registeredById?: StringFieldUpdateOperationsInput | string
     lastSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -40593,6 +44991,7 @@ export namespace Prisma {
   export type PurchaseOrderCreateManyClientInput = {
     id?: string
     poNumber: string
+    organizationId?: string | null
     orderDate: Date | string
     expectedDispatchDate?: Date | string | null
     status?: $Enums.POStatus
@@ -40616,6 +45015,7 @@ export namespace Prisma {
     tallyVoucherId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneWithoutPurchaseOrdersNestedInput
     createdBy?: UserUpdateOneRequiredWithoutOrdersCreatedNestedInput
     updatedBy?: UserUpdateOneWithoutOrdersUpdatedNestedInput
     lineItems?: POLineItemUpdateManyWithoutPurchaseOrderNestedInput
@@ -40625,6 +45025,7 @@ export namespace Prisma {
   export type PurchaseOrderUncheckedUpdateWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -40642,6 +45043,7 @@ export namespace Prisma {
   export type PurchaseOrderUncheckedUpdateManyWithoutClientInput = {
     id?: StringFieldUpdateOperationsInput | string
     poNumber?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
     orderDate?: DateTimeFieldUpdateOperationsInput | Date | string
     expectedDispatchDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumPOStatusFieldUpdateOperationsInput | $Enums.POStatus
@@ -41078,6 +45480,10 @@ export namespace Prisma {
      */
     export type UserCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UserCountOutputTypeDefaultArgs<ExtArgs>
     /**
+     * @deprecated Use OrganizationCountOutputTypeDefaultArgs instead
+     */
+    export type OrganizationCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OrganizationCountOutputTypeDefaultArgs<ExtArgs>
+    /**
      * @deprecated Use ProductCategoryCountOutputTypeDefaultArgs instead
      */
     export type ProductCategoryCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProductCategoryCountOutputTypeDefaultArgs<ExtArgs>
@@ -41121,6 +45527,14 @@ export namespace Prisma {
      * @deprecated Use UserDefaultArgs instead
      */
     export type UserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UserDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use OrganizationDefaultArgs instead
+     */
+    export type OrganizationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OrganizationDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use OrgMembershipDefaultArgs instead
+     */
+    export type OrgMembershipArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OrgMembershipDefaultArgs<ExtArgs>
     /**
      * @deprecated Use ProductCategoryDefaultArgs instead
      */

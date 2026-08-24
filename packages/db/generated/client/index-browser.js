@@ -133,6 +133,30 @@ exports.Prisma.UserScalarFieldEnum = {
   lastLoginAt: 'lastLoginAt',
   totpSecret: 'totpSecret',
   twoFactorEnabled: 'twoFactorEnabled',
+  renverseSub: 'renverseSub',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrganizationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  renverseOrgId: 'renverseOrgId',
+  siteId: 'siteId',
+  booksMode: 'booksMode',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrgMembershipScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  userId: 'userId',
+  role: 'role',
+  renverseSuiteRole: 'renverseSuiteRole',
+  renverseFloorRole: 'renverseFloorRole',
+  renverseDepartmentId: 'renverseDepartmentId',
+  renverseTeamIds: 'renverseTeamIds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -208,6 +232,7 @@ exports.Prisma.ClientScalarFieldEnum = {
   shippingAddress: 'shippingAddress',
   contactPersonName: 'contactPersonName',
   isActive: 'isActive',
+  organizationId: 'organizationId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -216,6 +241,7 @@ exports.Prisma.PurchaseOrderScalarFieldEnum = {
   id: 'id',
   poNumber: 'poNumber',
   clientId: 'clientId',
+  organizationId: 'organizationId',
   orderDate: 'orderDate',
   expectedDispatchDate: 'expectedDispatchDate',
   status: 'status',
@@ -265,6 +291,7 @@ exports.Prisma.ScannerDeviceScalarFieldEnum = {
   location: 'location',
   notes: 'notes',
   isActive: 'isActive',
+  organizationId: 'organizationId',
   registeredById: 'registeredById',
   lastSeenAt: 'lastSeenAt',
   createdAt: 'createdAt',
@@ -443,12 +470,12 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.NullableJsonNullValueInput = {
-  DbNull: Prisma.DbNull,
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
-exports.Prisma.JsonNullValueInput = {
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -468,7 +495,31 @@ exports.Prisma.UserOrderByRelevanceFieldEnum = {
   passwordHash: 'passwordHash',
   name: 'name',
   phone: 'phone',
-  totpSecret: 'totpSecret'
+  totpSecret: 'totpSecret',
+  renverseSub: 'renverseSub'
+};
+
+exports.Prisma.OrganizationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  renverseOrgId: 'renverseOrgId',
+  siteId: 'siteId',
+  booksMode: 'booksMode'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.OrgMembershipOrderByRelevanceFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  userId: 'userId',
+  renverseSuiteRole: 'renverseSuiteRole',
+  renverseFloorRole: 'renverseFloorRole',
+  renverseDepartmentId: 'renverseDepartmentId'
 };
 
 exports.Prisma.ProductCategoryOrderByRelevanceFieldEnum = {
@@ -476,12 +527,6 @@ exports.Prisma.ProductCategoryOrderByRelevanceFieldEnum = {
   name: 'name',
   slug: 'slug',
   description: 'description'
-};
-
-exports.Prisma.JsonNullValueFilter = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull,
-  AnyNull: Prisma.AnyNull
 };
 
 exports.Prisma.ProductOrderByRelevanceFieldEnum = {
@@ -519,13 +564,15 @@ exports.Prisma.ClientOrderByRelevanceFieldEnum = {
   gstin: 'gstin',
   phone: 'phone',
   email: 'email',
-  contactPersonName: 'contactPersonName'
+  contactPersonName: 'contactPersonName',
+  organizationId: 'organizationId'
 };
 
 exports.Prisma.PurchaseOrderOrderByRelevanceFieldEnum = {
   id: 'id',
   poNumber: 'poNumber',
   clientId: 'clientId',
+  organizationId: 'organizationId',
   notes: 'notes',
   tallyVoucherId: 'tallyVoucherId',
   createdById: 'createdById',
@@ -554,6 +601,7 @@ exports.Prisma.ScannerDeviceOrderByRelevanceFieldEnum = {
   ipAddress: 'ipAddress',
   location: 'location',
   notes: 'notes',
+  organizationId: 'organizationId',
   registeredById: 'registeredById'
 };
 
@@ -781,6 +829,8 @@ exports.NotificationStatus = exports.$Enums.NotificationStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  Organization: 'Organization',
+  OrgMembership: 'OrgMembership',
   ProductCategory: 'ProductCategory',
   Product: 'Product',
   ProductVariant: 'ProductVariant',

@@ -11,6 +11,7 @@
     "generate": "prisma generate",
     "studio": "dotenv -e ../../.env -- prisma studio",
     "seed": "dotenv -e ../../.env -- tsx prisma/seed.ts",
+    "backfill:org": "dotenv -e ../../.env -- tsx prisma/backfill-org-tenancy.ts",
     "typecheck": "dotenv -e ../../.env -- prisma validate",
     "lint": "echo \"skip\"",
     "build": "prisma generate",

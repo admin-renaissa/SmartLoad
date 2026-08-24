@@ -1,6 +1,6 @@
 # Codebase graph
 
-> Last updated: 2026-08-19 — RenVerse pack expanded to implementation-ready; EP-SL-01 tenancy + addon policy documented  
+> Last updated: 2026-08-24 — EP-X-01 cutover (`renverse_suite_cutover_at`) + suite-link `/renverse/link/start`  
 > Hub: RenVerse `docs/ECOSYSTEM_GRAPH.md`
 
 ## Suite bridge
@@ -11,30 +11,35 @@
 | displayName | SmartLoad |
 | suiteRole | **`addon`** (optional — not core Suite SKU) |
 | SoR | Ops stock, barcode scan, dispatch, POD |
-| tenantKey | `orgId` (**target**; BLOCKER until EP-SL-01) |
+| tenantKey | `orgId` via `organizations.renverse_org_id` |
 | host | `smartload.renaissa.ai` |
 | contractsVersion | `1.0.0` |
 | hub | RenVerse `docs/ECOSYSTEM_GRAPH.md` |
 | pack | `docs/renverse/` |
 | manifest | `renverse.manifest.json` |
-| blocker | Multi-tenant org incomplete; suite smoke via `apps/api/src/renverse/` · Tally on-prem |
+| blocker | Ops: `pnpm db:migrate:deploy` + `pnpm db:backfill-org` (or seed) before prod · Tally on-prem |
 
 ### Membership
 
 - Modes: `RENVERSE_MODE=standalone|suite` + `RENVERSE_APP_KEY=smartload`
-- Entitlement: **`hasAddon('smartload')`** — never `hasApp`
-- Health: `GET /renverse/status` · POD smoke: `POST /renverse/shipments/:id/pod`
+- Entitlement: **`hasAddon('smartload')`** — never `hasApp` (`addon-gate.ts` + `org-context` plugin)
+- Suite auth: `@renverse/suite-oidc-adapter` + DB JIT (`tenancy.ts`) · `onJit(claims, req)` honors link cookie
+- Product APIs: JWT may carry `organizationId`; lists/creates for clients/POs/POD/scanners scoped when org present
+- Health: `GET /renverse/status?orgId=` (tenantCutover) · Site: `GET /renverse/site` · Shipment: `GET /renverse/shipments/:id`
+- Link: `POST /renverse/link/start` + `suite-link.ts` · banner POSTs start
+- Cutover: `Organization.renverseSuiteCutoverAt` · runtime ALTER + migration `20260824140000`
+- POD: product acknowledge → `emitPodConfirmed`; smoke alias; Connect down safe
+- ISSA: `smartload.shipment.get`, `smartload.pod.status` · persona `smartload.ops_assistant`
+- Migrate: `20260824120000_renverse_org_tenancy` + `20260824130000_scanner_org_backfill` + cutover
+- Backfill: `pnpm db:backfill-org` · Seed creates demo org + membership
 - Tally: `SMARTLOAD_TALLY_MODE=onprem`
-- Policy: RenVerse `docs/revamp/00-governance/07_SMARTLOAD_OPTIONAL_ADDON_POLICY.md`
-- Join guide: `docs/revamp/70-apps/76_SMARTLOAD_JOIN_GUIDE.md`
-- Tenancy design: `docs/revamp/150-spec-complete/152_SMARTLOAD_TENANCY_DESIGN.md`
+- E2E URLs: `apps/api/src/renverse/e2e-urls.ts`
 
 ### Events produced / consumed
 
 | Direction | Event | Peer |
 |-----------|-------|------|
 | Out | `smartload.pod.confirmed.v1` | RenBooks |
-| In | `identity.user.provisioned.v1`, `identity.membership.changed.v1` | Identity |
 
 ### ISSA
 

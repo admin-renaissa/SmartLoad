@@ -14,6 +14,7 @@ import rateLimit from '@fastify/rate-limit';
 import { prismaPlugin } from './plugins/prisma.js';
 import { redisPlugin } from './plugins/redis.js';
 import { authPlugin } from './plugins/auth.js';
+import { orgContextPlugin } from './plugins/org-context.js';
 import { auditPlugin } from './plugins/audit.js';
 import { bullmqPlugin } from './plugins/bullmq.js';
 import { halPlugin } from './plugins/hal.js';
@@ -84,6 +85,7 @@ export async function buildServer() {
   await app.register(prismaPlugin);
   await app.register(redisPlugin);
   await app.register(authPlugin);
+  await app.register(orgContextPlugin);
   await app.register(auditPlugin);
   await app.register(bullmqPlugin);
   await app.register(halPlugin);

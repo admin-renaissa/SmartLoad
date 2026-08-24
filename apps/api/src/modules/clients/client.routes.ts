@@ -29,6 +29,9 @@ export const clientRoutes: FastifyPluginAsync = async (fastify) => {
     const { page, limit, skip } = parsePagination({ page: Number(query.page), limit: Number(query.limit) });
 
     const where: Record<string, unknown> = { isActive: true };
+    if (request.org?.organizationId) {
+      where.organizationId = request.org.organizationId;
+    }
     if (query.search) {
       where.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
@@ -53,6 +56,9 @@ export const clientRoutes: FastifyPluginAsync = async (fastify) => {
     const clients = await fastify.prisma.client.findMany({
       where: {
         isActive: true,
+        ...(request.org?.organizationId
+          ? { organizationId: request.org.organizationId }
+          : {}),
         OR: [
           { name: { contains: q, mode: 'insensitive' } },
           { clientCode: { contains: q, mode: 'insensitive' } },
@@ -81,6 +87,7 @@ export const clientRoutes: FastifyPluginAsync = async (fastify) => {
       data: {
         ...dto,
         clientCode: dto.clientCode,
+        organizationId: request.org?.organizationId || undefined,
         billingAddress: dto.billingAddress ?? defaultAddress,
         shippingAddress: dto.shippingAddress ?? dto.billingAddress ?? defaultAddress,
       },
@@ -93,6 +100,13 @@ export const clientRoutes: FastifyPluginAsync = async (fastify) => {
     const { id } = request.params as { id: string };
     const client = await fastify.prisma.client.findUnique({ where: { id } });
     if (!client) return reply.code(404).send(errorResponse('Client not found'));
+    if (
+      request.org?.organizationId &&
+      client.organizationId &&
+      client.organizationId !== request.org.organizationId
+    ) {
+      return reply.code(403).send(errorResponse('ORG_SCOPE_MISMATCH'));
+    }
     return reply.send(successResponse(client));
   });
 

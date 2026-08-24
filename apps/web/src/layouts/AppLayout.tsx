@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { PageTransition } from '../components/animation/PageTransition.tsx';
+import { RenverseLinkBanner } from '../components/auth/RenverseLinkBanner.tsx';
 import {
   LayoutDashboard, ShoppingCart, Package, Users, UserCog, Warehouse,
   Truck, Activity, BarChart3, Settings, RefreshCw, ClipboardList,
@@ -419,6 +420,8 @@ export function AppLayout() {
             {user && <UserProfileMenu user={user} onLogout={handleLogout} />}
           </div>
         </header>
+
+        <RenverseLinkBanner />
 
         {/* Page content */}
         <main className="flex-1 overflow-auto p-4 sm:p-6">

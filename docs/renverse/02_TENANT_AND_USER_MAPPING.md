@@ -1,42 +1,31 @@
 # Tenant & User Mapping — SmartLoad
 
-> **BLOCKER (EP-SL-01):** Product multi-tenant org incomplete. Today users are often global with `UserRole`; `Client` is a counterparty, **not** a suite tenant.  
+> **Status (2026-08-24):** Organization + OrgMembership shipped. Migrations `20260824120000_*` + `20260824130000_scanner_org_backfill`. Run `pnpm db:migrate:deploy` then `pnpm db:backfill-org` (or `db:seed`). Product APIs scope clients/POs/POD/scanners by `request.org.organizationId`.  
 > Design: [`152_SMARTLOAD_TENANCY_DESIGN.md`](../../../docs/revamp/150-spec-complete/152_SMARTLOAD_TENANCY_DESIGN.md).
 
-## Current state
-
-| Concept | Today | Target |
-|---------|-------|--------|
-| Access | Site / location / global roles | Org-scoped |
-| Suite tenant | Missing | `organizations` / **`orgId`** |
-| Counterparty | `Client` | Remains customer under org |
-
-## Target model (EP-SL-01)
+## Model
 
 ```
-Organization (id, name, renverse_org_id)
-  └── OrgMembership (userId, role → UserRole floor)
-  └── Shipments / PODs / scanners / sites scoped by orgId
-  └── Client (counterparty under org)
+Organization (id, name, renverse_org_id, site_id)
+  └── OrgMembership (userId, role → UserRole floor + renverse_* markers)
+  └── PurchaseOrder / Client scoped by organizationId
+  └── Client remains counterparty under org
 ```
 
 | RenIdentity | SmartLoad | Mechanism |
 |-------------|-----------|-----------|
-| `org_id` | `organizations.id` (`orgId`) | AppLink / `renverse_org_id` |
+| `org_id` | `organizations.renverse_org_id` | AppLink / JIT `tenancy.ts` |
 | `sub` | `users.renverse_sub` | JIT |
 
-Multi-site **within** one org is allowed; multi-org requires separate AppLinks.
+Code: `apps/api/src/renverse/tenancy.ts` · `renverse.routes.ts` onJit/onFirstEnable.
 
-## JIT (after org model)
+## Entitlement
 
-1. Validate OIDC + **`hasAddon(claims, 'smartload')`**  
-2. Resolve AppLink org → local `orgId` (fail if missing)  
-3. Create/link user; write membership + floor markers  
-4. Optional directory hints  
+**`hasAddon('smartload')` only** — `addon-gate.ts`. Never `hasApp('smartload')`.
 
 ## Membership sync
 
-Same pattern as other apps: `identity.membership.changed.v1` / `identity.user.provisioned.v1` per manifest — soft-disable, floor update, keep elevations.
+Prefer `identity.membership.changed.v1` when Connect fan-out is live (platform EP-PLAT-04). Soft-disable / floor update; keep local elevations.
 
 ## Standalone
 

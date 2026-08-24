@@ -8,6 +8,7 @@ export interface AuthUser {
   name: string;
   role: UserRole;
   phone?: string | null;
+  renverseSub?: string | null;
 }
 
 interface AuthState {

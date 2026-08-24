@@ -11,17 +11,15 @@ Do **not** emit `smartload.delivery.completed.v1` (older join-guide draft name �
 | Field map | [`contracts/events/field-maps-smartload-renbooks.md`](../../../contracts/events/field-maps-smartload-renbooks.md) |
 | Sync pack | [`47_SYNC_PACK_SMARTLOAD_RENBOOKS.md`](../../../docs/revamp/40-connect/47_SYNC_PACK_SMARTLOAD_RENBOOKS.md) |
 | Smoke helper | `apps/api/src/renverse/emit-pod-confirmed.ts` (+ `.test.ts`) |
-| Product module (target wire) | `apps/api/src/modules/pod/` |
+| Product module | `apps/api/src/modules/pod/pod.routes.ts` (acknowledge → emit) |
 
-> Org on envelope requires **EP-SL-01**. Until then, smoke: `POST /renverse/shipments/:id/pod`.
+## Honest status (2026-08-24)
 
-## Honest status
-
-| Surface | Current | Target | Epic |
-|---------|---------|--------|------|
-| Smoke emit | `POST /renverse/shipments/:id/pod` | Keep for labs | — |
-| Product POD confirm → outbox | Not wired | Atomic with `modules/pod` | EP-SL-02-1 |
-| RenBooks consumer E2E | Blocked | Addon-gated consume | EP-SL-02-2 + EP-RB-01 |
+| Surface | Current | Epic |
+|---------|---------|------|
+| Smoke emit | `POST /renverse/shipments/:id/pod` | — |
+| Product POD confirm → outbox | Wired; Connect down does not break POD CRUD | EP-SL-02-1 **done** |
+| RenBooks consumer E2E | RenBooks consume done; live Connect ops follow-up | EP-SL-02-2 |
 
 ---
 

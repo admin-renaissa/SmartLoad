@@ -6,6 +6,13 @@
 
 Canon: [`07_SMARTLOAD_OPTIONAL_ADDON_POLICY.md`](../../../docs/revamp/00-governance/07_SMARTLOAD_OPTIONAL_ADDON_POLICY.md) · Dual RBAC: [`153`](../../../docs/revamp/150-spec-complete/153_DUAL_RBAC_SUITE_AND_STANDALONE.md) · Billing: [`51_ENTITLEMENTS_MODEL.md`](../../../docs/revamp/50-billing/51_ENTITLEMENTS_MODEL.md)
 
+## Implementation (2026-08-24)
+
+Code: `apps/api/src/renverse/addon-gate.ts` — `requireSmartloadAddon` → `403 ADDON_NOT_ENABLED`.  
+Suite OIDC adapter uses `entitlement: 'addon'`. Public POD customer links remain exempt.
+
+---
+
 ## Entitlement key
 
 | Mode | Check | Fail |

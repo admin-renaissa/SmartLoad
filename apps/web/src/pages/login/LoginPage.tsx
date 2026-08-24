@@ -22,9 +22,33 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [twoFactorToken, setTwoFactorToken] = useState<string | null>(null);
   const [otp, setOtp] = useState('');
+  const [suiteMode, setSuiteMode] = useState(false);
+  const [authPhase, setAuthPhase] = useState<'standalone' | 'dual' | 'cutover'>('standalone');
   const { login } = useAuthStore();
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    fetch('/renverse/status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s) => {
+        const suite = s?.mode === 'suite';
+        setSuiteMode(Boolean(suite));
+        setAuthPhase(
+          !suite
+            ? 'standalone'
+            : s?.identityOnly || String(s?.authPhase || '').toLowerCase() === 'cutover'
+              ? 'cutover'
+              : 'dual',
+        );
+      })
+      .catch(() => {
+        setSuiteMode(false);
+        setAuthPhase('standalone');
+      });
+  }, []);
+
+  const showLocalLogin = authPhase !== 'cutover';
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -87,7 +111,14 @@ export default function LoginPage() {
             needsTwoFactor: false;
             accessToken: string;
             refreshToken: string;
-            user: { id: string; email: string; name: string; role: string; phone?: string | null };
+            user: {
+              id: string;
+              email: string;
+              name: string;
+              role: string;
+              phone?: string | null;
+              renverseSub?: string | null;
+            };
           };
     },
     onSuccess: (data) => {
@@ -104,6 +135,7 @@ export default function LoginPage() {
           name: data.user.name,
           role: data.user.role as Parameters<typeof login>[0]['role'],
           phone: data.user.phone,
+          renverseSub: data.user.renverseSub ?? null,
         },
         data.accessToken,
         data.refreshToken,
@@ -123,7 +155,7 @@ export default function LoginPage() {
       return res.data.data as {
         accessToken: string;
         refreshToken: string;
-        user: { id: string; email: string; name: string; role: string; phone?: string | null };
+        user: { id: string; email: string; name: string; role: string; phone?: string | null; renverseSub?: string | null };
       };
     },
     onSuccess: (data) => {
@@ -134,6 +166,7 @@ export default function LoginPage() {
           name: data.user.name,
           role: data.user.role as Parameters<typeof login>[0]['role'],
           phone: data.user.phone,
+          renverseSub: data.user.renverseSub ?? null,
         },
         data.accessToken,
         data.refreshToken,
@@ -434,7 +467,37 @@ export default function LoginPage() {
                   transition={{ duration: reduceMotion ? 0 : 0.25, ease: 'easeOut' }}
                 >
                   <h2 className="text-xl font-semibold text-primary-900 mb-1">Sign in to your account</h2>
-                  <p className="text-sm text-primary-800/65 mb-6">Use your work email and password.</p>
+                  <p className="text-sm text-primary-800/65 mb-6">
+                    {suiteMode && showLocalLogin
+                      ? 'Sign in with RenVerse or continue with your SmartLoad account.'
+                      : suiteMode
+                        ? 'Your organization uses RenVerse sign-in.'
+                        : 'Use your work email and password.'}
+                  </p>
+                  {suiteMode && (
+                    <div className="mb-4 space-y-2" data-testid="renverse-login-cta">
+                      <Button
+                        type="button"
+                        className="w-full"
+                        size="lg"
+                        data-testid="renverse-oidc-login"
+                        onClick={() => {
+                          window.location.href = '/auth/login';
+                        }}
+                      >
+                        Sign in with RenVerse
+                      </Button>
+                      {!showLocalLogin && (
+                        <p className="text-center text-xs text-primary-700/70" data-testid="renverse-cutover-message">
+                          Your organization uses RenVerse sign-in.
+                        </p>
+                      )}
+                      {showLocalLogin && (
+                        <p className="text-center text-xs text-primary-700/55">or</p>
+                      )}
+                    </div>
+                  )}
+                  {showLocalLogin ? (
                   <form onSubmit={handleSubmit((d) => loginMutation.mutate(d))} className="space-y-5">
                     <div>
                       <label className="block text-sm font-medium text-primary-900/85 mb-1">Email address</label>
@@ -469,10 +532,11 @@ export default function LoginPage() {
                       {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
                     </div>
 
-                    <Button type="submit" loading={loginMutation.isPending} className="w-full mt-2" size="lg">
-                      Sign In
+                    <Button type="submit" loading={loginMutation.isPending} className="w-full mt-2" size="lg" variant={suiteMode ? 'secondary' : undefined}>
+                      {suiteMode ? 'Continue with SmartLoad account' : 'Sign In'}
                     </Button>
                   </form>
+                  ) : null}
                 </motion.div>
               ) : (
                 <motion.div

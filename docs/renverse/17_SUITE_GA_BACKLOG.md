@@ -12,7 +12,7 @@
 ./scripts/push-app-renverse-branch.sh publish --apps SmartLoad
 ```
 
-**BLOCKER:** Multi-tenant org incomplete · **Entitlement:** `hasAddon('smartload')` only · **Tally:** on-prem
+**State (2026-08-24):** EP-SL-01/02 closeout — Organization + OrgMembership, product API org scope, `hasAddon` gates, OIDC JIT, ISSA tools, product POD emit. **EP-X-01:** dual CTA + link banner + cutover. **Ops:** `pnpm db:migrate:deploy` + `pnpm db:backfill-org`. **Tally:** on-prem.
 
 ---
 
@@ -20,12 +20,12 @@
 
 | ID | Story | SP | Status |
 |----|-------|-----|--------|
-| SL-01-1 | Org/site tenancy model | 8 | todo |
-| SL-01-2 | `hasAddon('smartload')` on APIs | 5 | todo |
-| SL-01-3 | Full OIDC + AppLink | 5 | todo |
-| SL-01-4 | ISSA tools (2 + persona) | 3 | todo |
+| SL-01-1 | Org/site tenancy model | 8 | done |
+| SL-01-2 | `hasAddon('smartload')` on APIs | 5 | done |
+| SL-01-3 | Full OIDC + AppLink | 5 | done |
+| SL-01-4 | ISSA tools (2 + persona) | 3 | done |
 
-**Path:** `apps/api/src/renverse/` · [02](./02_TENANT_AND_USER_MAPPING.md), [08](./08_ENTITLEMENTS_AND_GATES.md)
+**Path:** `apps/api/src/renverse/` · migrations `20260824120000_*` + `20260824130000_scanner_org_backfill` · `pnpm db:backfill-org`
 
 ---
 
@@ -33,22 +33,12 @@
 
 | ID | Story | SP | Status |
 |----|-------|-----|--------|
-| SL-02-1 | POD emit from product module | 3 | todo |
-| SL-02-2 | E2E with RenBooks RB-01-4 | 5 | todo |
+| SL-02-1 | POD emit from product module | 3 | done |
+| SL-02-2 | E2E with RenBooks RB-01-4 | 5 | done (product URLs; live Connect E2E ops follow-up) |
 
-**Event:** `smartload.pod.confirmed.v1` only
+**Event:** `smartload.pod.confirmed.v1` only · Product: `modules/pod/pod.routes.ts` → `emit-pod-confirmed.ts`
 
 ---
-
-## Sprint plan
-
-| Sprint | Focus |
-|--------|-------|
-| S2 | SL-01-1 |
-| S3 | SL-01-2 |
-| S4 | SL-01-3 |
-| S5 | SL-01-4, SL-02-1 |
-| S6 | SL-02-2 |
 
 ## Ban
 
@@ -58,4 +48,4 @@ No full WMS/ERP. Not required for core Suite SKU.
 
 ---
 
-*SmartLoad · 2026-08-19*
+*SmartLoad · 2026-08-24*

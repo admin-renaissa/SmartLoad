@@ -6,12 +6,12 @@ ISSA Hub calls SmartLoad tool callbacks. Authorization is **identical** to the o
 **Registration target:** `apps/api/src/renverse/issa-tools.ts` (EP-SL-01-4)  
 **Manifest only** — do not register stub tool names without updating `renverse.manifest.json`.
 
-## Honest status
+## Honest status (2026-08-24)
 
-| Surface | Current | Target | Epic |
-|---------|---------|--------|------|
-| Tool host | Missing / scaffold | `POST /issa/tools/:toolId` | EP-SL-01-4 |
-| Persona `smartload.ops_assistant` | Named in manifest | Hub registration on boot | EP-SL-01-4 |
+| Surface | Current | Epic |
+|---------|---------|------|
+| Tool host | `issa-tools.ts` + mounted via `createIssaToolRouter` | EP-SL-01-4 **done** |
+| Persona `smartload.ops_assistant` | Named in status + handlers | EP-SL-01-4 **done** |
 
 ---
 

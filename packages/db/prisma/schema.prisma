@@ -140,6 +140,8 @@ model User {
   lastLoginAt  DateTime?
   totpSecret   String?
   twoFactorEnabled Boolean @default(false)
+  /// Identity `sub` when user was JIT-provisioned in suite mode
+  renverseSub  String?   @unique @map("renverse_sub")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -153,11 +155,52 @@ model User {
   auditLogs          AuditLog[]
   configsUpdated     SystemConfig[]
   registeredDevices  ScannerDevice[]
+  orgMemberships     OrgMembership[]
 
   @@index([email])
   @@index([role])
   @@index([isActive])
   @@map("users")
+}
+
+/// Suite tenant (maps to RenIdentity org via renverse_org_id). Client remains counterparty.
+model Organization {
+  id                      String    @id @default(cuid())
+  name                    String
+  renverseOrgId           String    @unique @map("renverse_org_id")
+  siteId                  String    @map("site_id")
+  booksMode               String    @default("renbooks") @map("books_mode") // tally | renbooks
+  /// EP-X-01 Phase B — when set, local password login is blocked for this org
+  renverseSuiteCutoverAt  DateTime? @map("renverse_suite_cutover_at")
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  memberships    OrgMembership[]
+  clients        Client[]
+  purchaseOrders PurchaseOrder[]
+  scanners       ScannerDevice[]
+
+  @@index([siteId])
+  @@map("organizations")
+}
+
+model OrgMembership {
+  id                  String       @id @default(cuid())
+  organizationId      String       @map("organization_id")
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId              String       @map("user_id")
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role                UserRole     @default(OPERATOR)
+  renverseSuiteRole   String?      @map("renverse_suite_role")
+  renverseFloorRole   String?      @map("renverse_floor_role")
+  renverseDepartmentId String?     @map("renverse_department_id")
+  renverseTeamIds     Json         @default("[]") @map("renverse_team_ids")
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("org_memberships")
 }
 
 model ProductCategory {
@@ -260,6 +303,8 @@ model Client {
   shippingAddress   Json
   contactPersonName String?
   isActive          Boolean  @default(true)
+  organizationId    String?  @map("organization_id")
+  organization      Organization? @relation(fields: [organizationId], references: [id])
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -268,6 +313,7 @@ model Client {
   @@index([clientCode])
   @@index([name])
   @@index([isActive])
+  @@index([organizationId])
   @@map("clients")
 }
 
@@ -276,6 +322,8 @@ model PurchaseOrder {
   poNumber             String    @unique
   clientId             String
   client               Client    @relation(fields: [clientId], references: [id])
+  organizationId       String?   @map("organization_id")
+  organization         Organization? @relation(fields: [organizationId], references: [id])
   orderDate            DateTime
   expectedDispatchDate DateTime?
   status               POStatus  @default(DRAFT)
@@ -293,6 +341,7 @@ model PurchaseOrder {
   sessions  DispatchSession[]
 
   @@index([clientId])
+  @@index([organizationId])
   @@index([status])
   @@index([orderDate])
   @@index([poNumber])
@@ -350,6 +399,8 @@ model ScannerDevice {
   location       String?
   notes          String?
   isActive       Boolean   @default(true)
+  organizationId String?   @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id])
   registeredById String
   registeredBy   User      @relation(fields: [registeredById], references: [id])
   lastSeenAt     DateTime?
@@ -359,6 +410,7 @@ model ScannerDevice {
   @@index([serialNumber])
   @@index([driverName])
   @@index([isActive])
+  @@index([organizationId])
   @@map("scanner_devices")
 }
 

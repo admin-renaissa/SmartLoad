@@ -108,6 +108,20 @@ async function main(): Promise<void> {
   }
   console.log('✅ System config seeded')
 
+  // ── Suite Organization (EP-SL-01) ─────────────────────────────────────────
+  const defaultOrg = await prisma.organization.upsert({
+    where: { renverseOrgId: 'org_demo00000001' },
+    update: { name: 'Demo SmartLoad Org' },
+    create: {
+      id: 'org_local_default',
+      name: 'Demo SmartLoad Org',
+      renverseOrgId: 'org_demo00000001',
+      siteId: 'site_org_demo00000001',
+      booksMode: 'renbooks',
+    },
+  })
+  console.log('✅ Organization seeded', defaultOrg.id)
+
   // ── Admin User ─────────────────────────────────────────────────────────────
   const adminPassword = await bcrypt.hash('Admin@123', 12)
   const admin = await prisma.user.upsert({
@@ -126,6 +140,23 @@ async function main(): Promise<void> {
       role: UserRole.ADMIN,
       phone: '+91 9000000001',
       isActive: true,
+    },
+  })
+
+  await prisma.orgMembership.upsert({
+    where: {
+      organizationId_userId: {
+        organizationId: defaultOrg.id,
+        userId: admin.id,
+      },
+    },
+    update: {},
+    create: {
+      organizationId: defaultOrg.id,
+      userId: admin.id,
+      role: UserRole.ADMIN,
+      renverseSuiteRole: 'org_admin',
+      renverseFloorRole: 'ADMIN',
     },
   })
 
@@ -487,6 +518,7 @@ async function main(): Promise<void> {
         shippingAddress: shipping as unknown as Prisma.InputJsonValue,
         contactPersonName: `Contact Person ${i}`,
         isActive: true,
+        organizationId: defaultOrg.id,
       },
     })
     clients.push({ id: c.id, clientCode: c.clientCode })
@@ -595,6 +627,7 @@ async function main(): Promise<void> {
       data: {
         poNumber: `PO-2026-${String(i + 1).padStart(4, '0')}`,
         clientId: client.id,
+        organizationId: defaultOrg.id,
         orderDate: new Date(Date.UTC(2026, 0, 5 + i)),
         expectedDispatchDate: new Date(Date.UTC(2026, 1, 10 + i)),
         status: poStatuses[i]!,
