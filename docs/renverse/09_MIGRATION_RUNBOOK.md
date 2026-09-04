@@ -141,6 +141,16 @@ RENVERSE_MODE=standalone
 - Core suite apps unaffected  
 - Local scan/POD continue  
 
+## EP-X-01 staging verification
+
+```bash
+cd SmartLoad/apps/api && npm run test:renverse
+npm run x01:smoke -- --staging   # RenVerse repo
+STAGING_TEST_ORG_ID=org_… npm run x01:cutover:staging
+```
+
+See RenVerse [`130_EP-X-01_STAGING_VERIFICATION.md`](../../../docs/revamp/120-implementation/130_EP-X-01_STAGING_VERIFICATION.md).
+
 ## Remaining GA (do not mark complete early)
 
 | Item | Epic |
