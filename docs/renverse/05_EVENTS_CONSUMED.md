@@ -4,7 +4,7 @@ SmartLoad consumes **Identity directory events only** (manifest). Process via si
 
 **Catalog:** [`contracts/events/catalog.md`](../../../contracts/events/catalog.md)  
 **SDK:** `@renverse/connect-sdk`  
-**Target path:** `apps/api/src/renverse/connect-consume.ts` (not shipped until EP-SL-01)
+**Target path:** `apps/api/src/renverse/connect-consume.ts` (EP-SL-01 + EP-X-01)
 
 > Entitlement revoke: prefer JWT `addons[]` refresh. Catalog event `billing.entitlements.updated.v1` is **not** in SmartLoad `consumes[]` — do **not** consume until manifest + catalog agree.
 
@@ -12,8 +12,10 @@ SmartLoad consumes **Identity directory events only** (manifest). Process via si
 
 | Event | Manifest | Current | Target | Epic |
 |-------|----------|---------|--------|------|
-| `identity.user.provisioned.v1` | ✓ | Not GA | Link/create user by `sub` | EP-SL-01 |
-| `identity.membership.changed.v1` | ✓ | Not GA | Floor / disable / role hint | EP-SL-01 |
+| `identity.user.provisioned.v1` | ✓ | GA | Link/create user by `sub` | EP-SL-01 |
+| `identity.membership.changed.v1` | ✓ | GA | Floor / disable / role hint | EP-SL-01 |
+| `identity.org.migration.cutover.v1` | ✓ | GA | Set `organizations.renverse_suite_cutover_at` | EP-X-01 |
+| `identity.link.resolved.v1` | ✓ | GA | Admin link resolve → `users.renverse_sub` | EP-X-01 |
 | Any SmartLoad peer product event | ✗ | — | Do not invent | — |
 
 Production identity sync only after **EP-SL-01** org tenancy exists.

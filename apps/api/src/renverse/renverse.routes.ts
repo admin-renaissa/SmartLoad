@@ -8,6 +8,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { emitPodConfirmed } from './emit-pod-confirmed.js';
 import {
   createMemoryTenancyStore,
+  createPrismaTenancyStore,
   ensureOrgAndMembership,
   assertSameOrg,
   siteIdForOrg,
@@ -29,6 +30,12 @@ import {
   readRenverseLinkUserId,
   setRenverseLinkCookie,
 } from './suite-link.js';
+import {
+  applyConsumeEnvelope,
+  consumePendingEvents,
+  isConnectServiceAuthorized,
+  startConsumeLoop,
+} from './connect-consume.js';
 
 type AccessTokenClaims = {
   sub: string;
@@ -53,142 +60,7 @@ function readCookie(
 }
 
 function prismaTenancyStore(prisma: any): TenancyStore {
-  return {
-    async findOrgByRenverseId(renverseOrgId) {
-      const row = await prisma.organization.findUnique({
-        where: { renverseOrgId },
-      });
-      return row
-        ? {
-            id: row.id,
-            name: row.name,
-            renverseOrgId: row.renverseOrgId,
-            siteId: row.siteId,
-          }
-        : null;
-    },
-    async createOrg(input) {
-      const row = await prisma.organization.create({
-        data: {
-          name: input.name,
-          renverseOrgId: input.renverseOrgId,
-          siteId: input.siteId,
-        },
-      });
-      return {
-        id: row.id,
-        name: row.name,
-        renverseOrgId: row.renverseOrgId,
-        siteId: row.siteId,
-      };
-    },
-    async findUserBySub(sub) {
-      const row = await prisma.user.findUnique({ where: { renverseSub: sub } });
-      return row ? { id: row.id, email: row.email } : null;
-    },
-    async findUserById(userId: string) {
-      const row = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, email: true, renverseSub: true },
-      });
-      return row;
-    },
-    async findUsersByEmail(email: string) {
-      const rows = await prisma.user.findMany({
-        where: { email: { equals: email, mode: 'insensitive' } },
-        select: { id: true, email: true, renverseSub: true },
-      });
-      return rows;
-    },
-    async linkUserSub(userId: string, sub: string) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { renverseSub: sub },
-      });
-    },
-    async createSuiteUser(input) {
-      if (input.linkUserId) {
-        const existing = await prisma.user.findUnique({
-          where: { id: input.linkUserId },
-          select: { id: true, email: true, renverseSub: true },
-        });
-        if (existing) {
-          const claimEmail = String(input.email || '').toLowerCase();
-          if (
-            claimEmail &&
-            String(existing.email || '').toLowerCase() !== claimEmail
-          ) {
-            const err = new Error('email_mismatch');
-            (err as Error & { code?: string }).code = 'ACCOUNT_LINK_EMAIL_MISMATCH';
-            throw err;
-          }
-          if (existing.renverseSub && existing.renverseSub !== input.sub) {
-            const err = new Error('already_linked_other_sub');
-            (err as Error & { code?: string }).code = 'ACCOUNT_LINK_CONFLICT';
-            throw err;
-          }
-          if (!existing.renverseSub) {
-            await prisma.user.update({
-              where: { id: existing.id },
-              data: { renverseSub: input.sub },
-            });
-          }
-          return { id: existing.id };
-        }
-      }
-      if (input.email) {
-        const matches = await prisma.user.findMany({
-          where: { email: { equals: input.email, mode: 'insensitive' } },
-          select: { id: true, renverseSub: true },
-        });
-        if (matches.length > 1) {
-          const err = new Error(
-            'We found more than one match for this email. Ask your admin to link accounts.',
-          );
-          (err as Error & { code?: string }).code = 'ACCOUNT_LINK_MULTI_MATCH';
-          throw err;
-        }
-        if (matches[0] && !matches[0].renverseSub) {
-          await prisma.user.update({
-            where: { id: matches[0].id },
-            data: { renverseSub: input.sub },
-          });
-          return { id: matches[0].id };
-        }
-      }
-      const row = await prisma.user.create({
-        data: {
-          email: input.email,
-          passwordHash: '!', // unusable — suite OIDC only
-          name: input.name,
-          role: input.role,
-          renverseSub: input.sub,
-        },
-      });
-      return { id: row.id };
-    },
-    async upsertMembership(input) {
-      await prisma.orgMembership.upsert({
-        where: {
-          organizationId_userId: {
-            organizationId: input.organizationId,
-            userId: input.userId,
-          },
-        },
-        create: {
-          organizationId: input.organizationId,
-          userId: input.userId,
-          role: input.role,
-          renverseSuiteRole: input.suiteRole,
-          renverseFloorRole: input.floorRole,
-        },
-        update: {
-          renverseSuiteRole: input.suiteRole,
-          // keep local elevations: do not overwrite role if already higher
-        },
-      });
-    },
-  };
+  return createPrismaTenancyStore(prisma);
 }
 
 async function resolveStore(fastify: any): Promise<TenancyStore> {
@@ -291,8 +163,51 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
       connectEmit: pkgs
         ? pkgs.isFlagEnabled('renverse.connect.emit')
         : Boolean(process.env.RENVERSE_CONNECT_URL),
+      connectConsume: pkgs
+        ? pkgs.isFlagEnabled('renverse.connect.consume')
+        : Boolean(process.env.RENVERSE_CONNECT_URL),
       timestamp: new Date().toISOString(),
     });
+  });
+
+  function connectAuthOk(req: { headers: Record<string, unknown> }): boolean {
+    const auth = String(req.headers.authorization || '');
+    const presented = auth.startsWith('Bearer ') ? auth.slice(7) : String(req.headers['x-connect-token'] || '');
+    return isConnectServiceAuthorized(presented);
+  }
+
+  fastify.post('/renverse/events/consume', async (req, reply) => {
+    if (!connectAuthOk(req as any)) {
+      return reply.code(401).send({ error: 'unauthorized' });
+    }
+    const prisma = (fastify as any).prisma;
+    if (!prisma) {
+      return reply.code(503).send({ error: 'db_unavailable' });
+    }
+    const body = (req.body || {}) as Record<string, unknown>;
+    const envelope = {
+      id: String(body.id || body.eventId || ''),
+      type: String(body.type || ''),
+      orgId: String(body.orgId || body.org_id || ''),
+      payload: (body.payload || body.data || {}) as Record<string, unknown>,
+    };
+    if (!envelope.id || !envelope.type) {
+      return reply.code(400).send({ error: 'id and type required' });
+    }
+    const result = await applyConsumeEnvelope(prisma, envelope as any);
+    return reply.send({ ok: true, ...result });
+  });
+
+  fastify.post('/renverse/connect/consume', async (req, reply) => {
+    if (!connectAuthOk(req as any)) {
+      return reply.code(401).send({ error: 'unauthorized' });
+    }
+    const prisma = (fastify as any).prisma;
+    if (!prisma) {
+      return reply.code(503).send({ error: 'db_unavailable' });
+    }
+    const result = await consumePendingEvents(prisma);
+    return reply.send({ ok: true, ...result });
   });
 
   fastify.post('/renverse/link/start', {
@@ -487,6 +402,19 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
 
   const expressRouter = pkgs.createSuiteOidcRouter({
     config: oidcConfig,
+    resolveTenantCutover: async (req) => {
+      const orgId =
+        typeof req.query.orgId === 'string' ? req.query.orgId.trim() : '';
+      const probeOrg = orgId || readCookie(req as any, 'smartload_org_id') || '';
+      if (probeOrg && (fastify as any).prisma) {
+        try {
+          return await isOrgCutover((fastify as any).prisma, probeOrg);
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    },
     async onJit(claims: AccessTokenClaims, req?: any) {
       const store = await resolveStore(fastify);
       const linkUserId = req ? readRenverseLinkUserId(req) : null;
@@ -530,7 +458,27 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
         createLocalTenant: (orgId: string) => siteIdForOrg(orgId),
       });
       const store = await resolveStore(fastify);
-      await ensureOrgAndMembership(store, claims as any);
+      const membership = await ensureOrgAndMembership(store, claims as any);
+      const prisma = (fastify as any).prisma;
+      if (prisma && jit?.localUserId) {
+        try {
+          await prisma.$executeRawUnsafe(
+            `INSERT INTO renverse_id_map_local
+              (org_id, entity_type, source_app, source_id, target_app, target_id)
+             VALUES ($1,$2,$3,$4,$5,$6)
+             ON CONFLICT (org_id, entity_type, source_app, source_id, target_app)
+             DO UPDATE SET target_id = EXCLUDED.target_id`,
+            claims.org_id,
+            'user',
+            'identity',
+            claims.sub,
+            'smartload',
+            jit.localUserId,
+          );
+        } catch (e) {
+          fastify.log.warn({ err: e }, '[renverse] first-enable idmap skip');
+        }
+      }
       return result;
     },
     async onSession(_req: any, res: any, session: any, jit: any) {
@@ -630,4 +578,8 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.log.info(
     `[renverse] SmartLoad suite OIDC + tenancy mounted (tally=${tallyMode()}, entitlement=addon)`,
   );
+
+  if ((fastify as any).prisma) {
+    startConsumeLoop((fastify as any).prisma);
+  }
 };

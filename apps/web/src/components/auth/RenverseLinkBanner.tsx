@@ -4,6 +4,14 @@ import { Button } from '../ui/Button';
 
 const DISMISS_KEY = 'smartload_renverse_link_banner_dismissed';
 
+function renverseStatusUrl(): string {
+  const params = new URLSearchParams(window.location.search);
+  const orgFromUrl = params.get('orgId');
+  const orgEnv = import.meta.env.VITE_RENVERSE_ORG_ID as string | undefined;
+  const orgId = orgFromUrl || orgEnv;
+  return orgId ? `/renverse/status?orgId=${encodeURIComponent(orgId)}` : '/renverse/status';
+}
+
 /** A10 / EP-X-01 Phase A linking nudge. */
 export function RenverseLinkBanner() {
   const { user, isAuthenticated, accessToken } = useAuthStore();
@@ -18,7 +26,7 @@ export function RenverseLinkBanner() {
   const [linking, setLinking] = useState(false);
 
   useEffect(() => {
-    fetch('/renverse/status')
+    fetch(renverseStatusUrl())
       .then((r) => (r.ok ? r.json() : null))
       .then((s) => {
         const suite = s?.mode === 'suite';

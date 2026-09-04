@@ -10,7 +10,9 @@
   ],
   "consumes": [
     "identity.user.provisioned.v1",
-    "identity.membership.changed.v1"
+    "identity.membership.changed.v1",
+    "identity.org.migration.cutover.v1",
+    "identity.link.resolved.v1"
   ],
   "deepLinks": [
     {

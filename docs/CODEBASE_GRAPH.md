@@ -1,6 +1,6 @@
 # Codebase graph
 
-> Last updated: 2026-08-24 — EP-X-01 cutover (`renverse_suite_cutover_at`) + suite-link `/renverse/link/start`  
+> Last updated: 2026-09-04 — Connect consume (`connect-consume.ts`) + migration cutover/link events + resolveTenantCutover  
 > Hub: RenVerse `docs/ECOSYSTEM_GRAPH.md`
 
 ## Suite bridge
@@ -26,6 +26,7 @@
 - Suite auth: `@renverse/suite-oidc-adapter` + DB JIT (`tenancy.ts`) · `onJit(claims, req)` honors link cookie
 - Product APIs: JWT may carry `organizationId`; lists/creates for clients/POs/POD/scanners scoped when org present
 - Health: `GET /renverse/status?orgId=` (tenantCutover) · Site: `GET /renverse/site` · Shipment: `GET /renverse/shipments/:id`
+- Connect consume: `apps/api/src/renverse/connect-consume.ts` · `identity.user.provisioned.v1` · `identity.membership.changed.v1` · `identity.org.migration.cutover.v1` · `identity.link.resolved.v1`
 - Link: `POST /renverse/link/start` + `suite-link.ts` · banner POSTs start
 - Cutover: `Organization.renverseSuiteCutoverAt` · runtime ALTER + migration `20260824140000`
 - POD: product acknowledge → `emitPodConfirmed`; smoke alias; Connect down safe

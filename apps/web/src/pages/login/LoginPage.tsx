@@ -18,6 +18,14 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+function renverseStatusUrl(): string {
+  const params = new URLSearchParams(window.location.search);
+  const orgFromUrl = params.get('orgId');
+  const orgEnv = import.meta.env.VITE_RENVERSE_ORG_ID as string | undefined;
+  const orgId = orgFromUrl || orgEnv;
+  return orgId ? `/renverse/status?orgId=${encodeURIComponent(orgId)}` : '/renverse/status';
+}
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [twoFactorToken, setTwoFactorToken] = useState<string | null>(null);
@@ -29,7 +37,7 @@ export default function LoginPage() {
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    fetch('/renverse/status')
+    fetch(renverseStatusUrl())
       .then((r) => (r.ok ? r.json() : null))
       .then((s) => {
         const suite = s?.mode === 'suite';

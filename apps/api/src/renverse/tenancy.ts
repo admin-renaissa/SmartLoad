@@ -203,3 +203,171 @@ export async function ensureOrgAndMembership(
     suiteRole,
   };
 }
+
+/** Prisma-backed tenancy store for OIDC JIT and Connect consumers. */
+export function createPrismaTenancyStore(prisma: {
+  organization: {
+    findUnique: (args: unknown) => Promise<{
+      id: string;
+      name: string;
+      renverseOrgId: string;
+      siteId: string;
+    } | null>;
+    create: (args: unknown) => Promise<{
+      id: string;
+      name: string;
+      renverseOrgId: string;
+      siteId: string;
+    }>;
+  };
+  user: {
+    findUnique: (args: unknown) => Promise<{
+      id: string;
+      email: string;
+      renverseSub?: string | null;
+    } | null>;
+    findMany: (args: unknown) => Promise<Array<{ id: string; renverseSub?: string | null }>>;
+    create: (args: unknown) => Promise<{ id: string }>;
+    update: (args: unknown) => Promise<unknown>;
+  };
+  orgMembership: {
+    upsert: (args: unknown) => Promise<unknown>;
+    updateMany: (args: unknown) => Promise<unknown>;
+  };
+}): TenancyStore {
+  return {
+    async findOrgByRenverseId(renverseOrgId) {
+      const row = await prisma.organization.findUnique({
+        where: { renverseOrgId },
+      });
+      return row
+        ? {
+            id: row.id,
+            name: row.name,
+            renverseOrgId: row.renverseOrgId,
+            siteId: row.siteId,
+          }
+        : null;
+    },
+    async createOrg(input) {
+      const row = await prisma.organization.create({
+        data: {
+          name: input.name,
+          renverseOrgId: input.renverseOrgId,
+          siteId: input.siteId,
+        },
+      });
+      return {
+        id: row.id,
+        name: row.name,
+        renverseOrgId: row.renverseOrgId,
+        siteId: row.siteId,
+      };
+    },
+    async findUserBySub(sub) {
+      const row = await prisma.user.findUnique({ where: { renverseSub: sub } });
+      return row ? { id: row.id, email: row.email } : null;
+    },
+    async findUserById(userId) {
+      const row = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, renverseSub: true },
+      });
+      return row;
+    },
+    async findUsersByEmail(email) {
+      const rows = await prisma.user.findMany({
+        where: { email: { equals: email, mode: 'insensitive' } },
+        select: { id: true, email: true, renverseSub: true },
+      });
+      return rows;
+    },
+    async linkUserSub(userId, sub) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { renverseSub: sub },
+      });
+    },
+    async createSuiteUser(input) {
+      if (input.linkUserId) {
+        const existing = await prisma.user.findUnique({
+          where: { id: input.linkUserId },
+          select: { id: true, email: true, renverseSub: true },
+        });
+        if (existing) {
+          const claimEmail = String(input.email || '').toLowerCase();
+          if (
+            claimEmail &&
+            String(existing.email || '').toLowerCase() !== claimEmail
+          ) {
+            const err = new Error('email_mismatch');
+            (err as Error & { code?: string }).code = 'ACCOUNT_LINK_EMAIL_MISMATCH';
+            throw err;
+          }
+          if (existing.renverseSub && existing.renverseSub !== input.sub) {
+            const err = new Error('already_linked_other_sub');
+            (err as Error & { code?: string }).code = 'ACCOUNT_LINK_CONFLICT';
+            throw err;
+          }
+          if (!existing.renverseSub) {
+            await prisma.user.update({
+              where: { id: existing.id },
+              data: { renverseSub: input.sub },
+            });
+          }
+          return { id: existing.id };
+        }
+      }
+      if (input.email) {
+        const matches = await prisma.user.findMany({
+          where: { email: { equals: input.email, mode: 'insensitive' } },
+          select: { id: true, renverseSub: true },
+        });
+        if (matches.length > 1) {
+          const err = new Error(
+            'We found more than one match for this email. Ask your admin to link accounts.',
+          );
+          (err as Error & { code?: string }).code = 'ACCOUNT_LINK_MULTI_MATCH';
+          throw err;
+        }
+        if (matches[0] && !matches[0].renverseSub) {
+          await prisma.user.update({
+            where: { id: matches[0].id },
+            data: { renverseSub: input.sub },
+          });
+          return { id: matches[0].id };
+        }
+      }
+      const row = await prisma.user.create({
+        data: {
+          email: input.email,
+          passwordHash: '!',
+          name: input.name,
+          role: input.role,
+          renverseSub: input.sub,
+        },
+      });
+      return { id: row.id };
+    },
+    async upsertMembership(input) {
+      await prisma.orgMembership.upsert({
+        where: {
+          organizationId_userId: {
+            organizationId: input.organizationId,
+            userId: input.userId,
+          },
+        },
+        create: {
+          organizationId: input.organizationId,
+          userId: input.userId,
+          role: input.role,
+          renverseSuiteRole: input.suiteRole,
+          renverseFloorRole: input.floorRole,
+        },
+        update: {
+          renverseSuiteRole: input.suiteRole,
+        },
+      });
+    },
+  };
+}

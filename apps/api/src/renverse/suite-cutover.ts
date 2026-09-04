@@ -54,6 +54,23 @@ export async function isOrgCutover(
   }
 }
 
+/** Apply Phase B cutover timestamp for all org rows linked to Identity org id. */
+export async function setOrgCutover(
+  prisma: {
+    $executeRawUnsafe?: (q: string, ...values: unknown[]) => Promise<unknown>;
+  },
+  orgId: string,
+  suiteCutoverAt: string,
+): Promise<void> {
+  await ensureCutoverColumn(prisma);
+  await prisma.$executeRawUnsafe?.(
+    `UPDATE "organizations" SET "renverse_suite_cutover_at" = $1::timestamptz, "updatedAt" = now()
+     WHERE "renverse_org_id" = $2`,
+    suiteCutoverAt,
+    orgId,
+  );
+}
+
 /** True if any of the user's org memberships belong to a cut-over org. */
 export async function userHasOrgCutover(
   prisma: {
