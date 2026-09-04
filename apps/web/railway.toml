@@ -1,0 +1,9 @@
+# Pin Dockerfile builder — avoid Nixpacks puppeteer apt install on staging web.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/web/Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"

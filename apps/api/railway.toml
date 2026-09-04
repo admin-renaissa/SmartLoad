@@ -1,0 +1,9 @@
+# Pin Dockerfile builder for SmartLoad API (Fastify + renverse routes).
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/api/Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
