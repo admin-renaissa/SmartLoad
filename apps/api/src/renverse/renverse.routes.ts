@@ -36,6 +36,10 @@ import {
   isConnectServiceAuthorized,
   startConsumeLoop,
 } from './connect-consume.js';
+import {
+  isAppDirectoryServiceAuthorized,
+  lookupTenantsByEmail,
+} from './app-directory.js';
 
 type AccessTokenClaims = {
   sub: string;
@@ -168,6 +172,36 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
         : Boolean(process.env.RENVERSE_CONNECT_URL),
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // Service-to-service only (bearer token gated) — used by RenVerse identity
+  // for existing-app-user self-service onboarding. Unauthenticated by
+  // SmartLoad's normal session middleware; the bearer check below is the
+  // only gate and runs unconditionally before any DB access.
+  fastify.get('/renverse/identity/lookup-by-email', async (req, reply) => {
+    const auth = String(req.headers.authorization || '');
+    const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    if (!isAppDirectoryServiceAuthorized(presented)) {
+      return reply.code(401).send({ error: 'unauthorized' });
+    }
+    const email =
+      typeof (req.query as { email?: string }).email === 'string'
+        ? String((req.query as { email?: string }).email).trim()
+        : '';
+    if (!email) {
+      return reply.send({ matches: [] });
+    }
+    const prisma = (fastify as any).prisma;
+    if (!prisma) {
+      return reply.send({ matches: [] });
+    }
+    try {
+      const matches = await lookupTenantsByEmail(prisma, email);
+      return reply.send({ matches });
+    } catch (e) {
+      fastify.log.warn({ err: e }, '[renverse] identity lookup-by-email failed');
+      return reply.send({ matches: [] });
+    }
   });
 
   function connectAuthOk(req: { headers: Record<string, unknown> }): boolean {
