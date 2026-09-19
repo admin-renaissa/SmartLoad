@@ -6,6 +6,8 @@
  */
 import type { FastifyPluginAsync } from 'fastify';
 import { emitPodConfirmed } from './emit-pod-confirmed.js';
+import { emitLeadCaptured } from './emit-lead-captured.js';
+import { handlePeerReadRequest, loadSmartloadPeerProjection } from './peer-read.js';
 import {
   createMemoryTenancyStore,
   createPrismaTenancyStore,
@@ -318,6 +320,92 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
       organizationId: org.id,
       tallyMode: tallyMode(),
     });
+  });
+
+  fastify.get<{ Params: { entityType: string; id: string } }>(
+    '/renverse/peer/v1/:entityType/:id',
+    async (req, reply) => {
+      const result = await handlePeerReadRequest({
+        mode,
+        authorization: String(req.headers.authorization || ''),
+        entityType: req.params.entityType,
+        id: req.params.id,
+        loadProjection: async (opts) => {
+          const store = await resolveStore(fastify);
+          return loadSmartloadPeerProjection({
+            ...opts,
+            prisma: (fastify as any).prisma,
+            findOrgByRenverseId: (orgId) => store.findOrgByRenverseId(orgId),
+          });
+        },
+      });
+      return reply.code(result.status).send(result.body);
+    },
+  );
+  fastify.route({
+    method: ['POST', 'PUT', 'PATCH', 'DELETE'],
+    url: '/renverse/peer/v1/:entityType/:id',
+    handler: async (_req, reply) =>
+      reply.code(405).send({ error: 'method_not_allowed' }),
+  });
+
+  fastify.post('/renverse/leads/capture', async (req, reply) => {
+    const body = (req.body || {}) as Record<string, unknown>;
+    const orgId = String(body.orgId || req.headers['x-renverse-org-id'] || '').trim();
+    const sourceId = String(body.sourceId || '').trim();
+    const email = String(body.email || '').trim();
+    if (!orgId || !sourceId || !email) {
+      return reply.code(400).send({
+        error: 'invalid_lead',
+        message: 'orgId, sourceId, and email are required',
+      });
+    }
+    if (isSuiteMode(mode) && orgId) {
+      const addons = String(req.headers['x-renverse-addons'] || 'smartload')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!requireAddonOr403({ sub: 'x', org_id: orgId, apps: [], addons } as any, reply)) {
+        return;
+      }
+    }
+    const writeOutbox = async (row: {
+      eventId: string;
+      type: string;
+      orgId: string;
+      payload: Record<string, unknown>;
+    }) => {
+      try {
+        await (fastify as any).prisma?.$executeRawUnsafe?.(
+          `INSERT INTO renverse_outbox (event_id, type, org_id, payload)
+           VALUES ($1, $2, $3, $4::jsonb)
+           ON CONFLICT (event_id) DO NOTHING`,
+          row.eventId,
+          row.type,
+          row.orgId,
+          JSON.stringify(row.payload),
+        );
+      } catch {
+        /* table may not exist yet in unit env */
+      }
+    };
+    const result = await emitLeadCaptured({
+      orgId,
+      sourceId,
+      email,
+      name: body.name !== undefined ? String(body.name) : undefined,
+      company: body.company !== undefined ? String(body.company) : undefined,
+      consent: typeof body.consent === 'boolean' ? body.consent : undefined,
+      attrs:
+        body.attrs && typeof body.attrs === 'object'
+          ? (body.attrs as Record<string, unknown>)
+          : undefined,
+      idempotencyKey: body.idempotencyKey
+        ? String(body.idempotencyKey)
+        : undefined,
+      writeOutbox,
+    });
+    return reply.send(result);
   });
 
   fastify.get<{ Params: { id: string } }>(

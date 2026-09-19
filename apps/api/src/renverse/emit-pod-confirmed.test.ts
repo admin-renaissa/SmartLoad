@@ -29,18 +29,49 @@ test('emitPodConfirmed skips when connect emit flag off / no URL', async () => {
   }
 });
 
-test('emitPodConfirmed connect failure does not throw (POD CRUD safe)', async () => {
+test('emitPodConfirmed skips publish when pair disabled / standalone', async () => {
+  const prevMode = process.env.RENVERSE_MODE;
   const prevFlags = process.env.RENVERSE_FLAGS;
   const prevUrl = process.env.RENVERSE_CONNECT_URL;
   const prevFlagEnv = process.env['RENVERSE_FLAG_renverse.connect.emit'];
-  process.env.RENVERSE_FLAGS = JSON.stringify({ 'renverse.connect.emit': true });
+  process.env.RENVERSE_MODE = 'standalone';
+  process.env.RENVERSE_FLAGS = 'renverse.connect.emit=true';
+  process.env['RENVERSE_FLAG_renverse.connect.emit'] = '1';
+  process.env.RENVERSE_CONNECT_URL = 'http://127.0.0.1:9';
+  try {
+    const result = await emitPodConfirmed({
+      shipmentId: 'ship_pair',
+      orgId: 'org_demo00000001',
+    });
+    assert.equal(result.ok, true);
+    assert.equal(result.skipped, true);
+    assert.equal(result.reason, 'pair_disabled');
+  } finally {
+    if (prevMode === undefined) delete process.env.RENVERSE_MODE;
+    else process.env.RENVERSE_MODE = prevMode;
+    if (prevFlags === undefined) delete process.env.RENVERSE_FLAGS;
+    else process.env.RENVERSE_FLAGS = prevFlags;
+    if (prevUrl === undefined) delete process.env.RENVERSE_CONNECT_URL;
+    else process.env.RENVERSE_CONNECT_URL = prevUrl;
+    if (prevFlagEnv === undefined) delete process.env['RENVERSE_FLAG_renverse.connect.emit'];
+    else process.env['RENVERSE_FLAG_renverse.connect.emit'] = prevFlagEnv;
+  }
+});
+
+test('emitPodConfirmed connect failure does not throw (POD CRUD safe)', async () => {
+  const prevMode = process.env.RENVERSE_MODE;
+  const prevFlags = process.env.RENVERSE_FLAGS;
+  const prevUrl = process.env.RENVERSE_CONNECT_URL;
+  const prevFlagEnv = process.env['RENVERSE_FLAG_renverse.connect.emit'];
+  process.env.RENVERSE_MODE = 'suite';
+  process.env.RENVERSE_FLAGS = 'renverse.connect.emit=true';
   process.env['RENVERSE_FLAG_renverse.connect.emit'] = '1';
   process.env.RENVERSE_CONNECT_URL = 'http://127.0.0.1:9'; // nothing listening
   try {
-    // Bypass package flag parsing by stubbing via dynamic path: call with forced publish fail
     const result = await emitPodConfirmed({
       shipmentId: 'ship_2',
       orgId: 'org_demo00000001',
+      checkPair: async () => true,
       writeOutbox: async () => {
         /* ok */
       },
@@ -54,6 +85,8 @@ test('emitPodConfirmed connect failure does not throw (POD CRUD safe)', async ()
       );
     }
   } finally {
+    if (prevMode === undefined) delete process.env.RENVERSE_MODE;
+    else process.env.RENVERSE_MODE = prevMode;
     if (prevFlags === undefined) delete process.env.RENVERSE_FLAGS;
     else process.env.RENVERSE_FLAGS = prevFlags;
     if (prevUrl === undefined) delete process.env.RENVERSE_CONNECT_URL;

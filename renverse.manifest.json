@@ -6,7 +6,8 @@
   "contractsVersion": "1.0.0",
   "tenantKey": "orgId",
   "produces": [
-    "smartload.pod.confirmed.v1"
+    "smartload.pod.confirmed.v1",
+    "smartload.lead.captured.v1"
   ],
   "consumes": [
     "identity.user.provisioned.v1",

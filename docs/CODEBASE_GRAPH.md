@@ -1,6 +1,6 @@
 # Codebase graph
 
-> Last updated: 2026-09-04 — Connect consume (`connect-consume.ts`) + migration cutover/link events + resolveTenantCutover  
+> Last updated: 2026-09-19 — Vendored `@renverse/*` under `packages/` for Railway Docker  
 > Hub: RenVerse `docs/ECOSYSTEM_GRAPH.md`
 
 ## Suite bridge
@@ -26,10 +26,15 @@
 - Suite auth: `@renverse/suite-oidc-adapter` + DB JIT (`tenancy.ts`) · `onJit(claims, req)` honors link cookie
 - Product APIs: JWT may carry `organizationId`; lists/creates for clients/POs/POD/scanners scoped when org present
 - Health: `GET /renverse/status?orgId=` (tenantCutover) · Site: `GET /renverse/site` · Shipment: `GET /renverse/shipments/:id`
+- Dual login: suite `authPhase` is always `dual`; local password is never blocked
+- Pair gate: `pair-gate.ts` — standalone never emits/consumes sibling sync
+- Peer read: `GET /renverse/peer/v1/:entityType/:id` (`aud=smartload`, `read:shipment`) · standalone 404
+- Lead emit: `POST /renverse/leads/capture` → `smartload.lead.captured.v1` (pair smartload→renovax)
+- Deps: Vendored `packages/{auth-sdk,connect-sdk,ai-sdk,suite-oidc-adapter}` (`file:./packages/*` overrides)
 - Connect consume: `apps/api/src/renverse/connect-consume.ts` · `identity.user.provisioned.v1` · `identity.membership.changed.v1` · `identity.org.migration.cutover.v1` · `identity.link.resolved.v1`
 - Link: `POST /renverse/link/start` + `suite-link.ts` · banner POSTs start
 - Cutover: `Organization.renverseSuiteCutoverAt` · runtime ALTER + migration `20260824140000`
-- POD: product acknowledge → `emitPodConfirmed`; smoke alias; Connect down safe
+- POD: product acknowledge → `emitPodConfirmed` (pair smartload→renbooks); smoke alias; Connect down safe
 - ISSA: `smartload.shipment.get`, `smartload.pod.status` · persona `smartload.ops_assistant`
 - Migrate: `20260824120000_renverse_org_tenancy` + `20260824130000_scanner_org_backfill` + cutover
 - Backfill: `pnpm db:backfill-org` · Seed creates demo org + membership
@@ -40,7 +45,8 @@
 
 | Direction | Event | Peer |
 |-----------|-------|------|
-| Out | `smartload.pod.confirmed.v1` | RenBooks |
+| Out | `smartload.pod.confirmed.v1` | RenBooks (pair `smartload-renbooks`) |
+| Out | `smartload.lead.captured.v1` | ReNovaX (pair `smartload-lead-renovax`) |
 
 ### ISSA
 
@@ -74,7 +80,7 @@ Local features → sections below. Pack Cursor prompts: `docs/renverse/README.md
 |------|------|
 | `apps/web` | Vite + React UI |
 | `apps/api` | API (`src/modules/*`, workers) |
-| `apps/api/src/renverse/` | Suite addon OIDC + status + POD emit |
+| `apps/api/src/renverse/` | Suite addon OIDC + status + pair-gated POD/lead emit + peer shipment |
 | `apps/tally-bridge` | Tally integration bridge (on-prem) |
 | `packages/db`, `shared`, `ui` | Shared packages (`UserRole` in `packages/shared`) |
 | `docs/renverse/` | Suite pack (00–17) |
@@ -106,7 +112,7 @@ Local features → sections below. Pack Cursor prompts: `docs/renverse/README.md
 ## Backend hot paths
 
 - Server: `apps/api/src/server.ts`
-- RenVerse: `apps/api/src/renverse/renverse.routes.ts`, `emit-pod-confirmed.ts`
+- RenVerse: `apps/api/src/renverse/renverse.routes.ts`, `emit-pod-confirmed.ts`, `emit-lead-captured.ts`, `pair-gate.ts`, `peer-read.ts`
 - Modules: `apps/api/src/modules/*`
 - Workers: `apps/api/src/workers/`
 
@@ -118,6 +124,7 @@ flowchart LR
   API --> DB[(orgId DB target)]
   Scan --> Dispatch --> POD
   POD -->|pod.confirmed| RenBooks
+  API -->|lead.captured| ReNovaX
   TallyBridge[apps/tally-bridge] --> API
   Identity -->|identity.*| API
 ```

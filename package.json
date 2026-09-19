@@ -41,9 +41,10 @@
   },
   "pnpm": {
     "overrides": {
-      "@renverse/auth-sdk": "file:../packages/auth-sdk",
-      "@renverse/connect-sdk": "file:../packages/connect-sdk",
-      "@renverse/suite-oidc-adapter": "file:../packages/suite-oidc-adapter"
+      "@renverse/auth-sdk": "file:./packages/auth-sdk",
+      "@renverse/connect-sdk": "file:./packages/connect-sdk",
+      "@renverse/ai-sdk": "file:./packages/ai-sdk",
+      "@renverse/suite-oidc-adapter": "file:./packages/suite-oidc-adapter"
     }
   }
 }

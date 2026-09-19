@@ -1,10 +1,13 @@
 /**
- * Emit smartload.pod.confirmed.v1 when Connect emit flag is on.
+ * Emit smartload.pod.confirmed.v1 when Connect emit flag is on
+ * and the smartload→renbooks pair is enabled for this event.
  * Used by product POD acknowledge + smoke POST /renverse/shipments/:id/pod.
  *
  * Connect outages must not break POD CRUD — failures return skipped.
  * Tally bridge stays on-prem: SMARTLOAD_TALLY_MODE=onprem (default).
  */
+import { isPairApplyAllowed, type PairGateInput } from './pair-gate.js';
+
 export type PodConfirmedPayload = {
   shipmentId: string;
   orgId: string;
@@ -19,6 +22,7 @@ export type PodConfirmedPayload = {
     orgId: string;
     payload: Record<string, unknown>;
   }) => Promise<void>;
+  checkPair?: (input: PairGateInput) => Promise<boolean>;
 };
 
 export async function emitPodConfirmed(
@@ -53,6 +57,20 @@ export async function emitPodConfirmed(
 
   if (!isFlagEnabled('renverse.connect.emit')) {
     return { ok: true, skipped: true, reason: 'flag_off' };
+  }
+
+  const pairInput: PairGateInput = {
+    mode,
+    orgId: payload.orgId,
+    sourceApp: 'smartload',
+    targetApp: 'renbooks',
+    eventType: 'smartload.pod.confirmed.v1',
+  };
+  const pairOk = payload.checkPair
+    ? await payload.checkPair(pairInput)
+    : await isPairApplyAllowed(pairInput);
+  if (!pairOk) {
+    return { ok: true, skipped: true, reason: 'pair_disabled', mode };
   }
 
   const connectUrl =

@@ -6,14 +6,14 @@ import assert from 'node:assert/strict';
 import { resolveAuthPhase, shouldBlockLocalLogin } from './suite-auth-gate.js';
 
 describe('suite-cutover authPhase wiring', () => {
-  it('tenantCutover flips authPhase and blocks local login', () => {
+  it('tenantCutover is ignored — suite stays dual and never blocks local login', () => {
     assert.equal(
       resolveAuthPhase({ mode: 'suite', tenantCutover: true }),
-      'cutover',
+      'dual',
     );
     assert.equal(
       shouldBlockLocalLogin({ mode: 'suite', tenantCutover: true }),
-      true,
+      false,
     );
     assert.equal(
       shouldBlockLocalLogin({ mode: 'standalone', tenantCutover: true }),

@@ -1,6 +1,15 @@
 node_modules/
 dist/
 build/
+# Vendored @renverse SDKs ship compiled dist for Railway file: installs
+!packages/auth-sdk/dist/
+!packages/auth-sdk/dist/**
+!packages/connect-sdk/dist/
+!packages/connect-sdk/dist/**
+!packages/ai-sdk/dist/
+!packages/ai-sdk/dist/**
+!packages/suite-oidc-adapter/dist/
+!packages/suite-oidc-adapter/dist/**
 .env
 .env.local
 *.log
