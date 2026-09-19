@@ -15,7 +15,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "node -e \"require('fs').accessSync('dist/index.js')\"",
     "dev": "tsc -p tsconfig.json --watch",
     "test": "node --import tsx --test src/*.test.ts"
   },

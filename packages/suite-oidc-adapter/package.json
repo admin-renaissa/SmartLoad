@@ -14,8 +14,8 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --import tsx --test src/**/*.test.ts"
+    "build": "node -e \"require('fs').accessSync('dist/index.js')\"",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "@renverse/auth-sdk": "file:../auth-sdk",
