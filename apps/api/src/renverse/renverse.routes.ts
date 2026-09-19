@@ -25,6 +25,10 @@ import {
   createSmartloadIssaHandlers,
   SMARTLOAD_ISSA_PERSONA,
 } from './issa-tools.js';
+import {
+  authorizeSmartloadIssaTool,
+  registerIssaHubOnBoot,
+} from './issa-hub-boot.js';
 import { ensureCutoverColumn, isOrgCutover } from './suite-cutover.js';
 import {
   clearRenverseLinkCookie,
@@ -660,7 +664,7 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
     const toolSecret = process.env.ISSA_TOOL_TOKEN_SECRET || 'dev-issa-tool-secret';
     const issaUrl = process.env.RENVERSE_ISSA_URL || 'http://localhost:9120';
     const handlers = createSmartloadIssaHandlers({
-      canRead: () => true,
+      canRead: (ctx) => authorizeSmartloadIssaTool(ctx),
       async getShipment(id) {
         try {
           const po = await (fastify as any).prisma.purchaseOrder.findUnique({
@@ -716,10 +720,14 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
       secret: toolSecret,
       issuer: issaUrl,
       handlers,
-      authorize: () => true,
+      authorize: authorizeSmartloadIssaTool,
     });
     (fastify as any).use(issaRouter);
   }
+
+  void registerIssaHubOnBoot().catch((e) =>
+    console.warn('[renverse] ISSA Hub registration skipped:', (e as Error).message),
+  );
 
   fastify.log.info(
     `[renverse] SmartLoad suite OIDC + tenancy mounted (tally=${tallyMode()}, entitlement=addon)`,
