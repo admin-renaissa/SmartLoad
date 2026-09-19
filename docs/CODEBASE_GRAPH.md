@@ -1,6 +1,6 @@
 # Codebase graph
 
-> Last updated: 2026-09-19 — Vendored `@renverse/*` under `packages/` for Railway Docker  
+> Last updated: 2026-09-19 — Directory lookup-by-org; email lookup uses local Organization.id  
 > Hub: RenVerse `docs/ECOSYSTEM_GRAPH.md`
 
 ## Suite bridge
@@ -33,6 +33,7 @@
 - Deps: Vendored `packages/{auth-sdk,connect-sdk,ai-sdk,suite-oidc-adapter}` (`file:./packages/*` overrides)
 - Connect consume: `apps/api/src/renverse/connect-consume.ts` · `identity.user.provisioned.v1` · `identity.membership.changed.v1` · `identity.org.migration.cutover.v1` · `identity.link.resolved.v1`
 - Link: `POST /renverse/link/start` + `suite-link.ts` · banner POSTs start
+- Directory: `GET /renverse/identity/lookup-by-email` + `lookup-by-org` (local `Organization.id` even when `renverseOrgId` is null) · [`RENVERSE_IDENTITY_LOOKUP.md`](./RENVERSE_IDENTITY_LOOKUP.md)
 - Cutover: `Organization.renverseSuiteCutoverAt` · runtime ALTER + migration `20260824140000`
 - POD: product acknowledge → `emitPodConfirmed` (pair smartload→renbooks); smoke alias; Connect down safe
 - ISSA: `smartload.shipment.get`, `smartload.pod.status` · persona `smartload.ops_assistant`

@@ -23,9 +23,14 @@ export function isAppDirectoryServiceAuthorized(
 
 export type AppDirectoryMatch = {
   externalTenantId: string;
+  organizationName: string;
   tenantName: string;
-  role: string;
+  role?: string;
 };
+
+function toMatch(id: string, name: string, role?: string): AppDirectoryMatch {
+  return { externalTenantId: id, organizationName: name, tenantName: name, role };
+}
 
 /**
  * Case-insensitive exact email match across ALL organizations/tenants.
@@ -48,7 +53,7 @@ export async function lookupTenantsByEmail(
           renverseSuiteRole: true,
           organization: {
             select: {
-              renverseOrgId: true,
+              id: true,
               name: true,
             },
           },
@@ -62,13 +67,21 @@ export async function lookupTenantsByEmail(
   const matches: AppDirectoryMatch[] = [];
   for (const membership of user.orgMemberships || []) {
     const org = membership.organization;
-    if (!org?.renverseOrgId) continue;
+    if (!org?.id) continue;
     const role = String(membership.renverseSuiteRole || membership.role || 'member').toLowerCase();
-    matches.push({
-      externalTenantId: org.renverseOrgId,
-      tenantName: org.name,
-      role,
-    });
+    matches.push(toMatch(org.id, org.name, role));
   }
   return matches;
+}
+
+export async function lookupOrgsByName(prisma: any, name: string): Promise<AppDirectoryMatch[]> {
+  const q = String(name || '').trim();
+  if (!q || q.length < 3) return [];
+  const rows = await prisma.organization.findMany({
+    where: { name: { contains: q, mode: 'insensitive' } },
+    select: { id: true, name: true },
+    take: 10,
+    orderBy: { name: 'asc' },
+  });
+  return rows.map((row: { id: string; name: string }) => toMatch(row.id, row.name));
 }

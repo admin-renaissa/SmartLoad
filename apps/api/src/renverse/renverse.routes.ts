@@ -40,6 +40,7 @@ import {
 } from './connect-consume.js';
 import {
   isAppDirectoryServiceAuthorized,
+  lookupOrgsByName,
   lookupTenantsByEmail,
 } from './app-directory.js';
 
@@ -202,6 +203,29 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send({ matches });
     } catch (e) {
       fastify.log.warn({ err: e }, '[renverse] identity lookup-by-email failed');
+      return reply.send({ matches: [] });
+    }
+  });
+
+  fastify.get('/renverse/identity/lookup-by-org', async (req, reply) => {
+    const auth = String(req.headers.authorization || '');
+    const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    if (!isAppDirectoryServiceAuthorized(presented)) {
+      return reply.code(401).send({ error: 'unauthorized' });
+    }
+    const name =
+      typeof (req.query as { name?: string }).name === 'string'
+        ? String((req.query as { name?: string }).name).trim()
+        : '';
+    const prisma = (fastify as any).prisma;
+    if (!prisma || name.length < 3) {
+      return reply.send({ matches: [] });
+    }
+    try {
+      const matches = await lookupOrgsByName(prisma, name);
+      return reply.send({ matches });
+    } catch (e) {
+      fastify.log.warn({ err: e }, '[renverse] identity lookup-by-org failed');
       return reply.send({ matches: [] });
     }
   });
