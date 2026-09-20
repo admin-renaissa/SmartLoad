@@ -1,6 +1,6 @@
 # Codebase graph
 
-> Last updated: 2026-09-19 — Directory lookup-by-org; email lookup uses local Organization.id  
+> Last updated: 2026-09-20 — provision-org + first-open no longer auto-creates a SmartLoad org  
 > Hub: RenVerse `docs/ECOSYSTEM_GRAPH.md`
 
 ## Suite bridge

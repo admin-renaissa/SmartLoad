@@ -37,7 +37,7 @@ test('assertSameOrg suite strict denies null', () => {
   assert.equal(denyReq.ok, false);
 });
 
-test('ensureOrgAndMembership creates org + user + membership', async () => {
+test('ensureOrgAndMembership does not auto-create a company', async () => {
   const store = createMemoryTenancyStore();
   const claims = {
     sub: 'sub_1',
@@ -46,11 +46,29 @@ test('ensureOrgAndMembership creates org + user + membership', async () => {
     apps: [],
     addons: ['smartload'],
   } as AccessTokenClaims;
+  const pending = await ensureOrgAndMembership(store, claims);
+  assert.equal(pending.localUserId, 'pending_sub_1');
+  assert.equal(pending.localTenantId, '');
+  assert.equal(store.orgs.size, 0);
+});
+
+test('provision then JIT binds the named company', async () => {
+  const { provisionOrgForSuite } = await import('./tenancy.js');
+  const store = createMemoryTenancyStore();
+  const claims = {
+    sub: 'sub_1',
+    org_id: 'org_demo',
+    roles: ['org_admin'],
+    apps: [],
+    addons: ['smartload'],
+  } as AccessTokenClaims;
+  const org = await provisionOrgForSuite(store, {
+    orgId: 'org_demo',
+    organizationName: 'Acme Freight',
+  });
+  assert.equal(org.name, 'Acme Freight');
   const m = await ensureOrgAndMembership(store, claims);
   assert.equal(m.localUserId, 'local_sub_1');
   assert.equal(m.localTenantId, siteIdForOrg('org_demo'));
   assert.equal(m.role, 'ADMIN');
-  const again = await ensureOrgAndMembership(store, claims);
-  assert.equal(again.organizationId, m.organizationId);
-  assert.equal(store.orgs.size, 1);
 });

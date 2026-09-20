@@ -13,6 +13,7 @@ import {
   createPrismaTenancyStore,
   ensureOrgAndMembership,
   assertSameOrg,
+  provisionOrgForSuite,
   siteIdForOrg,
   type TenancyStore,
 } from './tenancy.js';
@@ -234,7 +235,33 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  function connectAuthOk(req: { headers: Record<string, unknown> }): boolean {
+  fastify.post('/renverse/identity/provision-org', async (req, reply) => {
+    const auth = String(req.headers.authorization || '');
+    const presented = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    if (!isAppDirectoryServiceAuthorized(presented)) {
+      return reply.code(401).send({ error: 'unauthorized' });
+    }
+    const body = (req.body || {}) as { orgId?: string; organizationName?: string; email?: string };
+    const orgId = String(body.orgId || '').trim();
+    const organizationName = String(body.organizationName || '').trim();
+    if (!orgId || !organizationName) {
+      return reply.code(400).send({ error: 'invalid_body' });
+    }
+    try {
+      const store = await resolveStore(fastify);
+      const org = await provisionOrgForSuite(store, { orgId, organizationName });
+      return reply.code(201).send({
+        externalTenantId: org.siteId,
+        organizationName: org.name,
+        tenantName: org.name,
+      });
+    } catch (e) {
+      fastify.log.warn({ err: e }, '[renverse] provision-org failed');
+      return reply.code(502).send({ error: 'provision_failed' });
+    }
+  });
+
+  function connectAuthOk((req: { headers: Record<string, unknown> }): boolean {
     const auth = String(req.headers.authorization || '');
     const presented = auth.startsWith('Bearer ') ? auth.slice(7) : String(req.headers['x-connect-token'] || '');
     return isConnectServiceAuthorized(presented);
@@ -605,7 +632,6 @@ export const renverseRoutes: FastifyPluginAsync = async (fastify) => {
         claims,
         session,
         jit,
-        createLocalTenant: (orgId: string) => siteIdForOrg(orgId),
       });
       const store = await resolveStore(fastify);
       const membership = await ensureOrgAndMembership(store, claims as any);

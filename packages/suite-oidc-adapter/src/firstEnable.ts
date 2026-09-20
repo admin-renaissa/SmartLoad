@@ -1,5 +1,6 @@
 import type { AccessTokenClaims, AppKey, Session } from '@renverse/auth-sdk';
 import { createConnectClient } from '@renverse/connect-sdk';
+import { NeedsMappingError } from './mappingStudio.js';
 
 export type JitResult = {
   localUserId: string;
@@ -15,57 +16,33 @@ const connectToken =
   process.env.CONNECT_SERVICE_TOKEN || 'dev-connect-token';
 
 /**
- * AppLink first-enable + Connect IdMap user/tenant rows.
- * Algorithm: contracts/applink/provisioning.md
+ * Missing AppLink is no longer a silent create. Callers redirect to
+ * Accounts Mapping Studio. `createLocalTenant` is unused here.
  */
 export async function runFirstEnable(opts: {
   appKey: AppKey;
   claims: AccessTokenClaims;
   session: Session;
   jit: JitResult;
-  createLocalTenant: (orgId: string) => string | Promise<string>;
+  /** @deprecated Ignored. Local tenants are created only from Mapping Studio. */
+  createLocalTenant?: (orgId: string) => string | Promise<string>;
 }): Promise<JitResult> {
   const orgId = opts.claims.org_id;
   const authHeader = { authorization: `Bearer ${opts.session.accessToken}` };
 
-  let linkRes = await fetch(
+  const linkRes = await fetch(
     `${identityBase}/v1/orgs/${orgId}/applinks/${opts.appKey}`,
     { headers: authHeader },
   );
 
-  let externalTenantId: string;
   if (linkRes.status === 404) {
-    externalTenantId = await Promise.resolve(opts.createLocalTenant(orgId));
-    const createRes = await fetch(
-      `${identityBase}/v1/orgs/${orgId}/applinks/${opts.appKey}`,
-      {
-        method: 'POST',
-        headers: { ...authHeader, 'content-type': 'application/json' },
-        body: JSON.stringify({ externalTenantId }),
-      },
-    );
-    if (createRes.status === 409) {
-      linkRes = await fetch(
-        `${identityBase}/v1/orgs/${orgId}/applinks/${opts.appKey}`,
-        { headers: authHeader },
-      );
-      if (!linkRes.ok) {
-        throw new Error(`applink conflict then get failed: ${linkRes.status}`);
-      }
-      const existing = (await linkRes.json()) as {
-        externalTenantId: string;
-      };
-      externalTenantId = existing.externalTenantId;
-    } else if (!createRes.ok) {
-      const text = await createRes.text();
-      throw new Error(`applink create failed: ${createRes.status} ${text}`);
-    }
-  } else if (linkRes.ok) {
-    const existing = (await linkRes.json()) as { externalTenantId: string };
-    externalTenantId = existing.externalTenantId;
-  } else {
+    throw new NeedsMappingError(orgId, opts.appKey);
+  }
+  if (!linkRes.ok) {
     throw new Error(`applink get failed: ${linkRes.status}`);
   }
+  const existing = (await linkRes.json()) as { externalTenantId: string };
+  const externalTenantId = existing.externalTenantId;
 
   const connect = createConnectClient({
     baseUrl: connectBase,

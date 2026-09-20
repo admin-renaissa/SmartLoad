@@ -31,6 +31,19 @@ export function siteIdForOrg(renverseOrgId: string): string {
   return `site_${renverseOrgId}`;
 }
 
+export async function provisionOrgForSuite(
+  store: TenancyStore,
+  input: { orgId: string; organizationName: string },
+): Promise<OrgRow> {
+  const existing = await store.findOrgByRenverseId(input.orgId);
+  if (existing) return existing;
+  return store.createOrg({
+    name: input.organizationName.trim() || 'Company',
+    renverseOrgId: input.orgId,
+    siteId: siteIdForOrg(input.orgId),
+  });
+}
+
 /** Cross-org IDOR guard. Suite mode: null resource or request org → deny. */
 export function assertSameOrg(
   resourceOrgId: string | null | undefined,
@@ -153,11 +166,13 @@ export async function ensureOrgAndMembership(
   const floor = suiteFloorToLocalRole(suiteRole);
   let org = await store.findOrgByRenverseId(claims.org_id);
   if (!org) {
-    org = await store.createOrg({
-      name: `SmartLoad ${claims.org_id}`,
-      renverseOrgId: claims.org_id,
-      siteId: siteIdForOrg(claims.org_id),
-    });
+    return {
+      localUserId: `pending_${claims.sub}`,
+      localTenantId: '',
+      organizationId: '',
+      role: floor,
+      suiteRole,
+    };
   }
   let user = await store.findUserBySub(claims.sub);
   if (!user && opts?.linkUserId) {

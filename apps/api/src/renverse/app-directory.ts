@@ -26,10 +26,11 @@ export type AppDirectoryMatch = {
   organizationName: string;
   tenantName: string;
   role?: string;
+  externalUserId?: string;
 };
 
-function toMatch(id: string, name: string, role?: string): AppDirectoryMatch {
-  return { externalTenantId: id, organizationName: name, tenantName: name, role };
+function toMatch(id: string, name: string, role?: string, externalUserId?: string): AppDirectoryMatch {
+  return { externalTenantId: id, organizationName: name, tenantName: name, role, externalUserId };
 }
 
 /**
@@ -47,6 +48,7 @@ export async function lookupTenantsByEmail(
   const user = await prisma.user.findFirst({
     where: { email: { equals: normalized, mode: 'insensitive' } },
     select: {
+      id: true,
       orgMemberships: {
         select: {
           role: true,
@@ -69,7 +71,7 @@ export async function lookupTenantsByEmail(
     const org = membership.organization;
     if (!org?.id) continue;
     const role = String(membership.renverseSuiteRole || membership.role || 'member').toLowerCase();
-    matches.push(toMatch(org.id, org.name, role));
+    matches.push(toMatch(org.id, org.name, role, String(user.id)));
   }
   return matches;
 }

@@ -20,6 +20,7 @@ import {
 } from './localAuth.js';
 import { completeAccountLink } from './linkFlow.js';
 import { registerMigrationRoutes, renderLinkBannerHtml, linkConflictUrl } from './migration.js';
+import { isNeedsMappingError, mappingStudioUrl } from './mappingStudio.js';
 
 export type JitResult = {
   localUserId: string;
@@ -185,8 +186,26 @@ export function createSuiteOidcRouter(opts: SuiteOidcAdapterOptions): Router {
       }
       let jit = await opts.onJit(session.claims, req);
       if (opts.onFirstEnable) {
-        const updated = await opts.onFirstEnable(session.claims, jit, session, req);
-        if (updated) jit = updated;
+        try {
+          const updated = await opts.onFirstEnable(session.claims, jit, session, req);
+          if (updated) jit = updated;
+        } catch (err) {
+          if (isNeedsMappingError(err)) {
+            const next =
+              (typeof req.query.next === 'string' && req.query.next) ||
+              process.env.RENVERSE_POST_LOGIN_REDIRECT ||
+              '/';
+            res.redirect(
+              mappingStudioUrl(accountsOrigin, {
+                orgId: err.orgId,
+                appKey: opts.config.appKey,
+                next,
+              }),
+            );
+            return;
+          }
+          throw err;
+        }
       }
 
       const linkUserId = req.cookies?.[LINK_USER_COOKIE];
@@ -317,6 +336,7 @@ export function requireSuiteEntitlement(appKey: AppKey) {
 }
 
 export { runFirstEnable } from './firstEnable.js';
+export { mappingStudioUrl, NeedsMappingError, isNeedsMappingError } from './mappingStudio.js';
 export { renderLinkBannerHtml, linkConflictUrl } from './migration.js';
 export { completeAccountLink } from './linkFlow.js';
 export {
