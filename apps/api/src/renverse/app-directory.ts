@@ -26,11 +26,36 @@ export type AppDirectoryMatch = {
   organizationName: string;
   tenantName: string;
   role?: string;
+  userName?: string;
+  permissions?: string[];
   externalUserId?: string;
 };
 
-function toMatch(id: string, name: string, role?: string, externalUserId?: string): AppDirectoryMatch {
-  return { externalTenantId: id, organizationName: name, tenantName: name, role, externalUserId };
+function toMatch(
+  id: string,
+  name: string,
+  role?: string,
+  externalUserId?: string,
+  userName?: string,
+  permissions?: string[],
+): AppDirectoryMatch {
+  return {
+    externalTenantId: id,
+    organizationName: name,
+    tenantName: name,
+    role,
+    userName,
+    permissions,
+    externalUserId,
+  };
+}
+
+export function tokenizeDirectoryName(q: string): string[] {
+  return q
+    .toLowerCase()
+    .split(/[^a-z0-9]+/i)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 3);
 }
 
 /**
@@ -49,6 +74,8 @@ export async function lookupTenantsByEmail(
     where: { email: { equals: normalized, mode: 'insensitive' } },
     select: {
       id: true,
+      name: true,
+      email: true,
       orgMemberships: {
         select: {
           role: true,
@@ -71,7 +98,16 @@ export async function lookupTenantsByEmail(
     const org = membership.organization;
     if (!org?.id) continue;
     const role = String(membership.renverseSuiteRole || membership.role || 'member').toLowerCase();
-    matches.push(toMatch(org.id, org.name, role, String(user.id)));
+    matches.push(
+      toMatch(
+        org.id,
+        org.name,
+        role,
+        String(user.id),
+        user.name || user.email || undefined,
+        [role],
+      ),
+    );
   }
   return matches;
 }
@@ -79,8 +115,12 @@ export async function lookupTenantsByEmail(
 export async function lookupOrgsByName(prisma: any, name: string): Promise<AppDirectoryMatch[]> {
   const q = String(name || '').trim();
   if (!q || q.length < 3) return [];
+  const tokens = tokenizeDirectoryName(q);
+  const patterns = tokens.length ? tokens : [q];
   const rows = await prisma.organization.findMany({
-    where: { name: { contains: q, mode: 'insensitive' } },
+    where: {
+      OR: patterns.map((token) => ({ name: { contains: token, mode: 'insensitive' } })),
+    },
     select: { id: true, name: true },
     take: 10,
     orderBy: { name: 'asc' },
