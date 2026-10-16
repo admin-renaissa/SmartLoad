@@ -128,6 +128,9 @@ export interface ToolTokenClaims {
     iss?: string;
     exp?: number;
     jti?: string;
+    apps?: string[];
+    addons?: string[];
+    roles?: string[];
 }
 export interface ToolHostHelpers {
     registerTool(tool: ToolRegistration): Promise<void>;

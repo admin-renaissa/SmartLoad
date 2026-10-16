@@ -13,11 +13,9 @@ export function authorizeSmartloadIssaTool(ctx: {
 }): boolean {
   if (ctx.arguments.deny === true) return false;
   if (!ctx.claims.org_id?.startsWith('org_') || !ctx.claims.sub) return false;
-  const addons = (ctx.claims as { addons?: string[] }).addons;
-  if (Array.isArray(addons) && addons.length > 0) {
-    return hasAddon(ctx.claims, 'smartload');
-  }
-  return true;
+  // SmartLoad is an add-on: the hub puts the user's addons[] in the tool token, and a
+  // missing or empty list is a deny (fail closed).
+  return hasAddon(ctx.claims, 'smartload');
 }
 
 export async function registerIssaHubOnBoot(): Promise<{ registered: boolean; reason?: string }> {

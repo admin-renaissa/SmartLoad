@@ -8,6 +8,9 @@ export async function signToolToken(opts) {
     return new jose.SignJWT({
         org_id: opts.orgId,
         tool_id: opts.toolId,
+        ...(opts.apps ? { apps: opts.apps } : {}),
+        ...(opts.addons ? { addons: opts.addons } : {}),
+        ...(opts.roles ? { roles: opts.roles } : {}),
     })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuer(opts.issuer)
@@ -34,5 +37,8 @@ export async function verifyToolToken(token, opts) {
         iss: payload.iss,
         exp: payload.exp,
         jti: payload.jti,
+        ...(Array.isArray(payload.apps) ? { apps: payload.apps.map(String) } : {}),
+        ...(Array.isArray(payload.addons) ? { addons: payload.addons.map(String) } : {}),
+        ...(Array.isArray(payload.roles) ? { roles: payload.roles.map(String) } : {}),
     };
 }

@@ -14,12 +14,20 @@ export async function signToolToken(opts: {
   sub: string;
   orgId: string;
   toolId: string;
+  /** The user's suite entitlements, so the app can re-check (defense in depth). */
+  apps?: string[];
+  addons?: string[];
+  /** Suite roles of the user (org_owner, org_admin, …) for app-side RBAC. */
+  roles?: string[];
   ttlSec?: number;
 }): Promise<string> {
   const ttl = Math.min(opts.ttlSec ?? 120, 120);
   return new jose.SignJWT({
     org_id: opts.orgId,
     tool_id: opts.toolId,
+    ...(opts.apps ? { apps: opts.apps } : {}),
+    ...(opts.addons ? { addons: opts.addons } : {}),
+    ...(opts.roles ? { roles: opts.roles } : {}),
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuer(opts.issuer)
@@ -50,5 +58,8 @@ export async function verifyToolToken(
     iss: payload.iss,
     exp: payload.exp,
     jti: payload.jti,
+    ...(Array.isArray(payload.apps) ? { apps: payload.apps.map(String) } : {}),
+    ...(Array.isArray(payload.addons) ? { addons: payload.addons.map(String) } : {}),
+    ...(Array.isArray(payload.roles) ? { roles: payload.roles.map(String) } : {}),
   };
 }
